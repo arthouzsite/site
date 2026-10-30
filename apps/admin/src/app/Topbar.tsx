@@ -1,9 +1,10 @@
-import type { ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useLocation } from 'react-router'
 import { Icon } from '../components/ui/Icon'
 import { initials } from '../lib/format'
 import type { SessionUser } from '../features/auth/useSession'
 import { useBreadcrumbLabel } from './breadcrumb'
+import { CommandPalette } from './CommandPalette'
 
 const SEGMENT_LABEL: Record<string, string> = { new: 'New', about: 'About page', settings: 'Home & settings' }
 /** Second path segment of /section/:id or /section/new: the record, not a section. */
@@ -27,6 +28,23 @@ type Props = { user: SessionUser; breadcrumb?: ReactNode; onLogout: () => void }
 export function Topbar({ user, breadcrumb, onLogout }: Props) {
   const { pathname } = useLocation()
   const crumbs = buildCrumbs(pathname, useBreadcrumbLabel())
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const searchButton = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== 'k') return
+      e.preventDefault()
+      // Another dialog already owns the keyboard.
+      if (document.querySelector('[aria-modal="true"]')) return
+      // Focus the button first so closing the palette always returns focus to it.
+      searchButton.current?.focus()
+      setIsSearchOpen(true)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
+
   return (
     <header className="sticky top-0 z-20 flex h-topbar items-center justify-between gap-6 border-b border-line bg-bg/90 px-[var(--gutter)] backdrop-blur-sm">
       <nav aria-label="Breadcrumb" className="flex items-center gap-2.5 text-12 uppercase tracking-eyebrow text-muted">
@@ -48,8 +66,11 @@ export function Topbar({ user, breadcrumb, onLogout }: Props) {
       </nav>
       <div className="flex items-center gap-2">
         <button
+          ref={searchButton}
           type="button"
           aria-label="Search all content"
+          aria-haspopup="dialog"
+          onClick={() => setIsSearchOpen(true)}
           className="flex h-11 items-center gap-2.5 rounded-xs border border-line bg-surface px-3 text-13 text-muted md:min-w-60 max-[1024px]:min-w-11 max-[1024px]:justify-center max-[1024px]:px-0"
         >
           <Icon name="search" />
@@ -60,6 +81,7 @@ export function Topbar({ user, breadcrumb, onLogout }: Props) {
           <span className="grid h-8 w-8 place-items-center rounded-full bg-amber text-12 font-semibold text-ink">{initials(user.name, user.email[0]?.toUpperCase() ?? "?")}</span>
         </button>
       </div>
+      <CommandPalette open={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </header>
   )
 }

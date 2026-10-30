@@ -12,12 +12,16 @@ type Props = {
   role?: 'dialog' | 'alertdialog'
   /** Tailwind width classes; defaults to a 480px dialog. */
   width?: string
+  /** Keep the title for assistive tech only, for surfaces whose content explains itself (search). */
+  hideTitle?: boolean
+  /** `top` anchors the dialog near the top so it does not jump as its content grows. */
+  placement?: 'center' | 'top'
 }
 
 const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
 /** Modal shell with focus trap, Escape to close and focus return. Mark the preferred first focus with `data-autofocus`. */
-export function Dialog({ open, title, onClose, children, footer, role = 'dialog', width = 'w-[min(480px,calc(100vw-32px))]' }: Props) {
+export function Dialog({ open, title, onClose, children, footer, role = 'dialog', width = 'w-[min(480px,calc(100vw-32px))]', hideTitle = false, placement = 'center' }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null)
   const titleId = useId()
 
@@ -55,7 +59,7 @@ export function Dialog({ open, title, onClose, children, footer, role = 'dialog'
   return createPortal(
     // Backdrop only traps Tab and Escape for the dialog inside it; it is not itself interactive.
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions
-    <div className="fixed inset-0 z-[60] grid place-items-center bg-scrim" onKeyDown={onKeyDown}>
+    <div className={cx('fixed inset-0 z-[60] grid bg-scrim', placement === 'top' ? 'place-items-start justify-items-center pt-[12vh] max-sm:pt-4' : 'place-items-center')} onKeyDown={onKeyDown}>
       <div
         ref={dialogRef}
         role={role}
@@ -63,7 +67,7 @@ export function Dialog({ open, title, onClose, children, footer, role = 'dialog'
         aria-labelledby={titleId}
         className={cx('flex max-h-[calc(100vh-32px)] flex-col gap-4 bg-surface-2 p-6', width)}
       >
-        <h2 id={titleId} className="m-0 font-display text-26 font-normal leading-[1.1]">{title}</h2>
+        <h2 id={titleId} className={cx('m-0 font-display text-26 font-normal leading-[1.1]', hideTitle && 'sr-only')}>{title}</h2>
         <div className="min-h-0 flex-1 overflow-auto text-14 text-body">{children}</div>
         {footer && <div className="flex justify-end gap-2">{footer}</div>}
       </div>
