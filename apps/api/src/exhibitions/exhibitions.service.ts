@@ -23,6 +23,7 @@ export const exhibitionListQuerySchema = z.object({
   city: z.string().trim().max(MAX_CITY_LENGTH).optional(),
   q: z.string().trim().max(MAX_SEARCH_LENGTH).optional(),
   published: z.enum(['true', 'false']).optional(),
+  artistId: z.string().uuid().optional(),
   page: z.coerce.number().int().min(1).optional(),
   limit: z.coerce.number().int().min(1).optional(),
 })
@@ -49,6 +50,7 @@ function listWhere(query: ExhibitionListQuery): Prisma.ExhibitionWhereInput {
   if (query.status) and.push(statusWhere(query.status))
   if (query.city) and.push({ city: { equals: query.city, mode: 'insensitive' } })
   if (query.published === 'true' || query.published === 'false') and.push({ isPublished: query.published === 'true' })
+  if (query.artistId) and.push({ artists: { some: { artistId: query.artistId } } })
   if (query.q) {
     and.push({ OR: [{ title: { contains: query.q, mode: 'insensitive' } }, { subtitle: { contains: query.q, mode: 'insensitive' } }] })
   }
