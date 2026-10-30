@@ -10,6 +10,10 @@ export const httpUrl = () => z.url({ protocol: /^https?$/ })
 export const urlSchema = httpUrl().max(2000)
 export const optionalUrlSchema = urlSchema.nullable().default(null)
 
+/** International phone number: + followed by 8-15 digits. */
+export const TEL_PATTERN = /^\+\d{8,15}$/
+export const TEL_MESSAGE = 'Use international format, e.g. +914412345678'
+
 export const publishSchema = z.object({ isPublished: z.boolean() })
 export const reorderSchema = z.object({ ids: z.array(idSchema) })
 

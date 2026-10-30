@@ -11,6 +11,7 @@ import { MediaModule } from './media/media.module'
 import { NewsModule } from './news/news.module'
 import { PublicModule } from './public/public.module'
 import { RevalidateModule } from './revalidate/revalidate.module'
+import { ServicesModule } from './services/services.module'
 import { SettingsModule } from './settings/settings.module'
 import { UsersModule } from './users/users.module'
 
@@ -24,6 +25,7 @@ import { UsersModule } from './users/users.module'
     ArtistsModule,
     ArtworksModule,
     FairsModule,
+    ServicesModule,
     NewsModule,
     LocationsModule,
     SettingsModule,

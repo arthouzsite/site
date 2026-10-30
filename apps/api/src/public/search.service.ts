@@ -15,7 +15,7 @@ export class SearchService {
   async search(rawQuery: string): Promise<PublicSearch> {
     const q = rawQuery.trim()
     if (!q) return { groups: [] }
-    const [artists, exhibitions, news] = await Promise.all([
+    const [artists, exhibitions, news, services] = await Promise.all([
       this.prisma.artist.findMany({
         where: { isPublished: true, name: matches(q) },
         select: { name: true, slug: true },
@@ -33,11 +33,17 @@ export class SearchService {
         orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
         take: SEARCH_NEWS_LIMIT,
       }),
+      this.prisma.service.findMany({
+        where: { isPublished: true, OR: [{ title: matches(q) }, { summary: matches(q) }] },
+        select: { title: true, slug: true },
+        orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
+      }),
     ])
     const groups: Group[] = [
       { label: 'Artists', items: artists.map((a) => ({ label: a.name, href: `/artists/${a.slug}` })) },
       { label: 'Exhibitions', items: exhibitions.map((e) => ({ label: e.title, href: `/exhibitions/${e.slug}` })) },
       { label: 'News', items: news.map((n) => ({ label: n.title, href: '/news' })) },
+      { label: 'Services', items: services.map((s) => ({ label: s.title, href: `/services/${s.slug}` })) },
     ]
     return { groups: groups.filter((g) => g.items.length > 0) }
   }

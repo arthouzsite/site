@@ -1,6 +1,6 @@
 import { formatDateRange, formatMonthYear, indexLetter, resolveExhibitionStatus, STATUS_BADGE } from '@arthouz/shared'
 import type {
-  PublicArtist, PublicExhibition, PublicExhibitionDetail, PublicFair, PublicLocation, PublicNews,
+  PublicArtist, PublicExhibition, PublicExhibitionDetail, PublicFair, PublicLocation, PublicNews, PublicService,
 } from '@arthouz/shared'
 import type { Prisma } from '../generated/prisma/client'
 import { toPublicImage } from './public.images'
@@ -87,6 +87,14 @@ export function toPublicFair(row: Prisma.FairGetPayload<{ include: { image: true
   return {
     id: row.id, slug: row.slug, title: row.title, where: [place, row.dateLabel].filter(Boolean).join(' · '), booth: row.booth,
     text: row.text, image: toPublicImage(row.image),
+  }
+}
+
+export function toPublicService(row: Prisma.ServiceGetPayload<{ include: { image: true } }>): PublicService {
+  return {
+    slug: row.slug, title: row.title, summary: row.summary, body: row.body, image: toPublicImage(row.image),
+    ctaLabel: row.ctaLabel, ctaHref: row.ctaHref,
+    contact: { name: row.contactName, phone: row.contactPhone, email: row.contactEmail },
   }
 }
 

@@ -112,6 +112,11 @@ async function artworkUsageTags(prisma: PrismaService, ids: string[]): Promise<s
   return rows.flatMap((r) => tagsFor('artwork', r.artist.slug))
 }
 
+async function serviceUsageTags(prisma: PrismaService, ids: string[]): Promise<string[]> {
+  const rows = await prisma.service.findMany({ where: { id: { in: ids } }, select: { slug: true } })
+  return rows.flatMap((r) => tagsFor('service', r.slug))
+}
+
 /** Tags of every page that renders a media item, so alt/caption edits reach the public site. */
 export async function mediaUsageTags(prisma: PrismaService, usage: readonly MediaUsage[]): Promise<string[]> {
   const buckets = bucketUsage(usage)
@@ -127,6 +132,7 @@ export async function mediaUsageTags(prisma: PrismaService, usage: readonly Medi
     ['exhibitionWork', (ids) => workUsageTags(prisma, ids)],
     ['artist', (ids) => artistUsageTags(prisma, ids)],
     ['artwork', (ids) => artworkUsageTags(prisma, ids)],
+    ['service', (ids) => serviceUsageTags(prisma, ids)],
   ]
   const resolved = await Promise.all(
     lookups.filter(([type]) => buckets[type]).map(([type, run]) => safely(`media usage ${type}`, () => run(buckets[type] as string[]))),

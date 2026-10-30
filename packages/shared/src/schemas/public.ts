@@ -27,6 +27,13 @@ export const publicFairSchema = z.object({
   booth: z.string(), text: z.string(), image,
 })
 
+export const publicServiceSchema = z.object({
+  slug: z.string(), title: z.string(), summary: z.string(), body: z.string(), image,
+  ctaLabel: z.string(), ctaHref: z.string(),
+  contact: z.object({ name: z.string(), phone: z.string(), email: z.string() }),
+})
+export const publicServiceListSchema = z.array(publicServiceSchema)
+
 export const publicNewsSchema = z.object({
   id: z.string(), slug: z.string(), title: z.string(), excerpt: z.string(),
   monthLabel: z.string(), externalUrl: z.string().nullable(),
@@ -105,7 +112,7 @@ export const publicHomeSchema = z.object({
 
 export const publicSearchSchema = z.object({
   groups: z.array(z.object({
-    label: z.enum(['Artists', 'Exhibitions', 'News']),
+    label: z.enum(['Artists', 'Exhibitions', 'News', 'Services']),
     items: z.array(z.object({ label: z.string(), href: z.string() })),
   })),
 })
@@ -116,6 +123,8 @@ export type PublicExhibitionDetail = z.infer<typeof publicExhibitionDetailSchema
 export type PublicArtist = z.infer<typeof publicArtistSchema>
 export type PublicArtistDetail = z.infer<typeof publicArtistDetailSchema>
 export type PublicFair = z.infer<typeof publicFairSchema>
+export type PublicService = z.infer<typeof publicServiceSchema>
+export type PublicServiceList = z.infer<typeof publicServiceListSchema>
 export type PublicNews = z.infer<typeof publicNewsSchema>
 export type PublicExhibitionList = z.infer<typeof publicExhibitionListSchema>
 export type PublicArtistList = z.infer<typeof publicArtistListSchema>

@@ -27,6 +27,16 @@ describe('seed', () => {
     expect(await prisma.news.count()).toBe(10)
     expect(await prisma.fair.count()).toBe(4)
     expect(await prisma.location.count()).toBe(2)
+    const services = await prisma.service.findMany({ orderBy: { sortOrder: 'asc' } })
+    expect(services.map((x) => [x.slug, x.title, x.sortOrder, x.isPublished, x.imageId, x.ctaLabel, x.ctaHref, x.contactName, x.contactPhone, x.contactEmail])).toEqual([
+      ['art-sales', 'Art sales', 0, true, null, 'Enquire →', '', '', '', ''],
+      ['gallery-on-rent', 'Gallery on rent', 1, true, null, 'Enquire →', '', '', '', ''],
+      ['art-for-rent', 'Art for rent', 2, true, null, 'Enquire →', '', '', '', ''],
+      ['corporate-painting-execution', 'Corporate painting execution', 3, true, null, 'Enquire →', '', '', '', ''],
+      ['turn-key-art-projects', 'Turn-key art projects', 4, true, null, 'Enquire →', '', '', '', ''],
+    ])
+    expect(services[0]?.summary).toBe('Acquire works by the artists we represent, or sell through the gallery.')
+    expect(services[0]?.body).toBe(services[0]?.summary)
     expect(await prisma.artwork.count()).toBe(55 * 6)
     expect(await prisma.exhibitionWork.count()).toBe(27)
     expect(await prisma.user.count()).toBe(1)

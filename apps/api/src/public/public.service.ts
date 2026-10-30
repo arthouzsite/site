@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import type {
   PublicAbout, PublicArtistDetail, PublicArtistList, PublicExhibitionDetail, PublicExhibitionList, PublicFair,
-  PublicLocation, PublicNews, PublicSettings,
+  PublicLocation, PublicNews, PublicService as PublicServiceDto, PublicSettings,
 } from '@arthouz/shared'
 import { indexLetter, resolveExhibitionStatus } from '@arthouz/shared'
 import { PrismaService } from '../common/prisma.service'
@@ -10,7 +10,7 @@ import { SettingsService } from '../settings/settings.service'
 import { resolveImages, toPublicImage } from './public.images'
 import {
   PUBLIC_ARTIST_INCLUDE, PUBLIC_EXHIBITION_DETAIL_INCLUDE, PUBLIC_EXHIBITION_INCLUDE, PUBLIC_NEWS_INCLUDE,
-  toPublicArtist, toPublicExhibition, toPublicExhibitionDetail, toPublicFair, toPublicLocation, toPublicNews,
+  toPublicArtist, toPublicExhibition, toPublicExhibitionDetail, toPublicFair, toPublicLocation, toPublicNews, toPublicService,
 } from './public.mapper'
 import type { PublicExhibitionsQuery } from './public.queries'
 import type {
@@ -119,6 +119,21 @@ export class PublicService {
       orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
     })
     return rows.map(toPublicFair)
+  }
+
+  async services(): Promise<PublicServiceDto[]> {
+    const rows = await this.prisma.service.findMany({
+      where: { isPublished: true },
+      include: { image: true },
+      orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
+    })
+    return rows.map(toPublicService)
+  }
+
+  async service(slug: string): Promise<PublicServiceDto> {
+    const row = await this.prisma.service.findFirst({ where: { slug, isPublished: true }, include: { image: true } })
+    if (!row) throw new NotFoundException({ code: 'NOT_FOUND', message: NOT_FOUND })
+    return toPublicService(row)
   }
 
   async news(): Promise<PublicNews[]> {

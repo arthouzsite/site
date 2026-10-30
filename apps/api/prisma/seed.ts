@@ -4,7 +4,7 @@ import { PrismaPg } from '@prisma/adapter-pg'
 import { slugify } from '@arthouz/shared'
 import { PrismaClient } from '../src/generated/prisma/client'
 import {
-  seedArtists, seedExhibitions, seedFairs, seedLocations, seedMedia, seedNews, type SeedExhibition,
+  seedArtists, seedExhibitions, seedFairs, seedLocations, seedMedia, seedNews, seedServices, type SeedExhibition,
 } from './seed/data'
 import { exhibitionWorkTitle, materialFor, placeholderArtist, placeholderArtworks } from './seed/placeholders'
 import { buildSettingValues, seedSettings } from './seed/settings'
@@ -157,6 +157,13 @@ async function seedFairRows(prisma: PrismaClient, mediaIds: IdMap): Promise<void
   }
 }
 
+export async function seedServiceRows(prisma: PrismaClient): Promise<void> {
+  for (const s of seedServices) {
+    const { slug, ...data } = s
+    await prisma.service.upsert({ where: { slug }, create: { slug, ...data, isPublished: true }, update: { ...data, isPublished: true } })
+  }
+}
+
 async function seedNewsRows(prisma: PrismaClient, mediaIds: IdMap, exhibitionIds: IdMap): Promise<void> {
   for (const n of seedNews) {
     const data = {
@@ -184,6 +191,7 @@ export async function seedDatabase(prisma: PrismaClient, opts: SeedOptions): Pro
   await seedArtworkRows(prisma, artistIds, mediaIds)
   const exhibitionIds = await seedExhibitionRows(prisma, artistIds, mediaIds)
   await seedFairRows(prisma, mediaIds)
+  await seedServiceRows(prisma)
   await seedNewsRows(prisma, mediaIds, exhibitionIds)
   await seedLocationRows(prisma, mediaIds)
   await seedSettings(

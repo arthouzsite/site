@@ -4,6 +4,7 @@ import fairs from '../seed-data/fairs.json'
 import locations from '../seed-data/locations.json'
 import media from '../seed-data/media.json'
 import news from '../seed-data/news.json'
+import services from '../seed-data/services.json'
 
 export interface SeedMedia { name: string; id: string; alt: string }
 export interface SeedArtist { name: string; placeholder: boolean; featuredOrder?: number }
@@ -19,6 +20,10 @@ export interface SeedFair {
   slug: string; title: string; venue: string; city: string; dateLabel: string; booth: string; text: string
   image: string; sortOrder: number
 }
+export interface SeedService {
+  slug: string; title: string; summary: string; body: string; imageId: null; ctaLabel: string; ctaHref: string
+  contactName: string; contactPhone: string; contactEmail: string; sortOrder: number
+}
 export interface SeedLocation {
   slug: string; city: string; address: string; phone: string; tel: string; days: string; hours: string
   mapUrl: string; image: string; sortOrder: number
@@ -29,4 +34,5 @@ export const seedArtists: readonly SeedArtist[] = artists
 export const seedExhibitions: readonly SeedExhibition[] = exhibitions
 export const seedNews: readonly SeedNews[] = news
 export const seedFairs: readonly SeedFair[] = fairs
+export const seedServices: readonly SeedService[] = services
 export const seedLocations: readonly SeedLocation[] = locations

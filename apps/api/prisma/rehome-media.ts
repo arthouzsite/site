@@ -15,7 +15,7 @@ import { R2Storage } from '../src/media/storage/r2.storage'
 
 const FETCH_TIMEOUT_MS = 30_000
 const MAX_TAGS_PER_REQUEST = 100
-const REVALIDATE_ENTITIES: readonly TagEntity[] = ['exhibition', 'artist', 'fair', 'news', 'location', 'setting']
+const REVALIDATE_ENTITIES: readonly TagEntity[] = ['exhibition', 'artist', 'fair', 'service', 'news', 'location', 'setting']
 
 type Outcome = { readonly key: string; readonly ok: boolean; readonly detail: string }
 

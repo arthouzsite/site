@@ -1,8 +1,5 @@
 import { z } from 'zod'
-import { nullableIdSchema, optionalText, requiredText, slugSchema, urlSchema } from './common'
-
-const TEL_PATTERN = /^\+\d{8,15}$/
-const TEL_MESSAGE = 'Use international format, e.g. +914412345678'
+import { nullableIdSchema, optionalText, requiredText, slugSchema, TEL_MESSAGE, TEL_PATTERN, urlSchema } from './common'
 
 export const locationInputSchema = z.object({
   slug: slugSchema,

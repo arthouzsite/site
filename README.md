@@ -40,7 +40,7 @@ pnpm dev                    # api, web and admin in parallel
 - Site: http://localhost:3100
 - Admin: http://localhost:5180 (fixed port, `--strictPort`)
 
-The seed loads the prototype content and creates the admin user from `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` in `apps/api/.env`. Sign in to the admin with those.
+The seed loads the prototype content (including the five Services: art sales, gallery on rent, art for rent, corporate painting execution, turn-key art projects, published with placeholder copy to replace in the CMS) and creates the admin user from `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` in `apps/api/.env`. Sign in to the admin with those.
 
 `.env.example` sets `STORAGE_DRIVER=memory`: uploads succeed but nothing is persisted and image URLs are `memory://...`. The media library accepts images (JPEG, PNG, WebP, AVIF, up to 25 MB) and videos (MP4, WebM, MOV, up to 200 MB); videos are library-only for now and are never offered in image pickers. To upload real files locally, set `STORAGE_DRIVER=r2` and the five `S3_ENDPOINT` / `AWS_*` keys (see `docs/deploy.md`). The seed writes placeholder image URLs (picsum); `media:rehome` downloads each one, uploads original and thumbnail to the bucket under `arthouz/seed/`, rewrites the rows and revalidates the site. It is idempotent and skips rows already served from `AWS_S3_PUBLIC_URL`.
 

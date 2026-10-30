@@ -1,7 +1,7 @@
 import { slugify } from '@arthouz/shared'
 import type { PrismaService } from './prisma.service'
 
-export type SlugModel = 'exhibition' | 'artist' | 'fair' | 'news' | 'location'
+export type SlugModel = 'exhibition' | 'artist' | 'fair' | 'service' | 'news' | 'location'
 
 const FALLBACK_SLUG = 'untitled'
 const FIRST_SUFFIX = 2

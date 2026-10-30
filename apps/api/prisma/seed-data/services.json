@@ -1,0 +1,67 @@
+[
+  {
+    "slug": "art-sales",
+    "title": "Art sales",
+    "summary": "Acquire works by the artists we represent, or sell through the gallery.",
+    "body": "Acquire works by the artists we represent, or sell through the gallery.",
+    "imageId": null,
+    "ctaLabel": "Enquire →",
+    "ctaHref": "",
+    "contactName": "",
+    "contactPhone": "",
+    "contactEmail": "",
+    "sortOrder": 0
+  },
+  {
+    "slug": "gallery-on-rent",
+    "title": "Gallery on rent",
+    "summary": "Hire the Chennai or Bengaluru gallery for exhibitions and events.",
+    "body": "Hire the Chennai or Bengaluru gallery for exhibitions and events.",
+    "imageId": null,
+    "ctaLabel": "Enquire →",
+    "ctaHref": "",
+    "contactName": "",
+    "contactPhone": "",
+    "contactEmail": "",
+    "sortOrder": 1
+  },
+  {
+    "slug": "art-for-rent",
+    "title": "Art for rent",
+    "summary": "Rent artworks for offices, hospitality spaces and productions.",
+    "body": "Rent artworks for offices, hospitality spaces and productions.",
+    "imageId": null,
+    "ctaLabel": "Enquire →",
+    "ctaHref": "",
+    "contactName": "",
+    "contactPhone": "",
+    "contactEmail": "",
+    "sortOrder": 2
+  },
+  {
+    "slug": "corporate-painting-execution",
+    "title": "Corporate painting execution",
+    "summary": "Commissioned paintings and murals for corporate spaces, executed end to end.",
+    "body": "Commissioned paintings and murals for corporate spaces, executed end to end.",
+    "imageId": null,
+    "ctaLabel": "Enquire →",
+    "ctaHref": "",
+    "contactName": "",
+    "contactPhone": "",
+    "contactEmail": "",
+    "sortOrder": 3
+  },
+  {
+    "slug": "turn-key-art-projects",
+    "title": "Turn-key art projects",
+    "summary": "Art programmes for new buildings and interiors, from concept to installation.",
+    "body": "Art programmes for new buildings and interiors, from concept to installation.",
+    "imageId": null,
+    "ctaLabel": "Enquire →",
+    "ctaHref": "",
+    "contactName": "",
+    "contactPhone": "",
+    "contactEmail": "",
+    "sortOrder": 4
+  }
+]

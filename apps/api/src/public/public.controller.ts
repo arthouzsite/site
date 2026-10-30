@@ -50,6 +50,16 @@ export class PublicController {
     return this.publicService.fairs()
   }
 
+  @Get('services')
+  services() {
+    return this.publicService.services()
+  }
+
+  @Get('services/:slug')
+  service(@Param('slug') slug: string) {
+    return this.publicService.service(slug)
+  }
+
   @Get('news')
   news() {
     return this.publicService.news()

@@ -65,6 +65,7 @@ model Media {
   artworks        Artwork[]
   exhibitionWorks ExhibitionWork[]
   fairs           Fair[]
+  services        Service[]
   news            News[]
   locations       Location[]
 }
@@ -191,6 +192,26 @@ model Fair {
   isPublished Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  image Media? @relation(fields: [imageId], references: [id], onDelete: Restrict)
+}
+
+model Service {
+  id           String   @id @default(uuid())
+  slug         String   @unique
+  title        String
+  summary      String   @default("")
+  body         String   @default("")
+  imageId      String?
+  ctaLabel     String   @default("Enquire →")
+  ctaHref      String   @default("")
+  contactName  String   @default("")
+  contactPhone String   @default("")
+  contactEmail String   @default("")
+  sortOrder    Int      @default(0)
+  isPublished  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   image Media? @relation(fields: [imageId], references: [id], onDelete: Restrict)
 }

@@ -20,6 +20,7 @@ const fakePrisma = (overrides: Record<string, unknown> = {}) => {
     exhibitionWork: model(),
     artist: model(),
     artwork: model(),
+    service: model(),
     ...overrides,
   } as unknown as PrismaService
 }
@@ -94,6 +95,7 @@ describe('mediaUsageTags', () => {
       exhibitionWork: { findMany: jest.fn().mockResolvedValue([{ exhibition: { slug: 'work-show' }, artist: { slug: 'bb' } }]) },
       artist: { findMany: jest.fn().mockResolvedValue([{ slug: 'cc', exhibitions: [{ exhibition: { slug: 'cc-show' } }] }]) },
       artwork: { findMany: jest.fn().mockResolvedValue([{ artist: { slug: 'dd' } }]) },
+      service: { findMany: jest.fn().mockResolvedValue([{ slug: 'art-sales' }]) },
     })
     const tags = await mediaUsageTags(prisma, [
       { type: 'exhibition', id: 'e1', title: 'Sea' },
@@ -102,13 +104,14 @@ describe('mediaUsageTags', () => {
       { type: 'artwork', id: 'k1', title: 'K' },
       { type: 'fair', id: 'f1', title: 'F' },
       { type: 'news', id: 'n1', title: 'N' },
+      { type: 'service', id: 's1', title: 'S' },
       { type: 'location', id: 'l1', title: 'L' },
       { type: 'setting', id: 'site', title: 'Site social image' },
     ])
     expect(tags).toEqual(
       expect.arrayContaining([
         'exhibition:sea', 'artist:aa', 'exhibition:work-show', 'artist:bb', 'artist:cc', 'exhibition:cc-show', 'artist:dd',
-        'fairs', 'news', 'locations', 'settings', 'about',
+        'fairs', 'news', 'locations', 'settings', 'about', 'services', 'service:art-sales',
       ]),
     )
   })
