@@ -41,6 +41,12 @@ function httpExceptionMessage(exception: HttpException): string {
   return exception.message
 }
 
+function httpExceptionExtras(response: string | object): { code?: string; details?: unknown } {
+  if (typeof response !== 'object') return {}
+  const { code, details } = response as { code?: unknown; details?: unknown }
+  return { code: typeof code === 'string' ? code : undefined, details }
+}
+
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(HttpExceptionFilter.name)
@@ -71,8 +77,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
     }
     if (exception instanceof HttpException) {
       const status = exception.getStatus()
-      const code = CODE_BY_STATUS[status] ?? 'ERROR'
-      return { status, body: fail(code, httpExceptionMessage(exception)) }
+      const extras = httpExceptionExtras(exception.getResponse())
+      const code = extras.code ?? CODE_BY_STATUS[status] ?? 'ERROR'
+      const base = fail(code, httpExceptionMessage(exception))
+      return { status, body: extras.details ? { ...base, error: { ...base.error!, details: extras.details } } : base }
     }
     this.logger.error(
       exception instanceof Error ? exception.message : String(exception),
