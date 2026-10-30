@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { makeArtist } from '../features/artists/testUtils'
 import { ID, makeExhibition } from '../features/exhibitions/testUtils'
 import { makeFair } from '../features/fairs/testData'
+import { makeService } from '../features/services/testData'
 import { makeNews } from '../features/news/testData'
 import { API_URL, HttpResponse, envelope, http, server } from '../test/msw'
 import { renderRoutes } from '../test/renderRoutes'
@@ -44,6 +45,11 @@ function stubSearch(overrides: { news?: () => Response } = {}) {
       record('fairs', request)
       return HttpResponse.json(envelope([makeFair({ id: 'f1', title: 'Tide Fair', isPublished: false }), makeFair({ id: 'f2', title: 'Art Dubai 2026' })]))
     }),
+    http.get(`${API_URL}/services`, ({ request }) => {
+      record('services', request)
+      const q = new URL(request.url).searchParams.get('q')
+      return HttpResponse.json(envelope(q === 'zzz' ? [] : [makeService({ id: 's1', title: 'Tide rentals', isPublished: false })]))
+    }),
   )
   return requests
 }
@@ -73,7 +79,7 @@ describe('command palette', () => {
     expect(await searchBox()).toHaveFocus()
   })
 
-  it('searches all four record types with a limit of 5, after a 200 ms pause and two characters', async () => {
+  it('searches all five record types with a limit of 5, after a 200 ms pause and two characters', async () => {
     const { requests, button } = setup()
     const u = userEvent.setup()
     await u.click(button)
@@ -81,7 +87,7 @@ describe('command palette', () => {
     await new Promise((r) => setTimeout(r, 350))
     expect(requests).toEqual([])
     await u.type(screen.getByRole('combobox'), 'ide')
-    await waitFor(() => expect(new Set(requests.map((r) => r.path))).toEqual(new Set(['exhibitions', 'artists', 'news', 'fairs'])))
+    await waitFor(() => expect(new Set(requests.map((r) => r.path))).toEqual(new Set(['exhibitions', 'artists', 'news', 'fairs', 'services'])))
     for (const r of requests.filter((x) => x.path !== 'fairs')) expect(r).toEqual({ path: r.path, q: 'tide', limit: '5' })
   })
 
@@ -98,6 +104,7 @@ describe('command palette', () => {
     expect(within(fairs).getAllByRole('option')).toHaveLength(1)
     expect(fairs).toHaveTextContent('Tide FairDraft')
     expect(screen.queryByText('Art Dubai 2026')).not.toBeInTheDocument()
+    expect(within(screen.getByRole('group', { name: 'Services' })).getByRole('option')).toHaveTextContent('Tide rentalsDraft')
   })
 
   it('moves with the arrow keys and opens the highlighted record on Enter', async () => {
@@ -166,6 +173,15 @@ describe('command palette', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not search News.')
     expect(screen.getByRole('group', { name: 'Artists' })).toBeInTheDocument()
     expect(screen.queryByText(/Nothing found/)).not.toBeInTheDocument()
+  })
+
+  it('opens a service result on click', async () => {
+    const { button } = setup()
+    const u = userEvent.setup()
+    await u.click(button)
+    await u.type(await searchBox(), 'tide')
+    await u.click(await screen.findByRole('option', { name: /Tide rentals/ }))
+    expect(where()).toHaveTextContent('/services/s1')
   })
 
   it('clears the search when reopened', async () => {
