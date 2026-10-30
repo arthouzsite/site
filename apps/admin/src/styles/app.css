@@ -1,6 +1,12 @@
 @import 'tailwindcss';
 @import './tokens.css';
 
+/* Form controls default to full width here (components layer) so a width utility
+   passed by a caller (w-44, w-auto, ...) always wins over it. */
+@layer components {
+  .control-w { width: 100%; }
+}
+
 @layer base {
   *, *::before, *::after { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
