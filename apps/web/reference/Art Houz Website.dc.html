@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Space+Grotesk:wght@400;500;600&family=Noto+Serif+Tamil:wght@400;500&display=swap" rel="stylesheet">
+<script src="./image-slot.js"></script>
+<style>
+html,body{margin:0;padding:0;background:#EDEAE4;color:#161513;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#161513;text-decoration:none}
+a:hover{color:#B4651A}
+::selection{background:#D98A2B;color:#161513}
+input::placeholder{color:#8A857D}
+</style>
+</helmet>
+<div style="min-height:100vh;background:#EDEAE4;font-family:'Space Grotesk','Noto Sans Tamil',sans-serif;color:#161513">
+
+<header style="position:sticky;top:0;z-index:50;background:rgba(237,234,228,0.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid rgba(22,21,19,0.12)">
+  <div style="max-width:1440px;margin:0 auto;padding:0 clamp(20px,4vw,56px);height:76px;display:flex;align-items:center;justify-content:space-between;gap:24px">
+    <a href="#" onClick="{{ goHome }}" style="display:flex;align-items:flex-end;gap:10px;color:#161513">
+      <span style="display:block;width:16px;height:20px;background:#D98A2B;clip-path:polygon(50% 0,100% 100%,0 100%)"></span>
+      <span style="font-size:16px;letter-spacing:0.34em;font-weight:500;line-height:1">ART HOUZ</span>
+    </a>
+    <sc-if value="{{ desktop }}" hint-placeholder-val="{{ true }}">
+      <nav style="display:flex;align-items:center;gap:clamp(18px,2.4vw,36px)">
+        <sc-for list="{{ nav }}" as="n" hint-placeholder-count="6">
+          <a href="#" onClick="{{ n.go }}" style="font-size:12.5px;letter-spacing:0.16em;text-transform:uppercase;color:{{ n.color }};padding:6px 0;border-bottom:1px solid {{ n.line }}">{{ n.label }}</a>
+        </sc-for>
+        <button onClick="{{ openSearch }}" aria-label="Search" style="background:none;border:none;padding:6px;cursor:pointer;color:#161513;display:flex">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="M15.5 15.5L21 21"></path></svg>
+        </button>
+      </nav>
+    </sc-if>
+    <sc-if value="{{ mobile }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;align-items:center;gap:8px">
+        <button onClick="{{ openSearch }}" aria-label="Search" style="background:none;border:none;width:44px;height:44px;cursor:pointer;color:#161513;display:flex;align-items:center;justify-content:center">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="M15.5 15.5L21 21"></path></svg>
+        </button>
+        <button onClick="{{ openMenu }}" style="background:none;border:1px solid #161513;height:40px;padding:0 16px;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:#161513">Menu</button>
+      </div>
+    </sc-if>
+  </div>
+</header>
+
+<main>
+
+<!-- HOME -->
+<sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+  <section data-screen-label="Home">
+    <sc-if value="{{ heroFull }}" hint-placeholder-val="{{ true }}">
+      <div style="position:relative;width:100%;height:clamp(420px,76vh,860px);background:#D8D3CA">
+        <image-slot id="ex-{{ heroEx.slug }}" shape="rect" src="{{ heroEx.img }}" placeholder="Exhibition image"></image-slot>
+      </div>
+      <div style="max-width:1440px;margin:0 auto;padding:clamp(28px,4vw,48px) clamp(20px,4vw,56px) clamp(64px,8vw,120px);display:flex;flex-wrap:wrap;gap:32px 64px;align-items:flex-end;justify-content:space-between">
+        <div style="flex:1 1 560px;min-width:0">
+          <div style="display:flex;align-items:center;gap:10px;font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:#B4651A;margin-bottom:18px"><span style="width:8px;height:8px;border-radius:50%;background:#D98A2B"></span>Now on view · {{ heroEx.city }}</div>
+          <h1 style="font-family:'EB Garamond',serif;font-weight:400;font-size:clamp(52px,8vw,128px);line-height:0.92;letter-spacing:-0.015em;margin:0;text-wrap:balance">{{ heroEx.title }}</h1>
+          <div style="font-family:'EB Garamond',serif;font-style:italic;font-size:clamp(22px,2.2vw,30px);color:#3B3833;margin-top:16px">{{ heroEx.sub }}</div>
+        </div>
+        <div style="flex:0 1 340px;display:flex;flex-direction:column;gap:20px;padding-bottom:8px">
+          <div style="font-size:15px;line-height:1.55;color:#3B3833">{{ heroEx.artistLine }}<br><span style="color:#5E5A54">{{ heroEx.dates }}</span></div>
+          <a href="#" onClick="{{ heroEx.open }}" style="align-self:flex-start;display:flex;align-items:center;gap:12px;background:#161513;color:#EDEAE4;padding:16px 24px;font-size:12.5px;letter-spacing:0.16em;text-transform:uppercase" style-hover="background:#D98A2B;color:#161513">View exhibition <span>→</span></a>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ heroSplit }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:1440px;margin:0 auto;padding:clamp(32px,5vw,72px) clamp(20px,4vw,56px) clamp(64px,8vw,120px);display:flex;flex-wrap:wrap;gap:40px 64px;align-items:stretch">
+        <div style="flex:1 1 380px;display:flex;flex-direction:column;justify-content:space-between;gap:40px;min-width:0">
+          <div style="display:flex;align-items:center;gap:10px;font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:#B4651A"><span style="width:8px;height:8px;border-radius:50%;background:#D98A2B"></span>Now on view · {{ heroEx.city }}</div>
+          <div>
+            <h1 style="font-family:'EB Garamond',serif;font-weight:400;font-size:clamp(52px,7vw,112px);line-height:0.92;letter-spacing:-0.015em;margin:0 0 20px;text-wrap:balance">{{ heroEx.title }}</h1>
+            <div style="font-family:'EB Garamond',serif;font-style:italic;font-size:clamp(22px,2.2vw,30px);color:#3B3833;margin-bottom:24px">{{ heroEx.sub }}</div>
+            <div style="font-size:15px;line-height:1.55;color:#3B3833;margin-bottom:28px">{{ heroEx.artistLine }}<br><span style="color:#5E5A54">{{ heroEx.dates }}</span></div>
+            <a href="#" onClick="{{ heroEx.open }}" style="display:inline-flex;align-items:center;gap:12px;background:#161513;color:#EDEAE4;padding:16px 24px;font-size:12.5px;letter-spacing:0.16em;text-transform:uppercase" style-hover="background:#D98A2B;color:#161513">View exhibition <span>→</span></a>
+          </div>
+        </div>
+        <div style="flex:1.3 1 480px;position:relative;aspect-ratio:4/5;max-height:82vh;min-width:0;background:#D8D3CA">
+          <image-slot id="ex-{{ heroEx.slug }}" shape="rect" src="{{ heroEx.img }}" placeholder="Exhibition image"></image-slot>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- Upcoming band -->
+    <div style="max-width:1440px;margin:0 auto;padding:0 clamp(20px,4vw,56px) clamp(72px,9vw,140px)">
+      <a href="#" onClick="{{ upEx.open }}" style="display:flex;flex-wrap:wrap;align-items:stretch;gap:0;background:#161513;color:#EDEAE4" style-hover="color:#EDEAE4">
+        <div style="flex:1 1 360px;position:relative;min-height:320px;min-width:0"><image-slot id="ex-{{ upEx.slug }}" shape="rect" src="{{ upEx.img }}" placeholder="Upcoming exhibition"></image-slot></div>
+        <div style="flex:1 1 420px;padding:clamp(28px,4vw,56px);display:flex;flex-direction:column;justify-content:space-between;gap:32px;min-width:0">
+          <div style="font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:#D98A2B">Upcoming · {{ upEx.city }}, {{ upEx.country }}</div>
+          <div>
+            <div style="font-family:'EB Garamond',serif;font-size:clamp(40px,5vw,76px);line-height:0.95;margin-bottom:16px">{{ upEx.title }}</div>
+            <div style="font-family:'EB Garamond',serif;font-style:italic;font-size:24px;color:#C9C4BB">{{ upEx.sub }}</div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;font-size:14px;color:#C9C4BB;border-top:1px solid rgba(237,234,228,0.2);padding-top:18px"><span>{{ upEx.dates }}</span><span style="color:#EDEAE4;letter-spacing:0.16em;text-transform:uppercase;font-size:12.5px">Preview →</span></div>
+        </div>
+      </a>
+    </div>
+
+    <div style="max-width:1440px;margin:0 auto;padding:0 clamp(20px,4vw,56px) clamp(72px,9vw,140px)">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px;border-top:1px solid #161513;padding-top:18px;margin-bottom:40px;flex-wrap:wrap">
+        <h2 style="font-size:12.5px;letter-spacing:0.18em;text-transform:uppercase;font-weight:500;margin:0">Recent exhibitions</h2>
+        <a href="#" onClick="{{ goExhibitions }}" style="font-size:12.5px;letter-spacing:0.16em;text-transform:uppercase">All exhibitions →</a>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:48px clamp(20px,2.4vw,36px)">
+        <sc-for list="{{ homeEx }}" as="e" hint-placeholder-count="3">
+          <a href="#" onClick="{{ e.open }}" style="display:flex;flex-direction:column;gap:16px;color:#161513">
+            <div style="position:relative;width:100%;aspect-ratio:4/5;background:#D8D3CA"><image-slot id="ex-{{ e.slug }}" shape="rect" src="{{ e.img }}" placeholder="{{ e.title }}"></image-slot></div>
+            <div style="font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:#B4651A">{{ e.city }}, {{ e.country }}</div>
+            <div style="font-family:'EB Garamond',serif;font-size:clamp(28px,2.6vw,38px);line-height:1.05;text-wrap:balance" style-hover="color:#B4651A">{{ e.title }}</div>
+            <div style="font-size:14px;color:#3B3833;line-height:1.5">{{ e.artistLine }}</div>
+            <div style="font-size:13.5px;color:#5E5A54">{{ e.dates }}</div>
+          </a>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- Worldwide -->
+    <div style="max-width:1440px;margin:0 auto;padding:0 clamp(20px,4vw,56px) clamp(72px,9vw,140px)">
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:24px;border-top:1px solid #161513;padding-top:18px;margin-bottom:24px">
+        <h2 style="font-size:12.5px;letter-spacing:0.18em;text-transform:uppercase;font-weight:500;margin:0">Across the world</h2>
+        <div style="font-size:13px;color:#5E5A54">Exhibitions and fairs with partner galleries</div>
+      </div>
+      <p style="font-family:'EB Garamond',serif;font-size:clamp(30px,4vw,56px);line-height:1.1;margin:0 0 40px;max-width:1080px;text-wrap:balance">From Chennai and Bengaluru to Singapore, Dubai and London.</p>
+      <div style="display:flex;flex-direction:column">
+        <sc-for list="{{ worldList }}" as="e" hint-placeholder-count="5">
+          <a href="#" onClick="{{ e.open }}" style="display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 32px;padding:22px 0;border-top:1px solid rgba(22,21,19,0.16);color:#161513" style-hover="color:#B4651A">
+            <span style="flex:0 0 200px;font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:#B4651A">{{ e.city }}, {{ e.country }}</span>
+            <span style="flex:1 1 320px;font-family:'EB Garamond',serif;font-size:clamp(24px,2.4vw,34px);line-height:1.1">{{ e.title }}</span>
+            <span style="flex:0 1 260px;font-size:14px;color:#5E5A54">{{ e.dates }}</span>
+            <span style="flex:0 0 110px;font-size:12px;letter-spacing:0.16em;text-transform:uppercase;text-align:right">{{ e.statusLabel }}</span>
+          </a>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- Featured artist -->
+    <div style="max-width:1440px;margin:0 auto;padding:0 clamp(20px,4vw,56px) clamp(72px,9vw,140px)">
+      <div style="border-top:1px solid #161513;padding-top:18px;margin-bottom:40px;font-size:12.5px;letter-spacing:0.18em;text-transform:uppercase;font-weight:500">Artist in focus</div>
+      <div style="display:flex;flex-wrap:wrap;gap:40px clamp(32px,6vw,120px);align-items:center">
+        <div style="flex:1 1 440px;position:relative;aspect-ratio:1/1;min-width:0;background:#D8D3CA"><image-slot id="artist-{{ focus.slug }}" shape="rect" src="{{ focus.img }}" placeholder="Artist work"></image-slot></div>
+        <div style="flex:1 1 380px;min-width:0;display:flex;flex-direction:column;gap:24px">
+          <div style="font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:#B4651A">{{ focus.medium }} · {{ focus.base }}</div>
+          <div style="font-family:'EB Garamond',serif;font-size:clamp(48px,6vw,96px);line-height:0.92">{{ focus.name }}</div>
+          <p style="font-size:16.5px;line-height:1.7;color:#3B3833;margin:0;max-width:560px;text-wrap:pretty">{{ focus.bio }}</p>
+          <a href="#" onClick="{{ focus.open }}" style="align-self:flex-start;font-size:12.5px;letter-spacing:0.16em;text-transform:uppercase;border-bottom:1px solid currentColor;padding-bottom:4px">View artist →</a>
+        </div>
+      </div>
+    </div>
+
+    <div style="max-width:1440px;margin:0 auto;padding:0 clamp(20px,4vw,56px) clamp(72px,9vw,140px)">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px;border-top:1px solid #161513;padding-top:18px;margin-bottom:40px;flex-wrap:wrap">
+        <h2 style="font-size:12.5px;letter-spacing:0.18em;text-transform:uppercase;font-weight:500;margin:0">Artists</h2>
+        <a href="#" onClick="{{ goArtists }}" style="font-size:12.5px;letter-spacing:0.16em;text-transform:uppercase">All artists →</a>
+      </div>
+      <p style="font-family:'EB Garamond',serif;font-size:clamp(28px,3.6vw,52px);line-height:1.22;margin:0;text-wrap:pretty">
+        <sc-for list="{{ homeArtists }}" as="a" hint-placeholder-count="20"><a href="#" onClick="{{ a.open }}" style="color:#161513" style-hover="color:#B4651A">{{ a.name }}</a><span style="color:#D98A2B;padding:0 0.32em">{{ a.sep }}</span></sc-for>
+      </p>
+    </div>
+
+    <div style="max-width:1440px;margin:0 auto;padding:0 clamp(20px,4vw,56px) clamp(72px,9vw,140px)">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px;border-top:1px solid #161513;padding-top:18px;margin-bottom:40px;flex-wrap:wrap">
+        <h2 style="font-size:12.5px;letter-spacing:0.18em;text-transform:uppercase;font-weight:500;margin:0">Galleries</h2>
+        <a href="#" onClick="{{ goVisit }}" style="font-size:12.5px;letter-spacing:0.16em;text-transform:uppercase">Plan a visit →</a>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:56px clamp(24px,4vw,64px)">
+        <sc-for list="{{ locations }}" as="l" hint-placeholder-count="2">
+          <div style="display:flex;flex-direction:column;gap:20px">
+            <div style="position:relative;width:100%;aspect-ratio:3/2;background:#D8D3CA"><image-slot id="loc-{{ l.slug }}" shape="rect" src="{{ l.img }}" placeholder="Art Houz {{ l.city }}"></image-slot></div>
+            <div style="font-family:'EB Garamond',serif;font-size:clamp(40px,4.4vw,64px);line-height:1">{{ l.city }}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:16px 40px;font-size:15px;line-height:1.55;color:#3B3833">
+              <div style="flex:1 1 220px">{{ l.address }}</div>
+              <div style="flex:0 1 200px">{{ l.days }}<br>{{ l.hours }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="max-width:1440px;margin:0 auto;padding:0 clamp(20px,4vw,56px) clamp(72px,9vw,140px)">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px;border-top:1px solid #161513;padding-top:18px;margin-bottom:40px;flex-wrap:wrap">
+        <h2 style="font-size:12.5px;letter-spacing:0.18em;text-transform:uppercase;font-weight:500;margin:0">In the press</h2>
+        <a href="#" onClick="{{ goNews }}" style="font-size:12.5px;letter-spacing:0.16em;text-transform:uppercase">All news →</a>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:40px clamp(24px,3vw,48px)">
+        <sc-for list="{{ homeNews }}" as="n" hint-placeholder-count="3">
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div style="position:relative;width:100%;aspect-ratio:3/2;background:#D8D3CA"><image-slot id="news-{{ n.id }}" shape="rect" src="{{ n.img }}" placeholder="Press image"></image-slot></div>
+            <div style="font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:#5E5A54">{{ n.date }}</div>
+            <div style="font-family:'EB Garamond','Noto Serif Tamil',serif;font-size:26px;line-height:1.15;text-wrap:balance">{{ n.title }}</div>
+            <div style="font-size:14.5px;line-height:1.6;color:#5E5A54;text-wrap:pretty">{{ n.excerpt }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+</sc-if>
+
+<!-- EXHIBITIONS -->
+<sc-if value="{{ isExhibitions }}" hint-placeholder-val="{{ false }}">
+  <section data-screen-label="Exhibitions" style="max-width:1440px;margin:0 auto;padding:clamp(40px,6vw,88px) clamp(20px,4vw,56px) clamp(72px,9vw,140px)">
+    <h1 style="font-family:'EB Garamond',serif;font-weight:400;font-size:clamp(56px,9vw,148px);line-height:0.9;letter-spacing:-0.02em;margin:0 0 40px">Exhibitions</h1>
+    <div style="display:flex;flex-wrap:wrap;gap:20px 40px;margin-bottom:56px;align-items:center">
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <sc-for list="{{ statusChips }}" as="c" hint-placeholder-count="4">
+          <button onClick="{{ c.pick }}" style="white-space:nowrap;height:40px;padding:0 18px;border:1px solid #161513;background:{{ c.bg }};color:{{ c.fg }};font-family:'Space Grotesk',sans-serif;font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;cursor:pointer">{{ c.label }}</button>
+        </sc-for>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px 20px">
+        <sc-for list="{{ cityChips }}" as="c" hint-placeholder-count="6">
+          <button onClick="{{ c.pick }}" style="white-space:nowrap;height:40px;padding:0;border:none;border-bottom:1px solid {{ c.line }};background:none;color:{{ c.fg }};font-family:'Space Grotesk',sans-serif;font-size:13px;letter-spacing:0.08em;cursor:pointer">{{ c.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column">
+      <sc-for list="{{ exList }}" as="e" hint-placeholder-count="4">
+        <div style="display:flex;flex-wrap:wrap;gap:28px clamp(28px,4vw,72px);padding:40px 0;border-top:1px solid rgba(22,21,19,0.18)">
+          <a href="#" onClick="{{ e.open }}" style="flex:1 1 420px;position:relative;aspect-ratio:3/2;min-width:0;display:block;background:#D8D3CA"><image-slot id="ex-{{ e.slug }}" shape="rect" src="{{ e.img }}" placeholder="{{ e.title }}"></image-slot></a>
+          <div style="flex:1 1 340px;display:flex;flex-direction:column;gap:16px;justify-content:center;min-width:0">
+            <div style="display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center">
+              <span style="white-space:nowrap;font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:#B4651A">{{ e.city }}, {{ e.country }}</span>
+              <span style="white-space:nowrap;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;padding:5px 10px;border:1px solid {{ e.badgeLine }};background:{{ e.badgeBg }};color:{{ e.badgeFg }}">{{ e.statusLabel }}</span>
+            </div>
+            <a href="#" onClick="{{ e.open }}" style="font-family:'EB Garamond',serif;font-size:clamp(32px,3.6vw,54px);line-height:1.02;text-wrap:balance;color:#161513" style-hover="color:#B4651A">{{ e.title }}</a>
+            <div style="font-family:'EB Garamond',serif;font-style:italic;font-size:22px;color:#3B3833">{{ e.sub }}</div>
+            <div style="font-size:14.5px;color:#3B3833;line-height:1.5">{{ e.artistLine }}</div>
+            <div style="font-size:14px;color:#5E5A54">{{ e.dates }} · {{ e.venue }}</div>
+            <a href="#" onClick="{{ e.open }}" style="align-self:flex-start;font-size:12.5px;letter-spacing:0.16em;text-transform:uppercase;border-bottom:1px solid currentColor;padding-bottom:4px;margin-top:6px">View exhibition →</a>
+          </div>
+        </div>
+      </sc-for>
+      <sc-if value="{{ noEx }}" hint-placeholder-val="{{ false }}">
+        <div style="font-family:'EB Garamond',serif;font-size:28px;color:#5E5A54;padding:32px 0;border-top:1px solid rgba(22,21,19,0.18)">No exhibitions match this filter.</div>
+      </sc-if>
+    </div>
+  </section>
+</sc-if>
+
+<!-- EXHIBITION DETAIL -->
+<sc-if value="{{ isExhibition }}" hint-placeholder-val="{{ false }}">
+  <section data-screen-label="Exhibition detail">
+    <div style="max-width:1440px;margin:0 auto;padding:clamp(28px,4vw,48px) clamp(20px,4vw,56px) clamp(32px,4vw,56px)">
+      <a href="#" onClick="{{ goExhibitions }}" style="font-size:12.5px;letter-spacing:0.16em;text-transform:uppercase;color:#5E5A54">← Exhibitions</a>
+      <div style="display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin:40px 0 18px">
+        <span style="font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:#B4651A">{{ ex.city }}, {{ ex.country }} · {{ ex.type }}</span>
+        <span style="white-space:nowrap;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;padding:5px 10px;border:1px solid {{ ex.badgeLine }};background:{{ ex.badgeBg }};color:{{ ex.badgeFg }}">{{ ex.statusLabel }}</span>
+      </div>
+      <h1 style="font-family:'EB Garamond',serif;font-weight:400;font-size:clamp(44px,7vw,112px);line-height:0.95;letter-spacing:-0.015em;margin:0;max-width:1200px;text-wrap:balance">{{ ex.title }}</h1>
+      <div style="font-family:'EB Garamond',serif;font-style:italic;font-size:clamp(22px,2.2vw,30px);color:#3B3833;margin-top:20px">{{ ex.sub }}</div>
+    </div>
+    <div style="position:relative;width:100%;height:clamp(360px,70vh,820px);background:#D8D3CA"><image-slot id="ex-{{ ex.slug }}" shape="rect" src="{{ ex.img }}" placeholder="{{ ex.title }}"></image-slot></div>
+    <div style="max-width:1440px;margin:0 auto;padding:clamp(40px,5vw,72px) clamp(20px,4vw,56px);display:flex;flex-wrap:wrap;gap:40px clamp(32px,6vw,120px)">
+      <dl style="flex:0 1 320px;margin:0;display:flex;flex-direction:column">
+        <sc-for list="{{ exMeta }}" as="m" hint-placeholder-count="4">
+          <div style="display:flex;flex-direction:column;gap:6px;padding:16px 0;border-top:1px solid rgba(22,21,19,0.18)">
+            <dt style="font-size:11.5px;letter-spacing:0.18em;text-transform:uppercase;color:#5E5A54">{{ m.k }}</dt>
+            <dd style="margin:0;font-size:16px;line-height:1.45">{{ m.v }}</dd>
+          </div>
+        </sc-for>
+      </dl>
+      <div style="flex:1 1 480px;min-width:0;display:flex;flex-direction:column;gap:28px">
+        <p style="font-family:'EB Garamond',serif;font-size:clamp(24px,2.4vw,34px);line-height:1.3;margin:0;max-width:820px;text-wrap:pretty">{{ ex.blurb }}</p>
+        <p style="font-size:16px;line-height:1.7;color:#3B3833;margin:0;max-width:720px;text-wrap:pretty">{{ ex.body }}</p>
+        <div>
+          <div style="font-size:11.5px;letter-spacing:0.18em;text-transform:uppercase;color:#5E5A54;margin-bottom:14px">Artists</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <sc-for list="{{ exArtists }}" as="a" hint-placeholder-count="2">
+              <a href="#" onClick="{{ a.open }}" style="display:flex;align-items:center;height:44px;padding:0 18px;border:1px solid #161513;font-size:14px" style-hover="background:#161513;color:#EDEAE4">{{ a.name }}</a>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="max-width:1440px;margin:0 auto;padding:0 clamp(20px,4vw,56px) clamp(56px,7vw,100px)">
+      <div style="border-top:1px solid #161513;padding-top:18px;margin-bottom:32px;font-size:12.5px;letter-spacing:0.18em;text-transform:uppercase;font-weight:500">Works in the exhibition</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:40px clamp(16px,2vw,28px)">
+        <sc-for list="{{ exViews }}" as="v" hint-placeholder-count="3">
+          <figure style="margin:0;display:flex;flex-direction:column;gap:12px">
+            <div style="position:relative;width:100%;aspect-ratio:4/5;background:#D8D3CA"><image-slot id="{{ v.id }}" shape="rect" src="{{ v.img }}" placeholder="Artwork"></image-slot></div>
+            <figcaption style="font-size:14px;line-height:1.5;color:#3B3833"><span style="font-family:'EB Garamond',serif;font-style:italic;font-size:19px;color:#161513">{{ v.title }}</span>, {{ v.year }}<br><span style="color:#5E5A54">{{ v.artist }} · {{ v.medium }}</span></figcaption>
+          </figure>
+        </sc-for>
+      </div>
+    </div>
+    <sc-if value="{{ hasExNews }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:1440px;margin:0 auto;padding:0 clamp(20px,4vw,56px) clamp(72px,9vw,140px)">
+        <div style="border-top:1px solid #161513;padding-top:18px;margin-bottom:8px;font-size:12.5px;letter-spacing:0.18em;text-transform:uppercase;font-weight:500">Press</div>
+        <sc-for list="{{ exNews }}" as="n" hint-placeholder-count="2">
+          <div style="display:flex;flex-wrap:wrap;gap:12px 48px;padding:28px 0;border-bottom:1px solid rgba(22,21,19,0.14)">
+            <div style="flex:1 1 380px;font-family:'EB Garamond','Noto Serif Tamil',serif;font-size:26px;line-height:1.15;text-wrap:balance">{{ n.title }}</div>
+            <div style="flex:1 1 380px;font-size:14.5px;line-height:1.6;color:#5E5A54;text-wrap:pretty">{{ n.excerpt }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+  </section>
+</sc-if>
+
+<!-- ARTISTS -->
+<sc-if value="{{ isArtists }}" hint-placeholder-val="{{ false }}">
+  <section data-screen-label="Artists" style="max-width:1440px;margin:0 auto;padding:clamp(40px,6vw,88px) clamp(20px,4vw,56px) clamp(72px,9vw,140px)">
+    <h1 style="font-family:'EB Garamond',serif;font-weight:400;font-size:clamp(56px,9vw,148px);line-height:0.9;letter-spacing:-0.02em;margin:0 0 48px">Artists</h1>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:36px clamp(16px,2vw,28px);margin-bottom:clamp(64px,8vw,112px)">
+      <sc-for list="{{ featured }}" as="a" hint-placeholder-count="6">
+        <a href="#" onClick="{{ a.open }}" style="display:flex;flex-direction:column;gap:12px;color:#161513">
+          <div style="position:relative;width:100%;aspect-ratio:3/4;background:#D8D3CA"><image-slot id="artist-{{ a.slug }}" shape="rect" src="{{ a.img }}" placeholder="{{ a.name }}"></image-slot></div>
+          <div style="font-family:'EB Garamond',serif;font-size:24px;line-height:1.1" style-hover="color:#B4651A">{{ a.name }}</div>
+          <div style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#5E5A54">{{ a.medium }}</div>
+        </a>
+      </sc-for>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:24px 48px;margin-bottom:24px">
+      <h2 style="font-family:'EB Garamond',serif;font-weight:400;font-size:clamp(36px,4vw,56px);line-height:1;margin:0">Index A–Z</h2>
+      <input value="{{ aq }}" onChange="{{ setAq }}" placeholder="Search artists" style="flex:0 1 360px;min-width:0;height:48px;border:none;border-bottom:1px solid #161513;background:transparent;font-family:'Space Grotesk',sans-serif;font-size:16px;color:#161513;outline:none;padding:0 2px">
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:24px;border-top:1px solid #161513;padding-top:14px">
+      <sc-for list="{{ letters }}" as="l" hint-placeholder-count="20">
+        <button onClick="{{ l.jump }}" style="width:36px;height:36px;background:none;border:none;cursor:pointer;font-family:'EB Garamond',serif;font-size:22px;color:#161513" style-hover="color:#B4651A">{{ l.letter }}</button>
+      </sc-for>
+    </div>
+    <sc-if value="{{ indexGrouped }}" hint-placeholder-val="{{ true }}">
+      <sc-for list="{{ artistGroups }}" as="g" hint-placeholder-count="6">
+        <div id="L-{{ g.letter }}" style="display:flex;gap:clamp(20px,4vw,64px);padding:28px 0;border-bottom:1px solid rgba(22,21,19,0.14)">
+          <div style="flex:0 0 clamp(40px,8vw,120px);font-family:'EB Garamond',serif;font-size:clamp(40px,5vw,72px);line-height:0.9;color:#B4651A">{{ g.letter }}</div>
+          <div style="flex:1;min-width:0;columns:3 220px;column-gap:40px">
+            <sc-for list="{{ g.items }}" as="a" hint-placeholder-count="4">
+              <a href="#" onClick="{{ a.open }}" style="display:block;break-inside:avoid;padding:8px 0;color:#161513" style-hover="color:#B4651A"><span style="display:block;font-size:17px;line-height:1.3">{{ a.name }}</span><span style="display:block;font-size:12.5px;color:#5E5A54;margin-top:2px">{{ a.medium }}</span></a>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </sc-if>
+    <sc-if value="{{ indexFlowing }}" hint-placeholder-val="{{ false }}">
+      <p style="font-family:'EB Garamond',serif;font-size:clamp(30px,4.2vw,64px);line-height:1.2;margin:24px 0 0;text-wrap:pretty">
+        <sc-for list="{{ artistFlat }}" as="a" hint-placeholder-count="20"><a href="#" onClick="{{ a.open }}" style="color:#161513" style-hover="color:#B4651A">{{ a.name }}</a><span style="color:#D98A2B;padding:0 0.3em">{{ a.sep }}</span></sc-for>
+      </p>
+    </sc-if>
+    <sc-if value="{{ noArtists }}" hint-placeholder-val="{{ false }}">
+      <div style="font-family:'EB Garamond',serif;font-size:28px;color:#5E5A54;padding:24px 0">No artists match “{{ aq }}”.</div>
+    </sc-if>
+  </section>
+</sc-if>
+
+<!-- ARTIST DETAIL -->
+<sc-if value="{{ isArtist }}" hint-placeholder-val="{{ false }}">
+  <section data-screen-label="Artist detail" style="max-width:1440px;margin:0 auto;padding:clamp(28px,4vw,48px) clamp(20px,4vw,56px) clamp(72px,9vw,140px)">
+    <a href="#" onClick="{{ goArtists }}" style="font-size:12.5px;letter-spacing:0.16em;text-transform:uppercase;color:#5E5A54">← Artists</a>
+    <div style="font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:#B4651A;margin:40px 0 16px">{{ artist.medium }} · Lives and works in {{ artist.base }}</div>
+    <h1 style="font-family:'EB Garamond',serif;font-weight:400;font-size:clamp(52px,8.4vw,136px);line-height:0.92;letter-spacing:-0.02em;margin:0 0 clamp(36px,5vw,64px);text-wrap:balance">{{ artist.name }}</h1>
+    <div style="display:flex;flex-wrap:wrap;gap:40px clamp(32px,6vw,120px)">
+      <div style="flex:0 1 480px;position:relative;aspect-ratio:4/5;min-width:min(100%,280px);background:#D8D3CA"><image-slot id="artist-{{ artist.slug }}" shape="rect" src="{{ artist.img }}" placeholder="Portrait or studio image"></image-slot></div>
+      <div style="flex:1 1 400px;min-width:0;display:flex;flex-direction:column;gap:28px">
+        <p style="font-family:'EB Garamond',serif;font-size:clamp(24px,2.4vw,32px);line-height:1.3;margin:0;text-wrap:pretty">{{ artist.lede }}</p>
+        <p style="font-size:16px;line-height:1.7;color:#3B3833;margin:0;max-width:620px;text-wrap:pretty">{{ artist.bio }}</p>
+        <sc-if value="{{ artist.hasEx }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="font-size:11.5px;letter-spacing:0.18em;text-transform:uppercase;color:#5E5A54;margin-bottom:6px">Exhibitions with Art Houz</div>
+            <sc-for list="{{ artist.exs }}" as="e" hint-placeholder-count="2">
+              <a href="#" onClick="{{ e.open }}" style="display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:18px 0;border-bottom:1px solid rgba(22,21,19,0.14);color:#161513" style-hover="color:#B4651A">
+                <span style="font-family:'EB Garamond',serif;font-size:26px;line-height:1.15">{{ e.title }}</span>
+                <span style="font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:#5E5A54;white-space:nowrap">{{ e.city }}</span>
+              </a>
+            </sc-for>
+          </div>
+        </sc-if>
+        <a href="#" onClick="{{ goVisit }}" style="align-self:flex-start;display:flex;align-items:center;gap:12px;background:#161513;color:#EDEAE4;padding:16px 24px;font-size:12.5px;letter-spacing:0.16em;text-transform:uppercase" style-hover="background:#D98A2B;color:#161513">Enquire about works →</a>
+      </div>
+    </div>
+    <div style="border-top:1px solid #161513;padding-top:18px;margin:clamp(56px,7vw,100px) 0 32px;font-size:12.5px;letter-spacing:0.18em;text-transform:uppercase;font-weight:500">Selected works</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));gap:40px clamp(16px,2vw,28px)">
+      <sc-for list="{{ artistWorks }}" as="w" hint-placeholder-count="6">
+        <figure style="margin:0;display:flex;flex-direction:column;gap:12px">
+          <div style="position:relative;width:100%;aspect-ratio:1/1;background:#D8D3CA"><image-slot id="{{ w.id }}" shape="rect" src="{{ w.img }}" placeholder="Artwork"></image-slot></div>
+          <figcaption style="font-size:14px;line-height:1.5;color:#3B3833"><span style="font-family:'EB Garamond',serif;font-style:italic;font-size:19px;color:#161513">{{ w.title }}</span>, {{ w.year }}<br><span style="color:#5E5A54">{{ w.medium }} · {{ w.size }}</span></figcaption>
+        </figure>
+      </sc-for>
+    </div>
+  </section>
+</sc-if>
+
+<!-- FAIRS -->
+<sc-if value="{{ isFairs }}" hint-placeholder-val="{{ false }}">
+  <section data-screen-label="Fairs" style="max-width:1440px;margin:0 auto;padding:clamp(40px,6vw,88px) clamp(20px,4vw,56px) clamp(72px,9vw,140px)">
+    <h1 style="font-family:'EB Garamond',serif;font-weight:400;font-size:clamp(56px,9vw,148px);line-height:0.9;letter-spacing:-0.02em;margin:0 0 56px">Fairs</h1>
+    <sc-for list="{{ fairs }}" as="f" hint-placeholder-count="3">
+      <div style="display:flex;flex-wrap:wrap;gap:28px clamp(28px,4vw,72px);padding:40px 0;border-top:1px solid rgba(22,21,19,0.18)">
+        <div style="flex:1 1 420px;position:relative;aspect-ratio:3/2;min-width:0;background:#D8D3CA"><image-slot id="fair-{{ f.slug }}" shape="rect" src="{{ f.img }}" placeholder="{{ f.title }}"></image-slot></div>
+        <div style="flex:1 1 340px;display:flex;flex-direction:column;gap:18px;justify-content:center;min-width:0">
+          <div style="font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:#B4651A">{{ f.where }}</div>
+          <div style="font-family:'EB Garamond',serif;font-size:clamp(34px,3.8vw,58px);line-height:1.02">{{ f.title }}</div>
+          <div style="font-size:14px;color:#5E5A54">{{ f.booth }}</div>
+          <div style="font-size:16px;line-height:1.6;color:#3B3833;max-width:560px;text-wrap:pretty">{{ f.text }}</div>
+        </div>
+      </div>
+    </sc-for>
+  </section>
+</sc-if>
+
+<!-- NEWS -->
+<sc-if value="{{ isNews }}" hint-placeholder-val="{{ false }}">
+  <section data-screen-label="News" style="max-width:1440px;margin:0 auto;padding:clamp(40px,6vw,88px) clamp(20px,4vw,56px) clamp(72px,9vw,140px)">
+    <h1 style="font-family:'EB Garamond',serif;font-weight:400;font-size:clamp(56px,9vw,148px);line-height:0.9;letter-spacing:-0.02em;margin:0 0 56px">News</h1>
+    <sc-for list="{{ newsList }}" as="n" hint-placeholder-count="5">
+      <article style="display:flex;flex-wrap:wrap;gap:24px clamp(24px,4vw,64px);padding:36px 0;border-top:1px solid rgba(22,21,19,0.18)">
+        <div style="flex:0 1 320px;position:relative;aspect-ratio:4/3;min-width:min(100%,220px);background:#D8D3CA"><image-slot id="news-{{ n.id }}" shape="rect" src="{{ n.img }}" placeholder="Press image"></image-slot></div>
+        <div style="flex:1 1 420px;min-width:0;display:flex;flex-direction:column;gap:14px">
+          <div style="font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:#5E5A54">{{ n.date }}</div>
+          <h2 style="font-family:'EB Garamond','Noto Serif Tamil',serif;font-weight:400;font-size:clamp(26px,2.6vw,38px);line-height:1.12;margin:0;text-wrap:balance">{{ n.title }}</h2>
+          <p style="font-size:15.5px;line-height:1.65;color:#3B3833;margin:0;max-width:760px;text-wrap:pretty">{{ n.excerpt }}</p>
+          <div style="display:flex;flex-wrap:wrap;gap:12px 28px;margin-top:4px">
+            <a href="#" onClick="{{ n.read }}" style="font-size:12.5px;letter-spacing:0.16em;text-transform:uppercase;border-bottom:1px solid currentColor;padding-bottom:4px">Read article ↗</a>
+            <sc-if value="{{ n.hasEx }}" hint-placeholder-val="{{ true }}">
+              <a href="#" onClick="{{ n.openEx }}" style="font-size:12.5px;letter-spacing:0.16em;text-transform:uppercase;border-bottom:1px solid currentColor;padding-bottom:4px">View exhibition →</a>
+            </sc-if>
+          </div>
+        </div>
+      </article>
+    </sc-for>
+  </section>
+</sc-if>
+
+<!-- ABOUT -->
+<sc-if value="{{ isAbout }}" hint-placeholder-val="{{ false }}">
+  <section data-screen-label="About" style="max-width:1440px;margin:0 auto;padding:clamp(40px,6vw,88px) clamp(20px,4vw,56px) clamp(72px,9vw,140px)">
+    <h1 style="font-family:'EB Garamond',serif;font-weight:400;font-size:clamp(56px,9vw,148px);line-height:0.9;letter-spacing:-0.02em;margin:0 0 40px">About</h1>
+    <div style="display:flex;flex-wrap:wrap;gap:0 28px;border-bottom:1px solid rgba(22,21,19,0.18);margin-bottom:clamp(40px,5vw,72px)">
+      <sc-for list="{{ aboutTabs }}" as="t" hint-placeholder-count="4">
+        <button onClick="{{ t.pick }}" style="background:none;border:none;border-bottom:2px solid {{ t.line }};margin-bottom:-1px;height:48px;padding:0;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:12.5px;letter-spacing:0.16em;text-transform:uppercase;color:{{ t.color }}">{{ t.label }}</button>
+      </sc-for>
+    </div>
+
+    <sc-if value="{{ tabGallery }}" hint-placeholder-val="{{ true }}">
+      <p style="font-family:'EB Garamond',serif;font-size:clamp(32px,4.4vw,68px);line-height:1.08;margin:0 0 clamp(40px,5vw,72px);max-width:1100px;text-wrap:balance">Art Houz is one of the leading contemporary art galleries from South-India.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:40px clamp(32px,6vw,120px);margin-bottom:clamp(64px,8vw,120px)">
+        <div style="flex:1 1 420px;position:relative;aspect-ratio:4/3;min-width:0;background:#D8D3CA"><image-slot id="about-gallery" shape="rect" src="{{ img.gallery }}" placeholder="Gallery interior"></image-slot></div>
+        <p style="flex:1 1 380px;font-size:17px;line-height:1.7;color:#3B3833;margin:0;max-width:600px;text-wrap:pretty">Founded in 2012 by Vincent Adaikalraj, Art Houz has achieved significant importance, mounting some of the most important shows from the Indian art scene. Our focus is on young emerging artists with an experimental approach to practice and expand the horizons of South Indian art audience. Not confining its presence within its own local premises, Art Houz plans to represent artists under its brand at international fairs through collaborations with other galleries, art institutions and initiatives. Through this we aim to produce an essential component of ‘the contemporary’ at important art tangents.</p>
+      </div>
+      <a href="#" onClick="{{ goVisit }}" style="display:flex;justify-content:space-between;align-items:center;gap:24px;border-top:1px solid #161513;border-bottom:1px solid #161513;padding:28px 0;font-family:'EB Garamond',serif;font-size:clamp(28px,3vw,44px);color:#161513" style-hover="color:#B4651A"><span>Our locations — Chennai &amp; Bengaluru</span><span>→</span></a>
+    </sc-if>
+
+    <sc-if value="{{ tabProprietor }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-wrap:wrap;gap:40px clamp(32px,6vw,120px)">
+        <div style="flex:0 1 440px;position:relative;aspect-ratio:4/5;min-width:min(100%,280px);background:#D8D3CA"><image-slot id="about-vincent" shape="rect" src="{{ img.vincent }}" placeholder="Vincent Adaikalraj"></image-slot></div>
+        <div style="flex:1 1 440px;min-width:0;display:flex;flex-direction:column;gap:28px">
+          <div style="font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:#B4651A">Founder &amp; Proprietor</div>
+          <h2 style="font-family:'EB Garamond',serif;font-weight:400;font-size:clamp(40px,5vw,72px);line-height:0.95;margin:0">Vincent Adaikalraj</h2>
+          <blockquote style="margin:0;font-family:'EB Garamond',serif;font-style:italic;font-size:clamp(22px,2.2vw,30px);line-height:1.35;border-top:1px solid #161513;padding-top:24px;text-wrap:pretty">‘My vision is to create stimulating possibilities in every domain of business. My mission is to believe these possibilities already exist and are simply waiting to be discovered’.</blockquote>
+          <p style="font-size:16px;line-height:1.7;color:#3B3833;margin:0;max-width:680px;text-wrap:pretty">In Vincent Adaikalraj’s world, possibility is a state of being. An entrepreneur with a difference, Adaikalraj’s interests are wide-ranging and dominant as they are particular and subtle. His interest in the realm of contemporary art, for instance, is just one example of his multi-faceted personality and his relentless passion for uncompromising quality. With the establishment of Art Houz Gallery in Chennai, Vincent Adaikalraj was not merely running a space for art and all things related to art, but was making a statement - that which spoke of redefining existing norms and creating, well, possibilities. The gallery’s resounding success in Chennai was thanks to its predecesor in Coimbatore, eventually leading to another successful gallery in Bengaluru. Under the LA 5 Global Publications banner, Adaikalraj also publishes one of the country’s best arts and design magazine, Arts Illustrated, and runs Corel Academy, the first-of-its-kind digital art studio, giving budding artists an unparalleled platform for global recognition. Vincent Adaikalraj is also the owner of Jenney’s Residency and the popular Black Thunder amusement park in Coimbatore, the newly launched family entertainment zone in Ooty, Thunder World, apart from handling businesses in the sphere of education and beverages.</p>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ tabServices }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-wrap:wrap;gap:40px clamp(32px,6vw,120px)">
+        <div style="flex:1 1 440px;position:relative;aspect-ratio:3/2;min-width:0;background:#D8D3CA"><image-slot id="about-framing" shape="rect" src="{{ img.framing }}" placeholder="Framing Services"></image-slot></div>
+        <div style="flex:1 1 380px;min-width:0;display:flex;flex-direction:column;gap:24px;justify-content:center">
+          <h2 style="font-family:'EB Garamond',serif;font-weight:400;font-size:clamp(40px,5vw,72px);line-height:0.95;margin:0">Framing Services</h2>
+          <p style="font-size:17px;line-height:1.7;color:#3B3833;margin:0;max-width:560px;text-wrap:pretty">Opt for our top-notch framing services, providing a diverse selection tailored to elevate your collection; our wooden frames with vinyl coating exude sophistication, customized to enhance your artwork's aesthetic appeal, catering to contemporary and traditional styles.</p>
+          <a href="#" onClick="{{ goVisit }}" style="align-self:flex-start;display:flex;align-items:center;gap:12px;background:#161513;color:#EDEAE4;padding:16px 24px;font-size:12.5px;letter-spacing:0.16em;text-transform:uppercase" style-hover="background:#D98A2B;color:#161513">Enquire →</a>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ tabPublications }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-wrap:wrap;gap:40px clamp(32px,6vw,120px)">
+        <div style="flex:1 1 440px;position:relative;aspect-ratio:3/2;min-width:0;background:#D8D3CA"><image-slot id="about-arts-illustrated" shape="rect" src="{{ img.publication }}" placeholder="Arts Illustrated covers"></image-slot></div>
+        <div style="flex:1 1 380px;min-width:0;display:flex;flex-direction:column;gap:24px;justify-content:center">
+          <h2 style="font-family:'EB Garamond',serif;font-weight:400;font-size:clamp(40px,5vw,72px);line-height:0.95;margin:0">Arts Illustrated</h2>
+          <p style="font-size:17px;line-height:1.7;color:#3B3833;margin:0;max-width:600px;text-wrap:pretty">Arts Illustrated is a pan-India magazine dedicated to the different facets of contemporary art. It delves deep into the visual art and design narrative, Offering a global and contemporary perspective. Taking on the topical and dynamic ideas currently shaping the cultural landscape, through the many facets of Art, Cinema, Architecture, Design, Photography, Theatre and Literature, It presents a carefully curated collection that makes for an exciting read. The magazine, out once every two months, Is published by LA 5 Global Publications and is distributed across India.</p>
+          <a href="#" style="align-self:flex-start;display:flex;align-items:center;gap:12px;border:1px solid #161513;padding:16px 24px;font-size:12.5px;letter-spacing:0.16em;text-transform:uppercase" style-hover="background:#161513;color:#EDEAE4">View more ↗</a>
+        </div>
+      </div>
+    </sc-if>
+  </section>
+</sc-if>
+
+<!-- VISIT -->
+<sc-if value="{{ isVisit }}" hint-placeholder-val="{{ false }}">
+  <section data-screen-label="Visit" style="max-width:1440px;margin:0 auto;padding:clamp(40px,6vw,88px) clamp(20px,4vw,56px) clamp(72px,9vw,140px)">
+    <h1 style="font-family:'EB Garamond',serif;font-weight:400;font-size:clamp(56px,9vw,148px);line-height:0.9;letter-spacing:-0.02em;margin:0 0 56px">Visit</h1>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:72px clamp(24px,4vw,64px)">
+      <sc-for list="{{ locations }}" as="l" hint-placeholder-count="2">
+        <div style="display:flex;flex-direction:column;gap:24px">
+          <div style="position:relative;width:100%;aspect-ratio:4/3;background:#D8D3CA"><image-slot id="loc-{{ l.slug }}" shape="rect" src="{{ l.img }}" placeholder="Art Houz {{ l.city }}"></image-slot></div>
+          <h2 style="font-family:'EB Garamond',serif;font-weight:400;font-size:clamp(44px,5vw,76px);line-height:1;margin:0">{{ l.city }}</h2>
+          <dl style="margin:0;display:flex;flex-direction:column">
+            <div style="display:flex;flex-wrap:wrap;gap:6px 24px;padding:16px 0;border-top:1px solid rgba(22,21,19,0.18)">
+              <dt style="flex:0 0 96px;font-size:11.5px;letter-spacing:0.18em;text-transform:uppercase;color:#5E5A54;padding-top:3px">Address</dt>
+              <dd style="flex:1 1 240px;margin:0;font-size:16px;line-height:1.5">{{ l.address }}</dd>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px 24px;padding:16px 0;border-top:1px solid rgba(22,21,19,0.18)">
+              <dt style="flex:0 0 96px;font-size:11.5px;letter-spacing:0.18em;text-transform:uppercase;color:#5E5A54;padding-top:3px">Hours</dt>
+              <dd style="flex:1 1 240px;margin:0;font-size:16px;line-height:1.5">{{ l.days }}, {{ l.hours }}</dd>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px 24px;padding:16px 0;border-top:1px solid rgba(22,21,19,0.18);border-bottom:1px solid rgba(22,21,19,0.18)">
+              <dt style="flex:0 0 96px;font-size:11.5px;letter-spacing:0.18em;text-transform:uppercase;color:#5E5A54;padding-top:3px">Call</dt>
+              <dd style="flex:1 1 240px;margin:0;font-size:16px;line-height:1.5"><a href="{{ l.tel }}">{{ l.phone }}</a></dd>
+            </div>
+          </dl>
+          <a href="{{ l.map }}" target="_blank" rel="noopener" style="align-self:flex-start;display:flex;align-items:center;gap:12px;background:#161513;color:#EDEAE4;padding:16px 24px;font-size:12.5px;letter-spacing:0.16em;text-transform:uppercase" style-hover="background:#D98A2B;color:#161513">Directions ↗</a>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+</sc-if>
+
+</main>
+
+<footer style="background:#161513;color:#EDEAE4">
+  <div style="max-width:1440px;margin:0 auto;padding:clamp(56px,7vw,96px) clamp(20px,4vw,56px) 32px">
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:48px">
+      <div style="flex:1 1 320px;display:flex;flex-direction:column;gap:20px">
+        <div style="display:flex;align-items:flex-end;gap:10px">
+          <span style="display:block;width:16px;height:20px;background:#D98A2B;clip-path:polygon(50% 0,100% 100%,0 100%)"></span>
+          <span style="font-size:16px;letter-spacing:0.34em;font-weight:500;line-height:1">ART HOUZ</span>
+        </div>
+        <div style="font-family:'EB Garamond',serif;font-size:24px;line-height:1.3;color:#C9C4BB;max-width:360px">Contemporary art from South India. Chennai &amp; Bengaluru, since 2012.</div>
+      </div>
+      <div style="flex:1 1 420px;display:flex;flex-wrap:wrap;gap:40px 64px">
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <sc-for list="{{ footerNav }}" as="n" hint-placeholder-count="5">
+            <a href="#" onClick="{{ n.go }}" style="color:#EDEAE4;font-size:15px" style-hover="color:#D98A2B">{{ n.label }}</a>
+          </sc-for>
+        </div>
+        <sc-for list="{{ locations }}" as="l" hint-placeholder-count="2">
+          <div style="display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.55;color:#C9C4BB;max-width:220px">
+            <div style="font-size:11.5px;letter-spacing:0.18em;text-transform:uppercase;color:#D98A2B">{{ l.city }}</div>
+            <div>{{ l.days }}<br>{{ l.hours }}</div>
+            <a href="{{ l.tel }}" style="color:#EDEAE4">{{ l.phone }}</a>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px;border-top:1px solid rgba(237,234,228,0.18);margin-top:56px;padding-top:24px;font-size:13px;color:#A8A39A">
+      <div>© 2012 – 2026 Art Houz. All rights reserved.</div>
+      <div style="display:flex;gap:24px">
+        <a href="https://www.instagram.com/" target="_blank" rel="noopener" style="color:#EDEAE4" style-hover="color:#D98A2B">Instagram ↗</a>
+        <a href="https://www.facebook.com/" target="_blank" rel="noopener" style="color:#EDEAE4" style-hover="color:#D98A2B">Facebook ↗</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:100;background:#161513;color:#EDEAE4;display:flex;flex-direction:column;padding:0 clamp(20px,4vw,56px) 32px;overflow:auto">
+    <div style="height:76px;display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:16px;letter-spacing:0.34em;font-weight:500">ART HOUZ</span>
+      <button onClick="{{ closeMenu }}" style="background:none;border:1px solid #EDEAE4;height:40px;padding:0 16px;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:#EDEAE4">Close</button>
+    </div>
+    <nav style="display:flex;flex-direction:column;margin-top:32px">
+      <sc-for list="{{ nav }}" as="n" hint-placeholder-count="6">
+        <a href="#" onClick="{{ n.go }}" style="font-family:'EB Garamond',serif;font-size:44px;line-height:1;padding:16px 0;border-bottom:1px solid rgba(237,234,228,0.16);color:#EDEAE4">{{ n.label }}</a>
+      </sc-for>
+    </nav>
+  </div>
+</sc-if>
+
+<sc-if value="{{ searchOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:100;background:#EDEAE4;overflow:auto">
+    <div style="max-width:1100px;margin:0 auto;padding:24px clamp(20px,4vw,56px) 64px">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:24px">
+        <button onClick="{{ closeSearch }}" style="background:none;border:1px solid #161513;height:40px;padding:0 16px;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:#161513">Close</button>
+      </div>
+      <input value="{{ q }}" onChange="{{ setQ }}" autofocus="{{ true }}" placeholder="Search artists, exhibitions, news" style="width:100%;border:none;border-bottom:1px solid #161513;background:transparent;font-family:'EB Garamond',serif;font-size:clamp(32px,5vw,64px);padding:8px 0 16px;color:#161513;outline:none">
+      <sc-for list="{{ results }}" as="g" hint-placeholder-count="0">
+        <div style="margin-top:40px">
+          <div style="font-size:11.5px;letter-spacing:0.18em;text-transform:uppercase;color:#5E5A54;margin-bottom:6px">{{ g.label }}</div>
+          <sc-for list="{{ g.items }}" as="r" hint-placeholder-count="2">
+            <a href="#" onClick="{{ r.open }}" style="display:block;padding:14px 0;border-bottom:1px solid rgba(22,21,19,0.14);font-family:'EB Garamond','Noto Serif Tamil',serif;font-size:26px;line-height:1.2;color:#161513" style-hover="color:#B4651A">{{ r.label }}</a>
+          </sc-for>
+        </div>
+      </sc-for>
+      <sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:40px;font-size:16px;color:#5E5A54">Nothing found for “{{ q }}”.</div>
+      </sc-if>
+    </div>
+  </div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;heroLayout&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Full-bleed&quot;,&quot;Split&quot;],&quot;default&quot;:&quot;Full-bleed&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Home&quot;},&quot;artistIndex&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Grouped A–Z&quot;,&quot;Flowing&quot;],&quot;default&quot;:&quot;Grouped A–Z&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Artists&quot;}}">
+const AH_IMG = id => 'https://picsum.photos/seed/arthouz' + id.slice(0, 8) + '/1200/1000';
+const AH_P = {
+  troika: 'a45e5f55-d02b-ce98-8bab-3af549684f58', green: 'c68f33ec-feb1-5277-334b-b71ac15ae394', impro: 'b5bc6b66-9e6e-fe57-dcec-fc49e820e904', murnau: '3f732b69-0ae7-7d1e-ad53-e20b0cc2de72', klange: 'f1a9dda2-96c3-9fee-5eee-de7b812521dd',
+  movement: '173ec65a-bc7e-067c-fed1-1677bf5f26a9', mines: '9b6f838e-5424-d030-2d2f-c9380830d631', mountain: '97314d3d-dc9b-fd8e-644e-eb5150f16721', move10: '768387ba-f972-b43b-39f7-98cb37dad883', fruit: '632a37ca-e571-efb2-f52a-14b5e5e11fa1',
+  aquarium: 'd0e36029-27fc-bf4e-357a-55cfbaf7bdfd', apples: 'b2bc0fc2-8d17-1fcd-8cae-8626421c11ef', geranium: 'd0049e0b-bd55-020e-aa8c-b137d06ae7df', divan: '65e58fc4-4dd1-7149-b76b-94547745bece',
+  gauguin: 'a4bef587-48a4-d186-813d-f297441b1ab3', lilies: '3c27b499-af56-f0d5-93b5-a7f2f1ad5813', mondrian: 'b8ca5039-1d0c-648d-ad46-838ecea3e14c', auvers: '90bc0cec-0d4e-9af5-3912-52a082a428e5', cezanne: '52ac8996-3460-cf71-cb42-5c4d0aa29b74',
+  acrobat: '72161599-24cf-4ba7-5dd3-48052b37da6d', elevation: '1f2b1e2f-4e91-c59f-057b-2833213e3219', nataraja: 'cf50f037-5fb2-e197-0e56-3ae701edb3e2', sorrow: 'bf569bf0-3394-7c36-d4ac-e16c2c214095', krishnaD: 'bc06c92f-4117-639f-9e9c-5fe927972be1',
+  fluting: '26dffbf4-b8b4-889a-8faf-a9366d8114dd', juggler: 'be8615b5-15e7-91f5-0157-d4a7f72080fe', nobles: '5f2eb807-4027-bf11-e71b-166f7a7f799f', munch: 'faf61d4e-118f-4dff-5b72-dde12b07efa2', thistles: '79b94ddd-e208-1993-01ab-98f75174fe88',
+  dove: '82af60b3-2e1d-fc8a-91ec-4892e70fc5bc', stmark: 'b55d836c-ee20-59f8-1f0c-a95e09905361', jatte: '2d484387-2509-5e8e-2c43-22f9981972eb', bedroom: '6644829f-f292-c5c4-a73c-0356a6fdbf0d', provincetown: 'f534bce3-4746-cba6-6c46-c37a7c9199fb', still15: '2a328b12-cb68-19e8-3843-b2160f007813', poplars: '9694ca0c-c4c4-e48d-566f-4d248990cff4', untitledK: '49386c47-95b8-f868-e849-5dd583e2026a'
+};
+const AH_POOL = ['troika','green','impro','murnau','klange','movement','mines','mountain','move10','fruit','aquarium','apples','geranium','divan','gauguin','lilies','mondrian','auvers','cezanne','acrobat','elevation','sorrow','fluting','juggler','nobles','munch','thistles','provincetown','still15','poplars','untitledK'];
+const AH_EX = [
+  { slug: 'tidewater', title: 'Tidewater', sub: 'New painting from the southern coast', city: 'Chennai', country: 'India', type: 'Group', status: 'current', dates: 'October 3 – November 22, 2026', venue: 'Art Houz Chennai', artists: ['Parvathi Nayar', 'Ranjith Raman', 'P. Gopinath', 'Pradeep Unni'], img: 'troika', works: ['green', 'lilies', 'mines'], blurb: 'Four painters return to the shoreline as a subject, a memory and a measure of time.', body: 'Tidewater brings together recent canvases and works on paper that read the coast of Tamil Nadu and Kerala through colour, erosion and repetition. Some works are made on site over many months; others are built from archives, family photographs and fishing charts. The exhibition is accompanied by a catalogue with an essay by the curator and a series of walkthroughs with the artists every Saturday.' },
+  { slug: 'weight-of-light', title: 'The Weight of Light', sub: 'A Solo Show by Seema Kohli', city: 'Dubai', country: 'UAE', type: 'Solo', status: 'upcoming', dates: 'January 14 – February 28, 2027', venue: 'Alserkal Avenue, with a partner gallery', artists: ['Seema Kohli'], img: 'aquarium', works: ['divan', 'geranium', 'gauguin'], blurb: 'Gold leaf, ink and myth meet in a new cycle of large-format works on canvas.', body: 'Presented with a partner gallery in Dubai, The Weight of Light is the artist’s first solo exhibition in the Gulf. The works draw on the idea of the cosmic womb and on stories told by the women of her family, layered with gold and silver leaf. A preview evening for collectors will be held on January 13.' },
+  { slug: 'quiet-matter', title: 'Quiet Matter', sub: 'Sculpture by Rahul Mhetre', city: 'Singapore', country: 'Singapore', type: 'Solo', status: 'past', dates: 'June 12 – July 26, 2026', venue: 'Gillman Barracks, with a partner gallery', artists: ['Rahul Mhetre'], img: 'acrobat', works: ['elevation', 'sorrow', 'acrobat'], blurb: 'Bronze, wood and found metal pared down to the weight of a gesture.', body: 'Quiet Matter gathered twelve sculptures made over three years in the artist’s Pune studio. The works sit low to the ground and invite the viewer to walk around them slowly, each one marked by the process of casting and recasting.' },
+  { slug: 'line-land-lineage', title: 'Line, Land, Lineage', sub: 'Three generations of Indian modernism', city: 'London', country: 'UK', type: 'Group', status: 'past', dates: 'March 6 – April 18, 2026', venue: 'Mayfair, with a partner gallery', artists: ['K.M. Adimoolam', 'S.G. Vasudev', 'Madhvi Parekh'], img: 'move10', works: ['movement', 'fluting', 'murnau'], blurb: 'Drawing, myth and the line as an inheritance.', body: 'The exhibition placed works by three artists side by side to trace how line and narrative moved through South and West Indian modernism. It included rarely seen drawings from private collections in Chennai and Bengaluru.' },
+  { slug: 'reflections', title: 'Reflections- A Journey in Two Perspectives', sub: 'Two artists in conversation', city: 'Bengaluru', country: 'India', type: 'Group', status: 'past', dates: 'September 14, 2024 – September 30, 2024', venue: 'Art Houz Bengaluru', artists: ['Uttam Manna', 'Sachin Jaltare'], img: 'green', works: ['impro', 'klange', 'still15'], blurb: 'Two painters, one city, and the space between how each of them sees it.', body: 'Reflections paired two bodies of work made in parallel, one rooted in figuration and the other in abstraction, and hung them in dialogue across the Bengaluru gallery.' },
+  { slug: 'by-natures-force', title: "By Nature's Force: Veli Vetridamakha Nagarkirathu", sub: 'A Solo Show by Vijay Pichumani', city: 'Chennai', country: 'India', type: 'Solo', status: 'past', dates: 'February 2 – February 18, 2024', venue: 'Lalit Kala Akademi Regional Centre, Chennai', artists: ['Vijay Pichumani'], img: 'mountain', works: ['mines', 'poplars', 'provincetown'], blurb: "Art Houz Gallery Chennai, has organized the solo show of artist Vijay Pichumani titled – ‘By Nature's Force: Veli Vetridamaakha Nagarkirathu’ at Lalit Kala Akademi Regional Centre.", body: 'The exhibition features a diverse body of paintings, drawings and wood carvings made over two years of travel across Tamil Nadu.' },
+  { slug: 'naan-yaar', title: 'Naan Yaar', sub: 'A Solo Show by Vijay Pichumani', city: 'Chennai', country: 'India', type: 'Solo', status: 'past', dates: 'August 4 – August 26, 2023', venue: 'Art Houz Chennai', artists: ['Vijay Pichumani'], img: 'munch', works: ['untitledK', 'thistles', 'munch'], blurb: 'Who am I? A sequence of black-and-white works on the self and its many faces.', body: 'Naan Yaar continues the artist’s work in wood carving and ink, exploring self and personal identity through portraits and flowers.' },
+  { slug: 'fifty-sculptors', title: '50 Indian Sculptors', sub: 'A group exhibition and book launch', city: 'Chennai', country: 'India', type: 'Group', status: 'past', dates: 'January 6 – February 4, 2023', venue: 'Art Houz Chennai', artists: ['Jasu Rawal', 'Laxman Aelay', 'Monica Ghule', 'N.K. Baskaran'], img: 'nataraja', works: ['krishnaD', 'elevation', 'sorrow'], blurb: 'Fifty Indian sculptors come together to showcase their work across the medium of metal, wood, ceramic, paper clay and fibreglass.', body: 'The exhibition was launched alongside a new book that highlights the works of 50 sculptors from across the country.' },
+  { slug: 'kolvel', title: 'Kolvel', sub: 'A Solo Show by Vijay Pichumani', city: 'Chennai', country: 'India', type: 'Solo', status: 'past', dates: 'November 6 – November 30, 2020', venue: 'Art Houz Chennai', artists: ['Vijay Pichumani'], img: 'klange', works: ['impro', 'fruit', 'cezanne'], blurb: "The body of work in the show is the artist's thoughts, experience and reflection of the pandemic and lockdowns.", body: 'Made entirely during quarantine, the works in Kolvel were first shown online and then in the Chennai gallery as restrictions eased.' }
+];
+const AH_NEWS = [
+  { id: 'n1', ex: 'by-natures-force', date: 'February 2024', img: 'mountain', title: 'Pa Ranjith கூட இது ரொம்ப புடிச்சிருக்கு | வெளி வெற்றிடமாக நகர்கிறது | A Solo Show by Vijay Pichumani', excerpt: 'Pa Ranjith கூட இது ரொம்ப புடிச்சிருக்கு | வெளி வெற்றிடமாக நகர்கிறது | A Solo Show by Vijay Pichumani' },
+  { id: 'n2', ex: 'by-natures-force', date: 'February 2024', img: 'poplars', title: "By Nature's Force: Veli Vetridamaakha Nagarkirathu – The solo Art Show of artist Vijay Pichumani", excerpt: "Art Houz Gallery Chennai, has organized the solo show of artist Vijay Pichumani titled – ‘By Nature's Force: Veli Vetridamaakha Nagarkirathu’ at Lalit Kala Akademi Regional Centre. The exhibition features a diverse…" },
+  { id: 'n3', ex: null, date: 'January 2024', img: 'mines', title: 'Soil to canvas: Art show delves into earth’s essence', excerpt: '“In this show, I will present works inspired by soil/nature. During my travels, I have gained valuable experiences. Each region I visit on my bike has its distinct colours. Each land embodies unique colours and…' },
+  { id: 'n4', ex: 'kolvel', date: 'November 2020', img: 'klange', title: 'Chennai Artist presents works created during quarantine', excerpt: 'Art Houz, an art gallery in Chennai, presents “Kolvel”, a solo show by artist Vijay Pichumani. The body of work in the show is the artist’s thoughts, experience and reflection of the pandemic and lockdowns.' },
+  { id: 'n5', ex: 'fifty-sculptors', date: 'January 2023', img: 'nataraja', title: '50 sculptors from across country come together for a group show', excerpt: 'This new book highlights the works of 50 sculptors from across the country. Interestingly, the sculptures featured in the book are currently displayed.' },
+  { id: 'n6', ex: 'fifty-sculptors', date: 'January 2023', img: 'krishnaD', title: '50 Indian sculptors showcase their work at this art exhibition', excerpt: 'Fifty Indian sculptors come together to showcase their work across the medium of metal, wood, ceramic, paper clay and fibreglass.' },
+  { id: 'n7', ex: null, date: 'September 2023', img: 'divan', title: "Artist Trio Explores Women's lives through Diverse Perspectives", excerpt: "In her works, Alamu interprets nature's beauty through intricate patterns and textures. She uses materials like fabric, thread, yarn, embroidery, and paint to create pieces that reflect her connection with the natural world." },
+  { id: 'n8', ex: 'naan-yaar', date: 'August 2023', img: 'munch', title: "நான் யார்': கலைஞர் விஜய் பிச்சுமணியின் எஸ் தனிக் கண்காட்சி வெள்ளிக்கிழமை முதல் சென்னை ஆர்ட் ஹவுஸில்", excerpt: "ஆர்ட் ஹவுஸ் கண்காட்சியில் விஜய் பிச்சுமணியின் சமீபத்திய கலைப்படைப்பு - 'நான் யார்' (நான் யார்) சென்னை ஆர்ட் ஹவுஸில் காட்சிப்படுத்தப்படும். இந்த கண்காட்சி கலைஞரின் சுய மற்றும் தனிப்பட்ட அடையாளத்தை…" },
+  { id: 'n9', ex: null, date: 'March 2022', img: 'lilies', title: 'Exploring human connection with nature through art', excerpt: 'Artist Vijay Pichumani’s new solo exhibition highlights humanity’s connection to nature.' },
+  { id: 'n10', ex: null, date: 'June 2021', img: 'thistles', title: 'Fragrance of ‘anbu’', excerpt: 'Through this black-and-white wood carving ‘Language of Love’, artist Vijay Pichumani asks, what if we saw people the way we appreciated flowers?' }
+];
+const AH_ARTISTS = ['Amol Pawar','A.V. Ilango','Bhaskara Rao Botcha','B.O. Shailesh','C. Douglas','Chandra Morkonda','Dhan Prasad','Dr. Sonali P. Chouhan','Gajraj Chavan','Gita Hudson','G. Subramaniam','Hanumantha Rao Devulapalli','Harish Ojha','Hemant Rao','Jasu Rawal','Kasa Vinay Kumar','K.C Murukeson','K.C.S. Panikar','K.M. Adimoolam','Laxman Aelay','Madhvi Parekh','Monica Ghule','Mukesh Salvi','Murali Chinnaswamy','N.K. Baskaran','Parvathi Nayar','Pa Sa Kumar','P Gnana','P. Gopinath','P.J. Stalin','Pradeep Unni','Priyendra Shukla','Rahul Mhetre','Raju Durshettiwar','Ranjith Raman','Ravindra Narayanan','R.M. Palaniappan','Romicon Revola','Sachin Baburao Akalekar','Sachin Jaltare','Santhosh D. Andrade','Seema Kohli','S.G. Vasudev','Sonal Varshneya','T. Athiveerapandian','Uttam Bhattacharya','Uttam Manna','V. Anamika','Venkatachalapathi','Vijay Pichumani','Visveswara Rao','Viswam','Vivek Nimbolkar','V. Madhu','Yuvan Bothysathuvar'];
+const AH_MEDIA = ['Painting', 'Sculpture', 'Printmaking', 'Mixed media', 'Drawing', 'Painting', 'Installation', 'Painting'];
+const AH_BASES = ['Chennai', 'Bengaluru', 'Mumbai', 'Hyderabad', 'Kochi', 'Vadodara', 'New Delhi', 'Kolkata', 'Pune', 'Coimbatore'];
+const AH_WORKT = ['Untitled I', 'Field Notes', 'Monsoon Study', 'Red Earth', 'Threshold', 'Night Garden', 'Ledger of Rivers', 'Still Water', 'Kolam', 'Salt Line', 'After the Rain', 'Two Suns'];
+const AH_MAT = { Painting: 'Acrylic on canvas', Sculpture: 'Bronze', Printmaking: 'Woodcut on paper', 'Mixed media': 'Mixed media on board', Drawing: 'Ink on paper', Installation: 'Wood, thread and pigment' };
+const AH_FEATURED = ['Vijay Pichumani', 'Seema Kohli', 'Parvathi Nayar', 'S.G. Vasudev', 'K.M. Adimoolam', 'Madhvi Parekh'];
+const AH_FAIRS = [
+  { slug: 'art-dubai-2026', title: 'Art Dubai 2026', where: 'Madinat Jumeirah, Dubai · March 2026', booth: 'Contemporary section', img: 'gauguin', text: 'Art Houz presented new paintings and works on paper by Seema Kohli, Parvathi Nayar and Vijay Pichumani, introducing South Indian contemporary practice to collectors across the Gulf.' },
+  { slug: 'iaf-2025', title: 'India Art Fair 2025', where: 'NSIC Grounds, New Delhi · February 2025', booth: 'Main hall', img: 'fluting', text: 'A booth dedicated to sculpture and drawing, with works by Rahul Mhetre, Jasu Rawal, K.M. Adimoolam and S.G. Vasudev.' },
+  { slug: 'art-sg-2025', title: 'ART SG 2025', where: 'Marina Bay Sands, Singapore · January 2025', booth: 'Galleries section', img: 'auvers', text: 'Our first presentation in Southeast Asia, showing recent canvases by Ranjith Raman and P. Gopinath alongside wood carvings by Vijay Pichumani.' },
+  { slug: 'iaf-2022', title: 'India Art Fair 2022', where: 'New Delhi · 2022', booth: 'Seven artists', img: 'mondrian', text: 'Art Houz was a part of the India Art Fair 2022, Delhi with the works of seven artists - Vijay Pichumani, G. Subramanian, Dhan Prasad,…' }
+];
+const AH_LOC = [
+  { slug: 'chennai', city: 'Chennai', img: AH_IMG(AH_P.jatte), address: 'No 123, The Brothers of Holy Cross, Sterling Rd, Nungambakkam, Chennai, Tamil Nadu 600034', phone: '73977 45684', tel: 'tel:+917397745684', days: 'Monday – Saturday', hours: '11:00 am – 7:00 pm', map: 'https://www.google.com/maps/search/?api=1&query=Art+Houz+Sterling+Road+Nungambakkam+Chennai' },
+  { slug: 'bengaluru', city: 'Bengaluru', img: AH_IMG(AH_P.cezanne), address: 'No.63, Palace Road, Abshot Layout, Vasanth Nagar, Bengaluru 560052', phone: '98861 12400', tel: 'tel:+919886112400', days: 'Monday – Saturday', hours: '10:00 am – 6:00 pm', map: 'https://www.google.com/maps/search/?api=1&query=Art+Houz+Palace+Road+Vasanth+Nagar+Bengaluru' }
+];
+const ahSlug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+const ahHash = s => { let h = 7; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; };
+const AH_STATUS = { current: ['Now on view', '#D98A2B', '#161513', '#D98A2B'], upcoming: ['Upcoming', '#161513', '#EDEAE4', '#161513'], past: ['Past', 'transparent', '#5E5A54', 'rgba(22,21,19,0.3)'] };
+
+function ahArtist(name) {
+  const h = ahHash(name);
+  const medium = AH_MEDIA[h % AH_MEDIA.length];
+  const base = AH_BASES[(h >> 3) % AH_BASES.length];
+  const born = 1948 + (h % 42);
+  const img = AH_IMG(AH_P[AH_POOL[h % AH_POOL.length]]);
+  return {
+    name, slug: ahSlug(name), medium, base, born, img,
+    lede: name + '’s ' + medium.toLowerCase() + ' returns again and again to land, memory and the rituals of everyday life in South India.',
+    bio: 'Born in ' + born + ', ' + name + ' trained in fine arts before developing an independent practice in ' + base + '. The work has been shown across India and abroad, and is held in private and institutional collections. With Art Houz, the artist has taken part in group exhibitions in Chennai and Bengaluru and in presentations at international fairs.'
+  };
+}
+
+class Component extends DCLogic {
+  state = { page: 'home', param: null, city: 'All', status: 'All', tab: 'gallery', menu: false, search: false, q: '', aq: '', w: typeof window !== 'undefined' ? window.innerWidth : 1280 };
+
+  componentDidMount() {
+    try { const r = JSON.parse(localStorage.getItem('arthouz-route') || 'null'); if (r && r.page) this.setState(r); } catch (e) {}
+    this.onResize = () => this.setState({ w: window.innerWidth });
+    window.addEventListener('resize', this.onResize);
+  }
+  componentWillUnmount() { window.removeEventListener('resize', this.onResize); }
+
+  go(page, param = null, extra = {}) {
+    const route = { page, param, ...extra };
+    this.setState({ ...route, menu: false, search: false, q: '' });
+    try { localStorage.setItem('arthouz-route', JSON.stringify(route)); } catch (e) {}
+    window.scrollTo(0, 0);
+  }
+  h(fn) { return e => { if (e && e.preventDefault) e.preventDefault(); fn(); }; }
+
+  renderVals() {
+    const s = this.state, p = this.props;
+    const mobile = s.w < 880;
+    const openEx = slug => this.h(() => this.go('exhibition', slug));
+    const openArtist = name => this.h(() => this.go('artist', name));
+    const exItem = e => {
+      const st = AH_STATUS[e.status];
+      return { ...e, img: AH_IMG(AH_P[e.img]), open: openEx(e.slug), artistLine: e.artists.join(', '), statusLabel: st[0], badgeBg: st[1], badgeFg: st[2], badgeLine: st[3] };
+    };
+    const navDefs = [['Exhibitions', 'exhibitions', ['exhibitions', 'exhibition']], ['Artists', 'artists', ['artists', 'artist']], ['Fairs', 'fairs', ['fairs']], ['News', 'news', ['news']], ['About', 'about', ['about']], ['Visit', 'visit', ['visit']]];
+    const nav = navDefs.map(([label, page, act]) => {
+      const on = act.includes(s.page);
+      return { label, go: this.h(() => this.go(page)), color: on ? '#B4651A' : '#161513', line: on ? '#B4651A' : 'transparent' };
+    });
+
+    const ex = AH_EX.find(e => e.slug === s.param) || AH_EX[0];
+    const exMeta = [['Location', ex.city + ', ' + ex.country], ['Venue', ex.venue], ['Dates', ex.dates], ['Format', ex.type === 'Solo' ? 'Solo exhibition' : 'Group exhibition']].map(([k, v]) => ({ k, v }));
+    const exNews = AH_NEWS.filter(n => n.ex === ex.slug);
+    const exViews = ex.works.map((k, i) => {
+      const an = ex.artists[i % ex.artists.length], a = ahArtist(an);
+      return { id: 'ex-' + ex.slug + '-view-' + (i + 1), img: AH_IMG(AH_P[k]), title: AH_WORKT[(ahHash(ex.slug) + i) % AH_WORKT.length], year: ex.dates.slice(-4), artist: an, medium: AH_MAT[a.medium] };
+    });
+
+    const aq = s.aq.trim().toLowerCase();
+    const filtered = AH_ARTISTS.filter(n => !aq || n.toLowerCase().includes(aq));
+    const groups = {};
+    filtered.forEach(n => { const L = n[0].toUpperCase(); (groups[L] = groups[L] || []).push({ name: n, medium: ahArtist(n).medium, open: openArtist(n) }); });
+    const artistGroups = Object.keys(groups).sort().map(letter => ({ letter, items: groups[letter] }));
+    const letters = artistGroups.map(g => ({ letter: g.letter, jump: () => { const el = document.getElementById('L-' + g.letter); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 96, behavior: 'smooth' }); } }));
+    const flat = list => list.map((n, i) => ({ name: n, open: openArtist(n), sep: i < list.length - 1 ? '·' : '' }));
+
+    const aName = AH_ARTISTS.includes(s.param) ? s.param : 'Vijay Pichumani';
+    const A = ahArtist(aName);
+    const aExs = AH_EX.filter(e => e.artists.includes(aName)).map(exItem);
+    const aH = ahHash(aName);
+    const artistWorks = [0, 1, 2, 3, 4, 5].map(i => ({
+      id: 'artist-' + A.slug + '-work-' + (i + 1), img: AH_IMG(AH_P[AH_POOL[(aH + i * 5 + 1) % AH_POOL.length]]),
+      title: AH_WORKT[(aH + i) % AH_WORKT.length], year: 2026 - ((aH >> i) % 8), medium: AH_MAT[A.medium], size: (60 + ((aH >> (i + 2)) % 7) * 15) + ' × ' + (60 + ((aH >> (i + 4)) % 6) * 15) + ' cm'
+    }));
+
+    const q = s.q.trim().toLowerCase();
+    let results = [];
+    if (q) {
+      const ra = AH_ARTISTS.filter(n => n.toLowerCase().includes(q)).slice(0, 8).map(n => ({ label: n, open: openArtist(n) }));
+      const re = AH_EX.filter(e => (e.title + ' ' + e.sub + ' ' + e.city + ' ' + e.country + ' ' + e.artists.join(' ')).toLowerCase().includes(q)).map(e => ({ label: e.title, open: openEx(e.slug) }));
+      const rn = AH_NEWS.filter(n => (n.title + ' ' + n.excerpt).toLowerCase().includes(q)).slice(0, 6).map(n => ({ label: n.title, open: this.h(() => this.go('news')) }));
+      results = [['Artists', ra], ['Exhibitions', re], ['News', rn]].filter(g => g[1].length).map(([label, items]) => ({ label, items }));
+    }
+
+    const cities = ['All', ...Array.from(new Set(AH_EX.map(e => e.city)))];
+    const statuses = [['All', 'All'], ['current', 'Now on view'], ['upcoming', 'Upcoming'], ['past', 'Past']];
+    const exList = AH_EX.filter(e => (s.city === 'All' || e.city === s.city) && (s.status === 'All' || e.status === s.status)).map(exItem);
+    const tabs = [['gallery', 'Gallery'], ['proprietor', 'Proprietor'], ['services', 'Services'], ['publications', 'Publications']];
+    const heroFull = (p.heroLayout ?? 'Full-bleed') === 'Full-bleed';
+    const grouped = (p.artistIndex ?? 'Grouped A–Z') === 'Grouped A–Z';
+    const hero = AH_EX.find(e => e.status === 'current') || AH_EX[0];
+    const up = AH_EX.find(e => e.status === 'upcoming') || AH_EX[1];
+    const focus = ahArtist('Vijay Pichumani');
+
+    return {
+      desktop: !mobile, mobile, nav,
+      footerNav: [['Exhibitions', 'exhibitions'], ['Artists', 'artists'], ['Fairs', 'fairs'], ['News', 'news'], ['About', 'about'], ['Contact', 'visit']].map(([label, pg]) => ({ label, go: this.h(() => this.go(pg)) })),
+      goHome: this.h(() => this.go('home')), goExhibitions: this.h(() => this.go('exhibitions')), goArtists: this.h(() => this.go('artists')), goNews: this.h(() => this.go('news')), goVisit: this.h(() => this.go('visit')),
+      openMenu: () => this.setState({ menu: true }), closeMenu: () => this.setState({ menu: false }),
+      openSearch: () => this.setState({ search: true, menu: false }), closeSearch: () => this.setState({ search: false, q: '' }),
+      menuOpen: s.menu, searchOpen: s.search,
+      isHome: s.page === 'home', isExhibitions: s.page === 'exhibitions', isExhibition: s.page === 'exhibition', isArtists: s.page === 'artists', isArtist: s.page === 'artist', isFairs: s.page === 'fairs', isNews: s.page === 'news', isAbout: s.page === 'about', isVisit: s.page === 'visit',
+      heroFull, heroSplit: !heroFull,
+      heroEx: exItem(hero), upEx: exItem(up),
+      homeEx: AH_EX.filter(e => e.status === 'past').slice(0, 3).map(exItem),
+      worldList: AH_EX.filter(e => e.country !== 'India').map(exItem),
+      focus: { ...focus, img: AH_IMG(AH_P.mountain), bio: 'Vijay Pichumani has shown with Art Houz since 2020, from Kolvel, made during the lockdowns, to By Nature’s Force at Lalit Kala Akademi. His paintings and black-and-white wood carvings come out of long journeys by bike across Tamil Nadu, reading each region through the colour of its soil.', medium: 'Painting & wood carving', base: 'Chennai', open: openArtist('Vijay Pichumani') },
+      homeArtists: flat(AH_ARTISTS.slice(0, 22)).map((a, i) => i === 21 ? { ...a, sep: '' } : a),
+      homeNews: AH_NEWS.slice(1, 4).map(n => ({ ...n, img: AH_IMG(AH_P[n.img]) })),
+      locations: AH_LOC,
+      img: { gallery: AH_IMG(AH_P.bedroom), vincent: AH_IMG(AH_P.dove), framing: AH_IMG(AH_P.thistles), publication: AH_IMG(AH_P.apples) },
+      statusChips: statuses.map(([k, label]) => ({ label, pick: () => this.setState({ status: k }), bg: s.status === k ? '#161513' : 'transparent', fg: s.status === k ? '#EDEAE4' : '#161513' })),
+      cityChips: cities.map(c => ({ label: c === 'All' ? 'All locations' : c, pick: () => this.setState({ city: c }), fg: s.city === c ? '#161513' : '#5E5A54', line: s.city === c ? '#D98A2B' : 'transparent' })),
+      exList, noEx: exList.length === 0,
+      ex: exItem(ex), exMeta, exNews, hasExNews: exNews.length > 0, exViews,
+      exArtists: ex.artists.map(n => ({ name: n, open: openArtist(n) })),
+      aq: s.aq, setAq: e => this.setState({ aq: e.target.value }),
+      featured: AH_FEATURED.map(n => ({ ...ahArtist(n), open: openArtist(n) })),
+      letters, artistGroups, artistFlat: flat(filtered), noArtists: filtered.length === 0,
+      indexGrouped: grouped, indexFlowing: !grouped,
+      artist: { ...A, exs: aExs, hasEx: aExs.length > 0 },
+      artistWorks,
+      fairs: AH_FAIRS.map(f => ({ ...f, img: AH_IMG(AH_P[f.img]) })),
+      newsList: AH_NEWS.map(n => ({ ...n, img: AH_IMG(AH_P[n.img]), hasEx: !!n.ex, openEx: n.ex ? openEx(n.ex) : null, read: e => { if (e && e.preventDefault) e.preventDefault(); } })),
+      aboutTabs: tabs.map(([k, label]) => ({ label, pick: () => this.setState({ tab: k }), color: s.tab === k ? '#161513' : '#5E5A54', line: s.tab === k ? '#D98A2B' : 'transparent' })),
+      tabGallery: s.tab === 'gallery', tabProprietor: s.tab === 'proprietor', tabServices: s.tab === 'services', tabPublications: s.tab === 'publications',
+      q: s.q, setQ: e => this.setState({ q: e.target.value }), results, noResults: !!q && results.length === 0
+    };
+  }
+}
+</script>
+</body>
+</html>
