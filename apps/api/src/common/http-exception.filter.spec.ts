@@ -27,6 +27,12 @@ function prismaError(code: string): Prisma.PrismaClientKnownRequestError {
 }
 
 describe('HttpExceptionFilter', () => {
+  it('uses a custom string code from the exception response', () => {
+    const result = run(new BadRequestException({ code: 'CANNOT_DELETE_SELF', message: 'Nope' }))
+    expect(result.status).toBe(400)
+    expect(result.body).toMatchObject({ ok: false, error: { code: 'CANNOT_DELETE_SELF', message: 'Nope' } })
+  })
+
   it('maps ZodError to 400 VALIDATION with the first message per path', () => {
     const schema = z.object({ title: z.string().min(1), nested: z.object({ n: z.number() }) })
     const result = schema.safeParse({ title: '', nested: { n: 'x' } })
