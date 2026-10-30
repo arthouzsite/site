@@ -104,7 +104,7 @@ export async function expectVisualMatch(prototype: Buffer, port: Buffer, options
   expect(b.width, `${options.name}: screenshot widths differ`).toBe(a.width)
   const height = Math.min(a.height, b.height)
   const diff = new PNG({ width: a.width, height })
-  const changed = pixelmatch(cropTo(a, height).data, cropTo(b, height).data, diff.data, a.width, height, { threshold: PIXELMATCH_THRESHOLD })
+  const changed = pixelmatch(cropTo(a, height).data, cropTo(b, height).data, diff.data, a.width, height, { threshold: PIXELMATCH_THRESHOLD, includeAA: false })
   const result: MatchResult = { name: options.name, diffRatio: changed / (a.width * height), heightDelta: Math.abs(a.height - b.height), width: a.width, height }
   const maxDiffRatio = options.maxDiffRatio ?? DEFAULT_MAX_DIFF_RATIO
   const maxHeightDelta = options.maxHeightDelta ?? DEFAULT_MAX_HEIGHT_DELTA

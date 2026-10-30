@@ -1,6 +1,7 @@
+import type { MouseEvent } from 'react'
 import { SearchIcon } from './SearchIcon'
 
-type Props = { variant: 'desktop' | 'mobile'; onClick: () => void }
+type Props = { variant: 'desktop' | 'mobile'; onClick: (event: MouseEvent<HTMLElement>) => void }
 
 const VARIANTS = {
   desktop: { className: 'hit-44 flex p-[6px]', icon: 18 },

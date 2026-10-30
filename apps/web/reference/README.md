@@ -23,14 +23,17 @@ rewrite the `data-props` defaults (`heroLayout`, `artistIndex`) in a further cop
 ### Determinism
 
 - **Frozen date:** the API runs with `TODAY_OVERRIDE=2026-10-30`, which makes Tidewater current
-  and matches the prototype's hard-coded statuses. The footer year comes from the clock and
-  matches the prototype's "2012 – 2026" during 2026.
+  and matches the prototype's hard-coded statuses. For the footer year the site reads the same `TODAY_OVERRIDE`
+  outside production; because `next start` forces `NODE_ENV=production`, the visual web server
+  also sets `ALLOW_TODAY_OVERRIDE=1` (never set in deployments). The footer therefore matches the prototype's "2012 – 2026" in any year. Header clips use `header.boundingBox()`
+  (77 px including the hairline).
 - **Browser:** installed Google Chrome (`channel: 'chrome'`), device scale factor 1, Asia/Kolkata.
   The bundled Playwright Chromium is not downloaded; both sides render in the same engine.
 - Fonts (`document.fonts.ready`) and network idle are awaited, and the page is scrolled to the
   bottom and back so lazy images load before the full-page screenshot.
-- Comparison: `pixelmatch` threshold 0.1, both images cropped to the smaller height; a case fails
-  above 0.5 % differing pixels or a height delta over 4 px. On failure `prototype.png`, `port.png`
+- Comparison: `pixelmatch` threshold 0.1 with `includeAA: false` (anti-aliased pixels are not
+  counted), both images cropped to the smaller height. The gate is ≤ 0.5 % non-anti-aliased
+  differing pixels and ≤ 4 px height delta. On failure `prototype.png`, `port.png`
   and `diff.png` are written to `test-results/visual/<name>/`; `result.json` is always written.
 
 ## Running
@@ -40,7 +43,8 @@ pnpm --filter @arthouz/web test:visual
 ```
 
 The API web server command migrates and seeds `VISUAL_DATABASE_URL`
-(default `postgresql://manoranjith@localhost:5433/arthouz_test_t11`) before starting the API on
+(default `postgresql://<os user>@localhost:5433/arthouz_test_web`; the user is filled in
+explicitly because Prisma's CLI, unlike libpq, does not default to it) before starting the API on
 4100 (`STORAGE_DRIVER=memory`); Playwright starts web servers before `globalSetup`, so
 `globalSetup` only verifies the API serves seeded data. The site is then built and served with
 `next build && next start` on 3100: `next dev` reload-looped under Turbopack's dev cache and its

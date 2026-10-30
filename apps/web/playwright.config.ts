@@ -59,6 +59,9 @@ export default defineConfig({
         NEXT_IMAGE_UNOPTIMIZED: '1',
         NEXT_PUBLIC_SITE_URL: `http://localhost:${WEB_PORT}`,
         REVALIDATE_SECRET: VISUAL_REVALIDATE_SECRET,
+        TODAY_OVERRIDE: VISUAL_TODAY,
+        // next start forces NODE_ENV=production; opt in to the frozen date for the footer year.
+        ALLOW_TODAY_OVERRIDE: '1',
       },
     },
   ],

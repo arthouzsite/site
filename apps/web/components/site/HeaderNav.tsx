@@ -1,8 +1,9 @@
 import Link from 'next/link'
+import type { MouseEvent } from 'react'
 import { NAV_ITEMS, isActive } from '@/lib/nav'
 import { SearchButton } from './SearchButton'
 
-type Props = { pathname: string; onSearch: () => void }
+type Props = { pathname: string; onSearch: (event: MouseEvent<HTMLElement>) => void }
 
 /** Desktop navigation (≥ 880 px): uppercase links, active section in rust with a 1 px underline. */
 export function HeaderNav({ pathname, onSearch }: Props) {
@@ -15,7 +16,7 @@ export function HeaderNav({ pathname, onSearch }: Props) {
             key={item.href}
             href={item.href}
             aria-current={active ? 'page' : undefined}
-            className={`hit-44 border-b py-[6px] text-[12.5px] tracking-[0.16em] uppercase hover:text-rust ${active ? 'border-rust text-rust' : 'border-transparent text-ink'}`}
+            className={`hit-44 border-b py-[6px] text-[12.5px] tracking-[0.16em] uppercase ${active ? 'border-rust text-rust' : 'border-transparent text-ink'}`}
           >
             {item.label}
           </Link>

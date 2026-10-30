@@ -42,8 +42,26 @@ function evaluateTitles(lines: readonly string[]): string[] {
   return items.map((item) => item.title)
 }
 
+/** Throws listing names present on one side only; order is ignored. */
+export function assertSameNames(label: string, prototype: readonly string[], api: readonly string[]): void {
+  const missing = prototype.filter((name) => !api.includes(name))
+  const extra = api.filter((name) => !prototype.includes(name))
+  const duplicates = prototype.length !== new Set(prototype).size || api.length !== new Set(api).size
+  if (missing.length === 0 && extra.length === 0 && !duplicates) return
+  throw new Error(
+    `normalise: ${label} differ between the prototype and the API` +
+      `\n  missing from API: ${JSON.stringify(missing)}\n  extra in API: ${JSON.stringify(extra)}` +
+      (duplicates ? '\n  (duplicate names present)' : ''),
+  )
+}
+
 export function reorderArtists(source: string, names: readonly string[]): string {
-  return replaceOnce(source, ARTISTS_PATTERN, () => `const AH_ARTISTS = ${JSON.stringify(names)};`, 'AH_ARTISTS order')
+  return replaceOnce(source, ARTISTS_PATTERN, (literal) => {
+    // Trusted, checked-in prototype source (see evaluateTitles).
+    const prototypeNames = new Function(`${literal} return AH_ARTISTS;`)() as string[]
+    assertSameNames('artist names', prototypeNames, names)
+    return `const AH_ARTISTS = ${JSON.stringify(names)};`
+  }, 'AH_ARTISTS order')
 }
 
 export function reorderNews(source: string, titles: readonly string[]): string {

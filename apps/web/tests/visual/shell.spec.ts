@@ -2,13 +2,13 @@ import { test, type Page } from '@playwright/test'
 import { PORT_SETTLE, PROTOTYPE_SETTLE, expectVisualMatch, renderPort, renderPrototype, settle } from './harness'
 import { cropPng } from './png'
 
-const HEADER_HEIGHT = 76
 const WIDTHS = [375, 1440] as const
 const MENU_WIDTH = 375
 
-async function footerClip(page: Page, fullPage: Buffer): Promise<Buffer> {
-  const box = await page.locator('footer').boundingBox()
-  if (!box) throw new Error('footer is not rendered')
+/** Crops a full-page screenshot to an element's box (document coordinates). */
+async function clipTo(page: Page, selector: 'header' | 'footer', fullPage: Buffer): Promise<Buffer> {
+  const box = await page.locator(selector).first().boundingBox()
+  if (!box) throw new Error(`${selector} is not rendered`)
   const scrollY = await page.evaluate(() => window.scrollY)
   return cropPng(fullPage, { ...box, y: box.y + scrollY })
 }
@@ -21,8 +21,7 @@ test.describe('site shell', () => {
       const portPage = await browser.newPage()
       const prototype = await renderPrototype(prototypePage, { route: { page: 'home' }, width })
       const port = await renderPort(portPage, { path: '/', width })
-      const clip = { x: 0, y: 0, width, height: HEADER_HEIGHT }
-      await expectVisualMatch(cropPng(prototype, clip), cropPng(port, clip), { name: `header-${width}` })
+      await expectVisualMatch(await clipTo(prototypePage, 'header', prototype), await clipTo(portPage, 'header', port), { name: `header-${width}` })
     })
 
     test(`footer matches the prototype at ${width}`, async ({ browser }) => {
@@ -30,7 +29,7 @@ test.describe('site shell', () => {
       const portPage = await browser.newPage()
       const prototype = await renderPrototype(prototypePage, { route: { page: 'visit' }, width })
       const port = await renderPort(portPage, { path: '/', width })
-      await expectVisualMatch(await footerClip(prototypePage, prototype), await footerClip(portPage, port), { name: `footer-${width}` })
+      await expectVisualMatch(await clipTo(prototypePage, 'footer', prototype), await clipTo(portPage, 'footer', port), { name: `footer-${width}` })
     })
   }
 

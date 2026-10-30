@@ -1,20 +1,17 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useRef } from 'react'
-import { useEscapeKey } from '@/hooks/useEscapeKey'
+import { useRef } from 'react'
+import { useModalDialog } from '@/hooks/useModalDialog'
 import { NAV_ITEMS, isActive } from '@/lib/nav'
 import { OutlineButton } from './OutlineButton'
 
-type Props = { pathname: string; onClose: () => void }
+type Props = { pathname: string; onClose: () => void; returnFocus?: HTMLElement | null }
 
 /** Full-screen ink menu for narrow viewports, as the prototype's `menuOpen` block. */
-export function MobileMenu({ pathname, onClose }: Props) {
+export function MobileMenu({ pathname, onClose, returnFocus }: Props) {
   const panel = useRef<HTMLDivElement>(null)
-  useEscapeKey(onClose)
-  useEffect(() => {
-    panel.current?.querySelector<HTMLElement>('button')?.focus()
-  }, [])
+  useModalDialog(panel, onClose, returnFocus)
 
   return (
     <div
@@ -37,7 +34,7 @@ export function MobileMenu({ pathname, onClose }: Props) {
             href={item.href}
             onClick={onClose}
             aria-current={isActive(pathname, item.href) ? 'page' : undefined}
-            className="border-b border-line-dark-16 py-4 font-display text-[44px] leading-none text-paper hover:text-amber"
+            className="border-b border-line-dark-16 py-4 font-display text-[44px] leading-none text-paper hover:text-paper"
           >
             {item.label}
           </Link>
