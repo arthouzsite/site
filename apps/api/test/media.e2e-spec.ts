@@ -4,6 +4,8 @@ import sharp from 'sharp'
 import request from 'supertest'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '../src/generated/prisma/client'
+import { MemoryStorage } from '../src/media/storage/memory.storage'
+import { STORAGE } from '../src/media/storage/storage.interface'
 import { createTestApp } from './helpers/app'
 import { migrateTestDb, resetDb } from './helpers/db'
 
@@ -117,9 +119,20 @@ describe('media', () => {
   })
 
   it('deletes unused media and its storage objects', async () => {
+    const storage = app.get<MemoryStorage>(STORAGE)
     const created = (await upload(jpeg).expect(201)).body.data
+    const thumbKey = created.key.replace(/\.jpg$/, '-thumb.webp')
+    expect(storage.has(created.key)).toBe(true)
+    expect(storage.has(thumbKey)).toBe(true)
     await request(server()).delete(`/media/${created.id}`).expect(200)
     expect(await prisma.media.count()).toBe(0)
+    expect(storage.has(created.key)).toBe(false)
+    expect(storage.has(thumbKey)).toBe(false)
+  })
+
+  it('stores the detected mime, not the client-supplied one', async () => {
+    const res = await upload(jpeg, 'image/png').expect(201)
+    expect(res.body.data.mime).toBe('image/jpeg')
   })
 
   it('DELETE used media → 409 MEDIA_IN_USE listing the exhibition title', async () => {

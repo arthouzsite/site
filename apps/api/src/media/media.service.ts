@@ -9,7 +9,7 @@ import { findMediaUsage, type MediaUsage } from './media.usage'
 import { STORAGE, type Storage } from './storage/storage.interface'
 
 export type MediaListQuery = { q?: string; missingAlt?: boolean; page: number; limit: number; skip: number }
-export type UploadedFile = { buffer: Buffer; mimetype: string }
+export type UploadedFile = { buffer: Buffer }
 
 function buildKeys(ext: string, now: Date): { key: string; thumbKey: string } {
   const yyyy = String(now.getUTCFullYear())
@@ -35,7 +35,7 @@ export class MediaService {
   async upload(file: UploadedFile, alt: string, userId: string | null): Promise<Media> {
     const processed = await this.images.process(file.buffer)
     const { key, thumbKey } = buildKeys(processed.ext, new Date())
-    const original = await this.storage.put(key, file.buffer, file.mimetype)
+    const original = await this.storage.put(key, file.buffer, processed.mime)
     try {
       const thumb = await this.storage.put(thumbKey, processed.thumb, 'image/webp')
       return await this.prisma.media.create({
@@ -45,7 +45,7 @@ export class MediaService {
           thumbUrl: thumb.url,
           width: processed.width,
           height: processed.height,
-          mime: file.mimetype,
+          mime: processed.mime,
           bytes: file.buffer.length,
           alt,
           uploadedById: userId,

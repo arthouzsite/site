@@ -5,7 +5,7 @@ import { R2Storage } from './r2.storage'
 
 describe('R2Storage', () => {
   const config = {
-    accountId: 'acct',
+    endpoint: 'https://acct.r2.cloudflarestorage.com',
     accessKeyId: 'key',
     secretAccessKey: 'secret',
     bucket: 'arthouz-bucket',
@@ -49,6 +49,6 @@ describe('R2Storage', () => {
 
   it('fromEnv requires R2 settings', () => {
     expect(env.STORAGE_DRIVER).toBe('memory')
-    expect(() => R2Storage.fromEnv({ ...env, R2_BUCKET: undefined })).toThrow(/R2/)
+    expect(() => R2Storage.fromEnv({ ...env, AWS_S3_BUCKET_NAME: undefined })).toThrow(/AWS_S3_BUCKET_NAME/)
   })
 })

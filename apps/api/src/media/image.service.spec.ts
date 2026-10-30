@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common'
 import sharp from 'sharp'
 import { ImageService } from './image.service'
 
@@ -12,11 +13,17 @@ async function jpeg(width: number, height: number, orientation?: number): Promis
 
 describe('ImageService', () => {
   const service = new ImageService()
+  let warn: jest.SpyInstance
+
+  beforeEach(() => {
+    warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation()
+  })
+  afterEach(() => jest.restoreAllMocks())
 
   it('process returns dimensions and a 480-wide webp thumb', async () => {
     const result = await service.process(await jpeg(SOURCE_WIDTH, SOURCE_HEIGHT))
     const thumb = await sharp(result.thumb).metadata()
-    expect(result).toMatchObject({ width: SOURCE_WIDTH, height: SOURCE_HEIGHT, ext: 'jpg' })
+    expect(result).toMatchObject({ width: SOURCE_WIDTH, height: SOURCE_HEIGHT, ext: 'jpg', mime: 'image/jpeg' })
     expect(thumb.format).toBe('webp')
     expect(thumb.width).toBe(EXPECTED_THUMB_WIDTH)
   })
@@ -44,6 +51,7 @@ describe('ImageService', () => {
       status: 400,
       response: { code: 'INVALID_IMAGE' },
     })
+    expect(warn).toHaveBeenCalled()
   })
 
   it('rejects image formats outside the allowed set', async () => {

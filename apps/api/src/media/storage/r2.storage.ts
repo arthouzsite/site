@@ -5,7 +5,7 @@ import { CACHE_CONTROL } from '../media.constants'
 import type { Storage } from './storage.interface'
 
 export type R2Config = {
-  accountId: string
+  endpoint: string
   accessKeyId: string
   secretAccessKey: string
   bucket: string
@@ -19,22 +19,24 @@ export class R2Storage implements Storage {
   constructor(private readonly config: R2Config) {
     this.client = new S3Client({
       region: 'auto',
-      endpoint: `https://${config.accountId}.r2.cloudflarestorage.com`,
+      endpoint: config.endpoint,
       credentials: { accessKeyId: config.accessKeyId, secretAccessKey: config.secretAccessKey },
     })
   }
 
   static fromEnv(source: Env): R2Storage {
-    const { R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET, R2_PUBLIC_URL } = source
-    if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY || !R2_BUCKET || !R2_PUBLIC_URL) {
-      throw new Error('R2 storage requires R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET, R2_PUBLIC_URL')
+    const { S3_ENDPOINT, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET_NAME, AWS_S3_PUBLIC_URL } = source
+    if (!S3_ENDPOINT || !AWS_ACCESS_KEY_ID || !AWS_SECRET_ACCESS_KEY || !AWS_S3_BUCKET_NAME || !AWS_S3_PUBLIC_URL) {
+      throw new Error(
+        'R2 storage requires S3_ENDPOINT, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET_NAME, AWS_S3_PUBLIC_URL',
+      )
     }
     return new R2Storage({
-      accountId: R2_ACCOUNT_ID,
-      accessKeyId: R2_ACCESS_KEY_ID,
-      secretAccessKey: R2_SECRET_ACCESS_KEY,
-      bucket: R2_BUCKET,
-      publicUrl: R2_PUBLIC_URL.replace(/\/+$/, ''),
+      endpoint: S3_ENDPOINT,
+      accessKeyId: AWS_ACCESS_KEY_ID,
+      secretAccessKey: AWS_SECRET_ACCESS_KEY,
+      bucket: AWS_S3_BUCKET_NAME,
+      publicUrl: AWS_S3_PUBLIC_URL.replace(/\/+$/, ''),
     })
   }
 
