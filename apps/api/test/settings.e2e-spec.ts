@@ -90,6 +90,12 @@ describe('settings', () => {
     expect(await prisma.setting.count()).toBe(0)
   })
 
+  it('EDITOR may PUT about.* keys but still not other keys', async () => {
+    const value = { ...(SETTING_DEFAULTS['about.gallery'] as object), statement: 'By an editor' }
+    await as(editorCookie).put('/settings/about.gallery').send({ value }).expect(200)
+    await as(editorCookie).put('/settings/footer').send({ value: SETTING_DEFAULTS.footer }).expect(403)
+  })
+
   it('homeFocus.artistId must exist -> 400 UNKNOWN_ARTIST', async () => {
     const value = { ...(SETTING_DEFAULTS.homeFocus as object), artistId: MISSING_ID }
     const res = await as(adminCookie).put('/settings/homeFocus').send({ value }).expect(400)
