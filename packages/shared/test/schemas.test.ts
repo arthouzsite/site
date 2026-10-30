@@ -76,9 +76,12 @@ describe('schemas', () => {
     const image = { url: 'https://x/y.jpg', thumbUrl: 'https://x/t.webp', width: 1, height: 1, alt: 'a' }
     expect(publicExhibitionSchema.safeParse({
       id, slug: 's', title: 't', subtitle: '', city: 'c', country: 'India', type: 'SOLO', status: 'PAST',
-      statusLabel: 'Past', datesLabel: 'x', artistLine: 'a', image,
+      statusLabel: 'Past', datesLabel: 'x', venue: '', blurb: '', body: '', artistLine: 'a',
+      artists: [{ name: 'a', slug: 'a' }], image,
     }).success).toBe(true)
-    expect(publicSearchSchema.safeParse({ artists: [], exhibitions: [], news: [] }).success).toBe(true)
+    expect(publicSearchSchema.safeParse({ groups: [] }).success).toBe(true)
+    expect(publicSearchSchema.safeParse({ groups: [{ label: 'News', items: [{ label: 'x', href: '/news' }] }] }).success).toBe(true)
+    expect(publicSearchSchema.safeParse({ groups: [{ label: 'Fairs', items: [] }] }).success).toBe(false)
     expect(publicHomeSchema.safeParse({}).success).toBe(false)
   })
 })
