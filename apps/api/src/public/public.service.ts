@@ -21,6 +21,7 @@ import type {
 const NOT_FOUND = 'Not found'
 const NON_LETTER = '#'
 const START_DESC = [{ startDate: 'desc' }, { id: 'asc' }] as const
+const STATUS_RANK = { CURRENT: 0, UPCOMING: 1, PAST: 2 } as const
 
 @Injectable()
 export class PublicService {
@@ -36,9 +37,11 @@ export class PublicService {
       include: PUBLIC_EXHIBITION_INCLUDE,
       orderBy: [...START_DESC],
     })
+    // Status rank (current, upcoming, past); the query's startDate-desc order is kept within each group (stable sort).
+    const ranked = [...rows].sort((a, b) => STATUS_RANK[resolveExhibitionStatus(a, now)] - STATUS_RANK[resolveExhibitionStatus(b, now)])
     const wantedCity = query.city?.toLowerCase()
-    const cities = [...new Set(rows.map((r) => r.city))]
-    const items = rows
+    const cities = [...new Set(ranked.map((r) => r.city))]
+    const items = ranked
       .filter((r) => !wantedCity || r.city.toLowerCase() === wantedCity)
       .filter((r) => !query.status || resolveExhibitionStatus(r, now) === query.status)
       .map((r) => toPublicExhibition(r, now))

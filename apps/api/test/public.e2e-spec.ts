@@ -233,6 +233,12 @@ describe('public API', () => {
       expect(exhibitions?.items).toHaveLength(3)
     })
 
+    it('orders exhibitions current, upcoming, then past by start date, and cities by first appearance', async () => {
+      const list = await ok('/public/exhibitions', publicExhibitionListSchema)
+      expect(list.items.slice(0, 3).map((e) => e.slug)).toEqual(['tidewater', 'weight-of-light', 'quiet-matter'])
+      expect(list.cities).toEqual(['Chennai', 'Dubai', 'Singapore', 'London', 'Bengaluru'])
+    })
+
     it('list and detail routes parse for seeded data', async () => {
       const list = await ok('/public/exhibitions', publicExhibitionListSchema)
       expect(list.items.length).toBeGreaterThan(0)
