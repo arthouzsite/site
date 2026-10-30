@@ -24,11 +24,15 @@
   --color-line-dark-18: rgba(237, 234, 228, 0.18);
   --color-line-dark-20: rgba(237, 234, 228, 0.2);
 
-  /* Fonts: next/font variables first (self-hosted files), then the prototype's stacks. */
+  /*
+   * Fonts: the prototype's stacks verbatim. next/font registers its self-hosted faces under these literal
+   * family names; its --font-* variables are not used because they insert a size-adjusted "… Fallback"
+   * face, which renders glyphs outside the subsets (→ ↗) wider than the prototype's generic fallback.
+   */
   --font-*: initial;
-  --font-display: var(--font-eb-garamond), 'EB Garamond', serif;
-  --font-display-tamil: var(--font-eb-garamond), 'EB Garamond', var(--font-noto-serif-tamil), 'Noto Serif Tamil', serif;
-  --font-ui: var(--font-space-grotesk), 'Space Grotesk', 'Noto Sans Tamil', sans-serif;
+  --font-display: 'EB Garamond', serif;
+  --font-display-tamil: 'EB Garamond', 'Noto Serif Tamil', serif;
+  --font-ui: 'Space Grotesk', 'Noto Sans Tamil', sans-serif;
 
   --breakpoint-*: initial;
   --breakpoint-nav: 880px;

@@ -1,6 +1,8 @@
 import { EB_Garamond, Noto_Serif_Tamil, Space_Grotesk } from 'next/font/google'
 
-// adjustFontFallback is off so the fallback chain matches the prototype's plain Google Fonts stacks.
+// Faces are registered under their literal family names (Turbopack), which styles/tokens.css uses directly.
+// next/font still emits a size-adjusted "… Fallback" face inside the --font-* variables despite
+// adjustFontFallback: false, so tokens.css does not route through those variables.
 export const ebGaramond = EB_Garamond({
   weight: ['400', '500'],
   style: ['normal', 'italic'],
