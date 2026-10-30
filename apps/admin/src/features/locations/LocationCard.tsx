@@ -10,6 +10,16 @@ import { LocationField as Field } from './LocationField'
 import type { AdminLocation } from './types'
 import { useDeleteLocation, useSaveLocation } from './useLocations'
 
+function isHttpUrl(value: string | undefined): boolean {
+  if (!value) return false
+  try {
+    const { protocol } = new URL(value)
+    return protocol === 'http:' || protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
 const LABELS = { city: 'City', address: 'Address', phone: 'Phone', tel: 'Tel', days: 'Days', hours: 'Hours', mapUrl: 'Google Maps URL' }
 
 type Props = {
@@ -100,7 +110,7 @@ export function LocationCard({ location, canMoveUp, canMoveDown, moving, onMove,
           <Field name="hours" idPrefix={headingId} label="Hours" error={err('hours')}><Input {...register('hours')} /></Field>
         </div>
         <div className="flex flex-col gap-1.5">
-          {mapUrl && (
+          {isHttpUrl(mapUrl) && (
             <a href={mapUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-8 items-center self-end text-12 text-body underline">Test ↗</a>
           )}
           <Field name="mapUrl" idPrefix={headingId} label="Google Maps URL" error={err('mapUrl')}><Input type="url" {...register('mapUrl')} /></Field>

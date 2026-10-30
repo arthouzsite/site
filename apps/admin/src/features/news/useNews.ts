@@ -43,8 +43,14 @@ export function usePublishNews() {
 }
 
 export function useDeleteNews() {
-  const invalidate = useInvalidate()
-  return useMutation({ mutationFn: (id: string) => api.delete<unknown>(`/news/${id}`), onSuccess: invalidate })
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api.delete<unknown>(`/news/${id}`),
+    onSuccess: (_data, id) => {
+      client.removeQueries({ queryKey: ['news-item', id], exact: true })
+      return client.invalidateQueries({ queryKey: ['news'], exact: false })
+    },
+  })
 }
 
 export type ExhibitionOption = { id: string; title: string; slug: string }

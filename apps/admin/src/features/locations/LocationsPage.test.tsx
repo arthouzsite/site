@@ -101,4 +101,13 @@ describe('LocationsPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Delete location' }))
     await waitFor(() => expect(deleted).toBe(true))
   })
+
+  it('renders the map test link only for http(s) URLs', async () => {
+    server.use(http.get(`${API_URL}/locations`, () => HttpResponse.json(envelope([locations[0], makeLocation({ id: 'l2', city: 'Bengaluru', mapUrl: 'javascript:alert(1)' })]))))
+    mount()
+    await screen.findByRole('region', { name: 'Bengaluru' })
+    const link = within(card('Chennai')).getByRole('link', { name: 'Test ↗' })
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+    expect(within(card('Bengaluru')).queryByRole('link', { name: 'Test ↗' })).not.toBeInTheDocument()
+  })
 })

@@ -101,5 +101,6 @@ describe('FairEditor', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Delete fair' }))
     await waitFor(() => expect(deleted).toBe(true))
     await waitFor(() => expect(router.state.location.pathname).toBe('/fairs'))
+    expect(screen.queryByText(/Could not load/)).not.toBeInTheDocument()
   })
 })

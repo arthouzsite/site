@@ -20,9 +20,9 @@ export default function NewsEditorPage() {
   const isNew = !id || id === 'new'
   const query = useNewsItem(isNew ? undefined : id)
   if (isNew) return <NewsForm item={null} />
+  if (query.data) return <NewsForm item={query.data} />
   if (query.isError) return <p role="alert" className="m-0 text-13 text-danger">Could not load this news item.</p>
-  if (!query.data) return <p className="m-0 text-13 text-muted">Loading news item</p>
-  return <NewsForm item={query.data} />
+  return <p className="m-0 text-13 text-muted">Loading news item</p>
 }
 
 function NewsForm({ item }: { item: AdminNews | null }) {
@@ -112,7 +112,6 @@ function NewsForm({ item }: { item: AdminNews | null }) {
             setValue('imageId', ref?.id ?? null, { shouldDirty: true })
           }} />
           {item && <Switch label="Published" checked={item.isPublished} disabled={isDirty || publish.isPending} onChange={(e) => void togglePublish(e.target.checked)} />}
-          {item && isDirty && <p className="m-0 text-12 text-muted">Save your changes to use the publish switch.</p>}
           <div className="flex flex-wrap gap-2">
             <Button type="submit" variant="primary" disabled={save.isPending}>Save</Button>
             <LinkButton to="/news">Cancel</LinkButton>

@@ -39,6 +39,12 @@ export function useReorderFairs() {
 }
 
 export function useDeleteFair() {
-  const invalidate = useInvalidate()
-  return useMutation({ mutationFn: (id: string) => api.delete<unknown>(`/fairs/${id}`), onSuccess: invalidate })
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api.delete<unknown>(`/fairs/${id}`),
+    onSuccess: (_data, id) => {
+      client.removeQueries({ queryKey: ['fair', id], exact: true })
+      return client.invalidateQueries({ queryKey: ['fairs'] })
+    },
+  })
 }

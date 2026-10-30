@@ -18,9 +18,9 @@ export default function FairEditor() {
   const isNew = !id || id === 'new'
   const query = useFair(isNew ? undefined : id)
   if (isNew) return <FairForm fair={null} />
+  if (query.data) return <FairForm fair={query.data} />
   if (query.isError) return <p role="alert" className="m-0 text-13 text-danger">Could not load this fair.</p>
-  if (!query.data) return <p className="m-0 text-13 text-muted">Loading fair</p>
-  return <FairForm fair={query.data} />
+  return <p className="m-0 text-13 text-muted">Loading fair</p>
 }
 
 function FairForm({ fair }: { fair: AdminFair | null }) {
@@ -99,7 +99,7 @@ function FairForm({ fair }: { fair: AdminFair | null }) {
             <Field name="city" label="City" error={err('city')}><Input {...register('city')} /></Field>
           </div>
           <div className="grid grid-cols-2 gap-5 max-sm:grid-cols-1">
-            <Field name="dateLabel" label="Date label" help="e.g. March 2026" error={err('dateLabel')}><Input {...register('dateLabel')} /></Field>
+            <Field name="dateLabel" label="Date label" error={err('dateLabel')}><Input {...register('dateLabel')} /></Field>
             <Field name="booth" label="Booth" error={err('booth')}><Input {...register('booth')} /></Field>
           </div>
           <Field name="text" label="Text" error={err('text')}><Textarea rows={6} {...register('text')} /></Field>
@@ -111,7 +111,6 @@ function FairForm({ fair }: { fair: AdminFair | null }) {
             <Switch label="Published" checked={fair.isPublished} disabled={isDirty || publish.isPending}
               onChange={(e) => void togglePublish(e.target.checked)} />
           )}
-          {fair && isDirty && <p className="m-0 text-12 text-muted">Save your changes to use the publish switch.</p>}
           <div className="flex flex-wrap gap-2">
             <Button type="submit" variant="primary" disabled={save.isPending}>Save</Button>
             <LinkButton to="/fairs">Cancel</LinkButton>
