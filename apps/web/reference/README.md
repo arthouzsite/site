@@ -7,7 +7,7 @@ Do not edit these three files: the visual harness patches a copy.
 ## Visual harness
 
 `tests/visual/normalise.ts` copies the prototype to `test-results/reference.html` (with the two
-scripts beside it) after four textual patches. Each patch must match exactly once or the run fails:
+scripts beside it) after five textual patches. Each patch must match exactly once or the run fails:
 
 1. **Artist order** — the `AH_ARTISTS` array literal is rewritten to the order of `flat[].name`
    from `GET /public/artists` (the API's collation, not the prototype's hand order).
@@ -16,8 +16,11 @@ scripts beside it) after four textual patches. Each patch must match exactly onc
 4. **Read article** — the "Read article ↗" anchor is wrapped in
    `<sc-if value="{{ n.hasUrl }}">` and `hasUrl: !!n.externalUrl` is added to the `newsList`
    mapping. The seed has no external URLs, so the link never renders on either side.
+5. **(e) Artist base** — `(h >> 3) % AH_BASES.length` becomes `(h >>> 3) % AH_BASES.length`. The
+   signed shift goes negative for large hashes (e.g. Vijay Pichumani), so the prototype's `base`
+   was `undefined` ("practice in undefined"); the seed already uses the unsigned shift.
 
-`renderPrototype` seeds `localStorage['arthouz-route']` (`{ page, param }`) before load and can
+`renderPrototype` seeds `localStorage['arthouz-route']` (`{ page, param, city, status, aq }`) before load and can
 rewrite the `data-props` defaults (`heroLayout`, `artistIndex`) in a further copy.
 
 ### Determinism

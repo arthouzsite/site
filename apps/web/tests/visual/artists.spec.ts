@@ -49,12 +49,6 @@ async function compare(
   return portPage
 }
 
-// The prototype keeps the search box text in route state as `aq`; the harness type does not list it, so build the route as a variable.
-function searchRoute(aq: string): PrototypeRoute {
-  const route = { page: 'artists', aq }
-  return route
-}
-
 test.describe('artists grouped', () => {
   for (const width of WIDTHS) {
     test(`artists grouped matches at ${width}`, async ({ browser }) => {
@@ -63,11 +57,11 @@ test.describe('artists grouped', () => {
   }
 
   test(`artists?q=pich shows only matches`, async ({ browser }) => {
-    await compare(browser, `artists-q-pich-${DESKTOP}`, searchRoute('pich'), '/artists?q=pich', DESKTOP)
+    await compare(browser, `artists-q-pich-${DESKTOP}`, { page: 'artists', aq: 'pich' }, '/artists?q=pich', DESKTOP)
   })
 
   test(`artists?q=zzz shows the empty state`, async ({ browser }) => {
-    const portPage = await compare(browser, `artists-q-zzz-${DESKTOP}`, searchRoute('zzz'), '/artists?q=zzz', DESKTOP)
+    const portPage = await compare(browser, `artists-q-zzz-${DESKTOP}`, { page: 'artists', aq: 'zzz' }, '/artists?q=zzz', DESKTOP)
     await expect(portPage.getByText('No artists match “zzz”.', { exact: true })).toBeVisible()
   })
 })
