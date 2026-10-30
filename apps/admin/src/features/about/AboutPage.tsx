@@ -15,7 +15,6 @@ const TABS = [
   { id: 'publications', label: 'Publications' },
 ]
 const DEFAULT_TAB = 'gallery'
-const UNSAVED_MARK = ' •'
 
 export default function AboutPage() {
   const settings = useSettings()
@@ -29,7 +28,7 @@ export default function AboutPage() {
     [],
   )
 
-  const tabs = TABS.map((t) => (dirty[t.id] ? { ...t, label: `${t.label}${UNSAVED_MARK}` } : t))
+  const tabs = TABS.map((t) => ({ ...t, unsaved: Boolean(dirty[t.id]) }))
   const data = settings.data
   return (
     <>

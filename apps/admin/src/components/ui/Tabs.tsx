@@ -1,7 +1,7 @@
 import { useRef, type KeyboardEvent, type ReactNode } from 'react'
 import { cx } from './cx'
 
-export type TabItem = { id: string; label: string }
+export type TabItem = { id: string; label: string; /** Shows a dot, announced as "(unsaved changes)". */ unsaved?: boolean }
 type Props = {
   tabs: TabItem[]
   value: string
@@ -60,6 +60,13 @@ export function Tabs({ tabs, value, onChange, label, children }: Props) {
               )}
             >
               {t.label}
+              {t.unsaved && (
+                <>
+                  <span aria-hidden="true" className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-amber align-middle" />
+                  {' '}
+                  <span className="sr-only">(unsaved changes)</span>
+                </>
+              )}
             </button>
           )
         })}

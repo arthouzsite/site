@@ -6,8 +6,8 @@ import { API_URL, HttpResponse, envelope, errorEnvelope, http, server } from '..
 import { renderPage, signIn } from '../settings/testUtils'
 import AboutPage from './AboutPage'
 
-function setup(initial = '/about') {
-  signIn()
+function setup(initial = '/about', role: 'ADMIN' | 'EDITOR' = 'ADMIN') {
+  signIn(role)
   const puts: Array<{ key: string; value: unknown }> = []
   server.use(
     http.get(`${API_URL}/settings`, () =>
@@ -30,7 +30,7 @@ describe('AboutPage', () => {
     const statement = await screen.findByRole('textbox', { name: 'Statement' })
     await user.clear(statement)
     await user.type(statement, 'Edited statement')
-    expect(screen.getByRole('tab', { name: 'Gallery •' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Gallery (unsaved changes)' })).toBeInTheDocument()
 
     await user.click(screen.getByRole('tab', { name: 'Proprietor' }))
     expect(screen.getByRole('tabpanel', { name: 'Proprietor' })).toBeVisible()
@@ -40,6 +40,14 @@ describe('AboutPage', () => {
     expect(screen.getByRole('textbox', { name: 'Statement' })).toHaveValue('Edited statement')
     await user.click(screen.getByRole('tab', { name: /Proprietor/ }))
     expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('Vincent')
+  })
+
+  it('lets an EDITOR save an About section', async () => {
+    const puts = setup('/about?tab=services', 'EDITOR')
+    const user = userEvent.setup()
+    await user.type(await screen.findByRole('textbox', { name: 'Title' }), 'Framing')
+    await user.click(screen.getByRole('button', { name: 'Save section' }))
+    await waitFor(() => expect(puts[0]?.key).toBe('about.services'))
   })
 
   it('saves a section to its own setting and clears the unsaved mark', async () => {
