@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Art Houz CMS — Media</title>
+<link rel="stylesheet" href="./mock.css">
+<style>
+.hit { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; cursor: pointer; }
+.hit-x { position: relative; }
+.hit-x::after { content: ''; position: absolute; inset: -6px; }
+.media-layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; }
+.media-main { gap: 16px; }
+.media-grid { list-style: none; margin: 0; padding: 0; }
+.media-tile:focus-visible { box-shadow: var(--focus); }
+.uploads { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.up { display: flex; align-items: center; gap: 14px; min-height: 56px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.up-ico { width: 36px; height: 36px; display: grid; place-items: center; background: var(--surface); border: 1px solid var(--line); color: var(--muted); flex: none; }
+.up-body { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.up-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; font-size: var(--fs-13); }
+.up-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.up-alt { display: inline-flex; align-items: center; gap: 6px; color: var(--danger); font-size: var(--fs-12); }
+.up .btn-sm { min-height: 44px; }
+.detail { position: sticky; top: calc(var(--topbar-h) + 24px); max-height: calc(100vh - var(--topbar-h) - 48px); overflow: auto; }
+.detail .card-h h3 { text-transform: none; letter-spacing: 0.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.textarea.alt { min-height: 88px; }
+.url-dd { min-width: 0; gap: 4px; }
+.url-row { align-items: center; }
+.url { max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--body); }
+.used li { min-height: 44px; padding: 6px 0; }
+.detail-actions { justify-content: space-between; flex-wrap: wrap; }
+.modal .list li { min-height: 44px; padding: 6px 0; }
+.modal-backdrop[hidden] { display: none; }
+@media (max-width: 1100px) { .media-layout { grid-template-columns: minmax(0, 1fr); } .detail { position: static; max-height: none; } }
+@media (max-width: 640px) { .search, .search input { width: 100%; } .search { flex: 1 1 100%; } .up-top .muted:not(:last-child) { display: none; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" aria-label="CMS navigation">
+    <a class="brand" href="./dashboard.html" aria-label="Art Houz CMS home"><span class="brand-mark"></span><span class="brand-word">ART HOUZ</span></a>
+    <div class="brand-sub">Content</div>
+    <nav class="nav" aria-label="Sections">
+      <a href="./dashboard.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><span class="txt">Dashboard</span></span></a>
+      <a href="./exhibitions.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14"/><path d="M3 18l5-6 4 4 3-3 6 5"/></svg><span class="txt">Exhibitions</span></span><span class="count">9</span></a>
+      <a href="./artists.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span class="txt">Artists</span></span><span class="count">55</span></a>
+      <a href="./fairs.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M3 21h18M5 21V8l7-4 7 4v13"/><path d="M9 21v-6h6v6"/></svg><span class="txt">Fairs</span></span><span class="count">4</span></a>
+      <a href="./news.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M4 5h13v14H4z"/><path d="M17 9h3v8a2 2 0 0 1-2 2H6"/><path d="M7 9h7M7 13h7"/></svg><span class="txt">News</span></span><span class="count">10</span></a>
+      <a href="./locations.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span class="txt">Locations</span></span><span class="count">2</span></a>
+      <a href="./about.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M9 12h6M9 16h6"/></svg><span class="txt">About page</span></span></a>
+      <a href="./settings.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="#161513"/><circle cx="15" cy="12" r="2" fill="#161513"/><circle cx="8" cy="18" r="2" fill="#161513"/></svg><span class="txt">Home &amp; settings</span></span></a>
+      <a href="./media.html" aria-current="page"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14"/><circle cx="9" cy="10" r="1.5"/><path d="M21 16l-5-5-8 8"/></svg><span class="txt">Media</span></span><span class="count">128</span></a>
+      <a href="./users.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5"/><circle cx="17.5" cy="9" r="2.5"/><path d="M22 19c0-2.5-2-4-4.5-4"/></svg><span class="txt">Users</span></span></a>
+    </nav>
+    <div class="sidebar-foot">
+      <a href="#" class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg> View public site</a>
+      <span>Signed in as Priya · Editor</span>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <nav class="crumbs" aria-label="Breadcrumb"><a href="./dashboard.html">CMS</a><span class="sep">/</span><span class="here">Media</span></nav>
+      <div class="topbar-actions">
+        <button class="kbd-search" type="button" aria-label="Search all content"><svg class="icon" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg><span class="txt">Search records</span><kbd>⌘K</kbd></button>
+        <span class="avatar" aria-label="Priya">P</span>
+      </div>
+    </header>
+
+    <main class="page">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Media</h1>
+          <p class="page-sub">128 files · 412 MB in R2</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-primary" type="button"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 20h16"/></svg> Upload</button>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <div class="search">
+            <label class="sr-only" for="q">Search by file name or alt text</label>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg>
+            <input id="q" type="search" placeholder="Search by file name or alt text">
+          </div>
+          <label class="sr-only" for="used">Used in</label>
+          <select class="select" id="used"><option>Used in: all</option><option>Exhibitions</option><option>Artists</option><option>Fairs</option><option>News</option><option>Locations</option><option>Not used</option></select>
+          <label class="sr-only" for="sort">Sort</label>
+          <select class="select" id="sort"><option>Sort: newest</option><option>Sort: oldest</option><option>Sort: name</option><option>Sort: largest</option></select>
+        </div>
+      </div>
+
+      <div class="media-layout">
+        <div class="stack media-main">
+          <label class="dropzone" for="files">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 20h16"/></svg>
+            <span>Drop images here or <strong>choose files</strong> · JPEG, PNG, WebP, AVIF up to 25 MB</span>
+            <input class="sr-only" id="files" type="file" multiple accept="image/jpeg,image/png,image/webp,image/avif">
+          </label>
+          <ul class="uploads" aria-label="Uploads in progress">
+          <li class="up">
+            <span class="up-ico"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/></svg></span>
+            <div class="grow up-body">
+              <div class="up-top"><span class="up-name">seema-kohli-studio.jpg</span><span class="small muted">8.4 MB</span><span class="small muted">62%</span></div>
+              <div class="progress" role="progressbar" aria-label="Uploading seema-kohli-studio.jpg" aria-valuemin="0" aria-valuemax="100" aria-valuenow="62"><i style="width:62%"></i></div>
+            </div>
+            <button class="btn btn-ghost btn-sm" type="button" aria-label="Cancel upload of seema-kohli-studio.jpg">Cancel</button>
+          </li>
+          <li class="up">
+            <span class="up-ico"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/></svg></span>
+            <div class="grow up-body">
+              <div class="up-top"><span class="up-name">kolvel-install-view.webp</span><span class="small muted">3.1 MB</span><span class="up-alt"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/></svg> Needs alt text</span></div>
+              <div class="progress" role="progressbar" aria-label="Uploading kolvel-install-view.webp" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><i style="width:100%"></i></div>
+            </div>
+            <button class="btn btn-sm" type="button">Add alt text</button>
+          </li>
+          </ul>
+          <ul class="media-grid" role="listbox" aria-label="Media library">
+          <li class="media-tile" role="option" tabindex="0" aria-selected="true">
+            <div class="img-slot r-4-3"><img src="https://picsum.photos/seed/arthouza45e5f55/1200/1000" alt="tidewater hero" width="1200" height="1000" loading="lazy"></div>
+            <div class="cap">
+              <span class="fname">tidewater-hero.jpg</span>
+              <span class="fmeta"><span>2400×1600</span><span>1.2 MB</span></span>
+            </div>
+          </li>
+          <li class="media-tile" role="option" tabindex="-1" aria-selected="false">
+            <div class="img-slot r-4-3"><img src="https://picsum.photos/seed/arthouzd0e36029/1200/1000" alt="weight of light hero" width="1200" height="1000" loading="lazy"></div>
+            <div class="cap">
+              <span class="fname">weight-of-light-hero.jpg</span>
+              <span class="fmeta"><span>2400×1600</span><span>1.6 MB</span></span>
+            </div>
+          </li>
+          <li class="media-tile" role="option" tabindex="-1" aria-selected="false">
+            <div class="img-slot r-4-3"><img src="https://picsum.photos/seed/arthouzb5bc6b66/1200/1000" alt="vijay pichumani portrait" width="1200" height="1000" loading="lazy"></div>
+            <div class="cap">
+              <span class="fname">vijay-pichumani-portrait.jpg</span>
+              <span class="fmeta"><span>1600×2000</span><span>880 KB</span></span>
+            </div>
+          </li>
+          <li class="media-tile" role="option" tabindex="-1" aria-selected="false">
+            <div class="img-slot r-4-3"><img src="https://picsum.photos/seed/arthouz72161599/1200/1000" alt="quiet matter hero" width="1200" height="1000" loading="lazy"></div>
+            <div class="cap">
+              <span class="fname">quiet-matter-hero.jpg</span>
+              <span class="fmeta"><span>2400×1600</span><span>1.4 MB</span></span>
+            </div>
+          </li>
+          <li class="media-tile" role="option" tabindex="-1" aria-selected="false">
+            <div class="img-slot r-4-3"><img src="https://picsum.photos/seed/arthouza4bef587/1200/1000" alt="art dubai 2026 booth" width="1200" height="1000" loading="lazy"></div>
+            <div class="cap">
+              <span class="fname">art-dubai-2026-booth.jpg</span>
+              <span class="fmeta"><span>2400×1600</span><span>2.1 MB</span></span>
+            </div>
+          </li>
+          <li class="media-tile" role="option" tabindex="-1" aria-selected="false">
+            <div class="img-slot r-4-3"><img src="https://picsum.photos/seed/arthouzc68f33ec/1200/1000" alt="" width="1200" height="1000" loading="lazy"></div>
+            <div class="cap">
+              <span class="fname">tidewater-green-shore.webp</span>
+              <span class="fmeta"><span class="noalt">No alt text</span></span>
+            </div>
+          </li>
+          <li class="media-tile" role="option" tabindex="-1" aria-selected="false">
+            <div class="img-slot r-4-3"><img src="https://picsum.photos/seed/arthouz768387ba/1200/1000" alt="line land lineage hero" width="1200" height="1000" loading="lazy"></div>
+            <div class="cap">
+              <span class="fname">line-land-lineage-hero.jpg</span>
+              <span class="fmeta"><span>2400×1600</span><span>1.3 MB</span></span>
+            </div>
+          </li>
+          <li class="media-tile" role="option" tabindex="-1" aria-selected="false">
+            <div class="img-slot r-4-3"><img src="https://picsum.photos/seed/arthouz5f2eb807/1200/1000" alt="seema kohli portrait" width="1200" height="1000" loading="lazy"></div>
+            <div class="cap">
+              <span class="fname">seema-kohli-portrait.jpg</span>
+              <span class="fmeta"><span>1600×2000</span><span>910 KB</span></span>
+            </div>
+          </li>
+          <li class="media-tile" role="option" tabindex="-1" aria-selected="false">
+            <div class="img-slot r-4-3"><img src="https://picsum.photos/seed/arthouz2d484387/1200/1000" alt="chennai gallery exterior" width="1200" height="1000" loading="lazy"></div>
+            <div class="cap">
+              <span class="fname">chennai-gallery-exterior.jpg</span>
+              <span class="fmeta"><span>2400×1600</span><span>1.8 MB</span></span>
+            </div>
+          </li>
+          <li class="media-tile" role="option" tabindex="-1" aria-selected="false">
+            <div class="img-slot r-4-3"><img src="https://picsum.photos/seed/arthouz52ac8996/1200/1000" alt="bengaluru gallery exterior" width="1200" height="1000" loading="lazy"></div>
+            <div class="cap">
+              <span class="fname">bengaluru-gallery-exterior.jpg</span>
+              <span class="fmeta"><span>2400×1600</span><span>1.7 MB</span></span>
+            </div>
+          </li>
+          <li class="media-tile" role="option" tabindex="-1" aria-selected="false">
+            <div class="img-slot r-4-3"><img src="https://picsum.photos/seed/arthouzcf50f037/1200/1000" alt="fifty sculptors nataraja" width="1200" height="1000" loading="lazy"></div>
+            <div class="cap">
+              <span class="fname">fifty-sculptors-nataraja.jpg</span>
+              <span class="fmeta"><span>2000×2000</span><span>1.1 MB</span></span>
+            </div>
+          </li>
+          <li class="media-tile" role="option" tabindex="-1" aria-selected="false">
+            <div class="img-slot r-4-3"><img src="https://picsum.photos/seed/arthouzf1a9dda2/1200/1000" alt="kolvel red earth" width="1200" height="1000" loading="lazy"></div>
+            <div class="cap">
+              <span class="fname">kolvel-red-earth.avif</span>
+              <span class="fmeta"><span>2400×1600</span><span>420 KB</span></span>
+            </div>
+          </li>
+          <li class="media-tile" role="option" tabindex="-1" aria-selected="false">
+            <div class="img-slot r-4-3"><img src="https://picsum.photos/seed/arthouzfaf61d4e/1200/1000" alt="naan yaar self portrait" width="1200" height="1000" loading="lazy"></div>
+            <div class="cap">
+              <span class="fname">naan-yaar-self-portrait.jpg</span>
+              <span class="fmeta"><span>1800×2250</span><span>1.0 MB</span></span>
+            </div>
+          </li>
+          <li class="media-tile" role="option" tabindex="-1" aria-selected="false">
+            <div class="img-slot r-4-3"><img src="https://picsum.photos/seed/arthouz26dffbf4/1200/1000" alt="" width="1200" height="1000" loading="lazy"></div>
+            <div class="cap">
+              <span class="fname">iaf-2025-main-hall.jpg</span>
+              <span class="fmeta"><span class="noalt">No alt text</span></span>
+            </div>
+          </li>
+          <li class="media-tile" role="option" tabindex="-1" aria-selected="false">
+            <div class="img-slot r-4-3"><img src="https://picsum.photos/seed/arthouz2a328b12/1200/1000" alt="reflections installation" width="1200" height="1000" loading="lazy"></div>
+            <div class="cap">
+              <span class="fname">reflections-installation.jpg</span>
+              <span class="fmeta"><span>2400×1600</span><span>1.5 MB</span></span>
+            </div>
+          </li>
+          <li class="media-tile" role="option" tabindex="-1" aria-selected="false">
+            <div class="img-slot r-4-3"><img src="https://picsum.photos/seed/arthouz49386c47/1200/1000" alt="parvathi nayar portrait" width="1200" height="1000" loading="lazy"></div>
+            <div class="cap">
+              <span class="fname">parvathi-nayar-portrait.jpg</span>
+              <span class="fmeta"><span>1600×2000</span><span>860 KB</span></span>
+            </div>
+          </li>
+          <li class="media-tile" role="option" tabindex="-1" aria-selected="false">
+            <div class="img-slot r-4-3"><img src="https://picsum.photos/seed/arthouz90bc0cec/1200/1000" alt="art sg 2025 booth" width="1200" height="1000" loading="lazy"></div>
+            <div class="cap">
+              <span class="fname">art-sg-2025-booth.jpg</span>
+              <span class="fmeta"><span>2400×1600</span><span>1.6 MB</span></span>
+            </div>
+          </li>
+          <li class="media-tile" role="option" tabindex="-1" aria-selected="false">
+            <div class="img-slot r-4-3"><img src="https://picsum.photos/seed/arthouz97314d3d/1200/1000" alt="by natures force mountain" width="1200" height="1000" loading="lazy"></div>
+            <div class="cap">
+              <span class="fname">by-natures-force-mountain.jpg</span>
+              <span class="fmeta"><span>2400×1600</span><span>1.3 MB</span></span>
+            </div>
+          </li>
+          </ul>
+          <nav class="pager" aria-label="Pagination">
+            <span>Showing 1–18 of 128</span>
+            <button class="btn" type="button">Load more</button>
+          </nav>
+        </div>
+
+        <aside class="detail card" aria-labelledby="d-h">
+          <div class="card-h"><h3 id="d-h">tidewater-hero.jpg</h3><button class="btn btn-ghost btn-icon btn-sm hit-x" type="button" aria-label="Close details"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+          <div class="card-b">
+            <div class="img-slot r-4-3"><img src="https://picsum.photos/seed/arthouza45e5f55/1200/1000" alt="Tidewater installation view, four large canvases of the southern coast in blue and ochre" width="1200" height="1000" loading="lazy"></div>
+            <div class="field">
+              <label for="alt">Alt text <span class="req" aria-hidden="true">*</span><span class="sr-only">(required)</span></label>
+              <textarea class="textarea alt" id="alt" rows="3" required aria-describedby="alt-help">Tidewater installation view, four large canvases of the southern coast in blue and ochre</textarea>
+              <span class="help" id="alt-help">Read aloud by screen readers. Required before the image can be used.</span>
+            </div>
+            <div class="field">
+              <label for="cap">Caption</label>
+              <input class="input" id="cap" value="Installation view, Art Houz Chennai, 2026">
+            </div>
+            <dl class="kv">
+              <div><dt>Dimensions</dt><dd>2400 × 1600 px</dd></div>
+              <div><dt>Size</dt><dd>1.2 MB</dd></div>
+              <div><dt>Format</dt><dd>JPEG</dd></div>
+              <div><dt>Uploaded</dt><dd>3 Oct 2026 by Priya</dd></div>
+              <div class="url-row"><dt>URL</dt><dd class="hstack url-dd"><span class="url" title="https://media.arthouz.com/2026/10/tidewater-hero.jpg">media.arthouz.com/2026/10/tidewater-hero.jpg</span><button class="btn btn-ghost btn-icon btn-sm hit-x" type="button" aria-label="Copy URL"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12"/><path d="M16 8V4H4v12h4"/></svg></button></dd></div>
+            </dl>
+            <div class="stack">
+              <span class="label">Used in</span>
+              <ul class="list used">
+                <li><div class="t"><a class="name" href="./exhibitions.html">Tidewater</a><div class="sub">Hero image</div></div></li>
+                <li><div class="t"><a class="name" href="./settings.html">Home</a><div class="sub">Artist in focus</div></div></li>
+              </ul>
+            </div>
+            <div class="hstack detail-actions">
+              <button class="btn" type="button"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg> Replace file</button>
+              <button class="btn btn-danger" type="button"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg> Delete</button>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+</div>
+<div class="modal-backdrop">
+  <div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="m-h" aria-describedby="m-p">
+    <h3 id="m-h">This image is in use</h3>
+    <p id="m-p">tidewater-hero.jpg is used in 2 places. Replace it there first, then delete it here.</p>
+    <ul class="list">
+      <li><div class="t"><a class="name" href="./exhibitions.html">Tidewater</a><div class="sub">Exhibition · hero image</div></div></li>
+      <li><div class="t"><a class="name" href="./settings.html">Home</a><div class="sub">Home &amp; settings · artist in focus</div></div></li>
+    </ul>
+    <div class="actions"><button class="btn btn-primary" type="button" autofocus>Close</button></div>
+  </div>
+</div>
+<script>
+const tiles = [...document.querySelectorAll('.media-tile')];
+tiles.forEach(t => t.addEventListener('click', () => tiles.forEach(x => { const on = x === t; x.setAttribute('aria-selected', on); x.tabIndex = on ? 0 : -1; })));
+const backdrop = document.querySelector('.modal-backdrop');
+backdrop.querySelector('.actions .btn').addEventListener('click', () => { backdrop.hidden = true; });
+document.querySelector('.btn-danger').addEventListener('click', () => { backdrop.hidden = false; });
+</script>
+</body>
+</html>

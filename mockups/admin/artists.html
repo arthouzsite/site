@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Art Houz CMS — Artists</title>
+<link rel="stylesheet" href="./mock.css">
+<style>
+.hit { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; cursor: pointer; }
+.hit-x { position: relative; }
+.hit-x::after { content: ''; position: absolute; inset: -6px; }
+.az { display: flex; flex-wrap: wrap; gap: 4px; border-top: 1px solid var(--line-ink); padding-top: 12px; }
+.az button { width: 36px; height: 36px; border: 1px solid transparent; background: none; font-family: var(--font-display); font-size: 20px; line-height: 1; color: var(--ink); transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease); }
+.az button:hover:not([disabled]) { border-color: var(--line-strong); }
+.az button[aria-pressed="true"] { color: var(--rust); border-color: var(--amber); }
+.az button[disabled] { color: var(--faint); opacity: 0.45; cursor: default; }
+.sortname { display: block; font-family: var(--font-ui); font-size: var(--fs-12); color: var(--muted); margin-top: 3px; }
+.fo { font-size: var(--fs-12); color: var(--rust); font-variant-numeric: tabular-nums; }
+.by { color: var(--faint); }
+table.data td { height: 56px; }
+.table-wrap { position: relative; }
+.table-wrap table.data th { position: static; }
+.feat-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; border-top: none; }
+.feat-list li { height: 60px; }
+.feat-list li:nth-child(-n+2) { border-top: 1px solid var(--line); }
+.feat-name { flex: 1; min-width: 0; font-size: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.feat-name:hover { color: var(--rust); }
+.feat-list .meta { white-space: nowrap; }
+@media (max-width: 1280px) { .feat-list .meta { display: none; } }
+@media (max-width: 760px) { .feat-list { grid-template-columns: 1fr; } .feat-list li:nth-child(2) { border-top: none; } .search input { width: 100%; } .search { flex: 1 1 100%; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" aria-label="CMS navigation">
+    <a class="brand" href="./dashboard.html" aria-label="Art Houz CMS home"><span class="brand-mark"></span><span class="brand-word">ART HOUZ</span></a>
+    <div class="brand-sub">Content</div>
+    <nav class="nav" aria-label="Sections">
+      <a href="./dashboard.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><span class="txt">Dashboard</span></span></a>
+      <a href="./exhibitions.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14"/><path d="M3 18l5-6 4 4 3-3 6 5"/></svg><span class="txt">Exhibitions</span></span><span class="count">9</span></a>
+      <a href="./artists.html" aria-current="page"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span class="txt">Artists</span></span><span class="count">55</span></a>
+      <a href="./fairs.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M3 21h18M5 21V8l7-4 7 4v13"/><path d="M9 21v-6h6v6"/></svg><span class="txt">Fairs</span></span><span class="count">4</span></a>
+      <a href="./news.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M4 5h13v14H4z"/><path d="M17 9h3v8a2 2 0 0 1-2 2H6"/><path d="M7 9h7M7 13h7"/></svg><span class="txt">News</span></span><span class="count">10</span></a>
+      <a href="./locations.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span class="txt">Locations</span></span><span class="count">2</span></a>
+      <a href="./about.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M9 12h6M9 16h6"/></svg><span class="txt">About page</span></span></a>
+      <a href="./settings.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="#161513"/><circle cx="15" cy="12" r="2" fill="#161513"/><circle cx="8" cy="18" r="2" fill="#161513"/></svg><span class="txt">Home &amp; settings</span></span></a>
+      <a href="./media.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14"/><circle cx="9" cy="10" r="1.5"/><path d="M21 16l-5-5-8 8"/></svg><span class="txt">Media</span></span><span class="count">128</span></a>
+      <a href="./users.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5"/><circle cx="17.5" cy="9" r="2.5"/><path d="M22 19c0-2.5-2-4-4.5-4"/></svg><span class="txt">Users</span></span></a>
+    </nav>
+    <div class="sidebar-foot">
+      <a href="#" class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg> View public site</a>
+      <span>Signed in as Priya · Editor</span>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <nav class="crumbs" aria-label="Breadcrumb"><a href="./dashboard.html">CMS</a><span class="sep">/</span><span class="here">Artists</span></nav>
+      <div class="topbar-actions">
+        <button class="kbd-search" type="button" aria-label="Search all content"><svg class="icon" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg><span class="txt">Search records</span><kbd>⌘K</kbd></button>
+        <span class="avatar" aria-label="Priya">P</span>
+      </div>
+    </header>
+
+    <main class="page">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Artists</h1>
+          <p class="page-sub">55 artists · 54 published · 6 featured</p>
+        </div>
+        <div class="page-actions">
+          <a class="btn btn-primary" href="./artist-edit.html"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> New artist</a>
+        </div>
+      </div>
+
+      <section class="card" aria-labelledby="feat-h">
+        <div class="card-h">
+          <h3 id="feat-h">Featured on the Artists page</h3>
+          <span class="small muted">6 of 6 slots</span>
+        </div>
+        <div class="card-b">
+          <ol class="ordered feat-list">
+            <li>
+              <span class="idx">1</span>
+              <img class="thumb" src="https://picsum.photos/seed/arthouzb5bc6b66/1200/1000" alt="" width="1200" height="1000" loading="lazy">
+              <a class="name display feat-name" href="./artist-edit.html">Vijay Pichumani</a>
+              <span class="meta">Painting &amp; wood carving, Chennai</span>
+              <span class="move">
+                <button class="btn btn-ghost btn-icon btn-sm hit-x" type="button" aria-label="Move Vijay Pichumani up" disabled><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
+                <button class="btn btn-ghost btn-icon btn-sm hit-x" type="button" aria-label="Move Vijay Pichumani down"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+              </span>
+            </li>
+            <li>
+              <span class="idx">2</span>
+              <img class="thumb" src="https://picsum.photos/seed/arthouz5f2eb807/1200/1000" alt="" width="1200" height="1000" loading="lazy">
+              <a class="name display feat-name" href="./artist-edit.html">Seema Kohli</a>
+              <span class="meta">Sculpture, Kochi</span>
+              <span class="move">
+                <button class="btn btn-ghost btn-icon btn-sm hit-x" type="button" aria-label="Move Seema Kohli up"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
+                <button class="btn btn-ghost btn-icon btn-sm hit-x" type="button" aria-label="Move Seema Kohli down"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+              </span>
+            </li>
+            <li>
+              <span class="idx">3</span>
+              <img class="thumb" src="https://picsum.photos/seed/arthouzfaf61d4e/1200/1000" alt="" width="1200" height="1000" loading="lazy">
+              <a class="name display feat-name" href="./artist-edit.html">Parvathi Nayar</a>
+              <span class="meta">Painting, Mumbai</span>
+              <span class="move">
+                <button class="btn btn-ghost btn-icon btn-sm hit-x" type="button" aria-label="Move Parvathi Nayar up"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
+                <button class="btn btn-ghost btn-icon btn-sm hit-x" type="button" aria-label="Move Parvathi Nayar down"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+              </span>
+            </li>
+            <li>
+              <span class="idx">4</span>
+              <img class="thumb" src="https://picsum.photos/seed/arthouzd0049e0b/1200/1000" alt="" width="1200" height="1000" loading="lazy">
+              <a class="name display feat-name" href="./artist-edit.html">S.G. Vasudev</a>
+              <span class="meta">Sculpture, New Delhi</span>
+              <span class="move">
+                <button class="btn btn-ghost btn-icon btn-sm hit-x" type="button" aria-label="Move S.G. Vasudev up"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
+                <button class="btn btn-ghost btn-icon btn-sm hit-x" type="button" aria-label="Move S.G. Vasudev down"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+              </span>
+            </li>
+            <li>
+              <span class="idx">5</span>
+              <img class="thumb" src="https://picsum.photos/seed/arthouz49386c47/1200/1000" alt="" width="1200" height="1000" loading="lazy">
+              <a class="name display feat-name" href="./artist-edit.html">K.M. Adimoolam</a>
+              <span class="meta">Drawing, Hyderabad</span>
+              <span class="move">
+                <button class="btn btn-ghost btn-icon btn-sm hit-x" type="button" aria-label="Move K.M. Adimoolam up"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
+                <button class="btn btn-ghost btn-icon btn-sm hit-x" type="button" aria-label="Move K.M. Adimoolam down"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+              </span>
+            </li>
+            <li>
+              <span class="idx">6</span>
+              <img class="thumb" src="https://picsum.photos/seed/arthouzb8ca5039/1200/1000" alt="" width="1200" height="1000" loading="lazy">
+              <a class="name display feat-name" href="./artist-edit.html">Madhvi Parekh</a>
+              <span class="meta">Painting, Bengaluru</span>
+              <span class="move">
+                <button class="btn btn-ghost btn-icon btn-sm hit-x" type="button" aria-label="Move Madhvi Parekh up"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
+                <button class="btn btn-ghost btn-icon btn-sm hit-x" type="button" aria-label="Move Madhvi Parekh down" disabled><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+              </span>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <div class="search">
+            <label class="sr-only" for="q">Search artists</label>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg>
+            <input id="q" type="search" placeholder="Search artists">
+          </div>
+          <label class="sr-only" for="f-feat">Featured</label>
+          <select class="select" id="f-feat"><option>Featured: all</option><option>Featured only</option><option>Not featured</option></select>
+          <label class="sr-only" for="f-pub">Published</label>
+          <select class="select" id="f-pub"><option>Published: all</option><option>Published</option><option>Draft</option></select>
+        </div>
+      </div>
+      <nav class="az" aria-label="Jump to letter"><button type="button" class="hit-x" aria-pressed="false">A</button><button type="button" class="hit-x" aria-pressed="false">B</button><button type="button" class="hit-x" aria-pressed="false">C</button><button type="button" class="hit-x" aria-pressed="false">D</button><button type="button" class="hit-x" disabled aria-label="E, no artists">E</button><button type="button" class="hit-x" disabled aria-label="F, no artists">F</button><button type="button" class="hit-x" aria-pressed="false">G</button><button type="button" class="hit-x" aria-pressed="false">H</button><button type="button" class="hit-x" disabled aria-label="I, no artists">I</button><button type="button" class="hit-x" aria-pressed="false">J</button><button type="button" class="hit-x" aria-pressed="true">K</button><button type="button" class="hit-x" aria-pressed="false">L</button><button type="button" class="hit-x" aria-pressed="false">M</button><button type="button" class="hit-x" aria-pressed="false">N</button><button type="button" class="hit-x" disabled aria-label="O, no artists">O</button><button type="button" class="hit-x" aria-pressed="false">P</button><button type="button" class="hit-x" disabled aria-label="Q, no artists">Q</button><button type="button" class="hit-x" aria-pressed="false">R</button><button type="button" class="hit-x" aria-pressed="false">S</button><button type="button" class="hit-x" aria-pressed="false">T</button><button type="button" class="hit-x" aria-pressed="false">U</button><button type="button" class="hit-x" aria-pressed="false">V</button><button type="button" class="hit-x" disabled aria-label="W, no artists">W</button><button type="button" class="hit-x" disabled aria-label="X, no artists">X</button><button type="button" class="hit-x" aria-pressed="false">Y</button><button type="button" class="hit-x" disabled aria-label="Z, no artists">Z</button></nav>
+
+      <div class="table-wrap">
+        <table class="data">
+          <caption class="sr-only">Artists, sorted by sort name, page 3 of 4</caption>
+          <thead>
+            <tr>
+              <th scope="col"><label class="hit"><input class="checkbox" type="checkbox" id="all" aria-label="Select all on this page"></label></th>
+              <th scope="col"><span class="sr-only">Portrait</span></th>
+              <th scope="col" class="sorted" aria-sort="ascending">Name</th>
+              <th scope="col">Medium</th>
+              <th scope="col">Base</th>
+              <th scope="col" style="text-align:right">Works</th>
+              <th scope="col">Featured</th>
+              <th scope="col">Published</th>
+              <th scope="col">Updated</th>
+              <th scope="col"><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><label class="hit"><input class="checkbox" type="checkbox" aria-label="Select K.C Murukeson"></label></td>
+              <td><img class="thumb portrait" src="https://picsum.photos/seed/arthouz5f2eb807/1200/1000" alt="" width="1200" height="1000" loading="lazy"></td>
+              <td class="title"><a href="./artist-edit.html">K.C Murukeson</a><span class="sortname">Sorted as KC Murukeson</span></td>
+              <td class="sub">Installation</td>
+              <td class="sub">Pune</td>
+              <td class="num">4</td>
+              <td><span class="hstack"><label class="hit"><input class="switch" type="checkbox" role="switch" aria-label="Featured: K.C Murukeson"></label></span></td>
+              <td><label class="hit"><input class="switch" type="checkbox" role="switch" checked aria-label="Published: K.C Murukeson"></label></td>
+              <td class="sub">28 Oct 2026 <span class="by">by Priya</span></td>
+              <td class="actions"><span class="hstack"><a class="btn btn-ghost btn-icon hit-x" href="./artist-edit.html" aria-label="Edit K.C Murukeson"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></a><a class="btn btn-ghost btn-icon hit-x" href="#" aria-label="View K.C Murukeson on site"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg></a></span></td>
+            </tr>
+            <tr>
+              <td><label class="hit"><input class="checkbox" type="checkbox" aria-label="Select K.C.S. Panikar"></label></td>
+              <td><img class="thumb portrait" src="https://picsum.photos/seed/arthouz2a328b12/1200/1000" alt="" width="1200" height="1000" loading="lazy"></td>
+              <td class="title"><a href="./artist-edit.html">K.C.S. Panikar</a><span class="sortname">Sorted as KCS Panikar</span></td>
+              <td class="sub">Painting</td>
+              <td class="sub">Kochi</td>
+              <td class="num">8</td>
+              <td><span class="hstack"><label class="hit"><input class="switch" type="checkbox" role="switch" aria-label="Featured: K.C.S. Panikar"></label></span></td>
+              <td><label class="hit"><input class="switch" type="checkbox" role="switch" checked aria-label="Published: K.C.S. Panikar"></label></td>
+              <td class="sub">12 Sep 2026 <span class="by">by Arun</span></td>
+              <td class="actions"><span class="hstack"><a class="btn btn-ghost btn-icon hit-x" href="./artist-edit.html" aria-label="Edit K.C.S. Panikar"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></a><a class="btn btn-ghost btn-icon hit-x" href="#" aria-label="View K.C.S. Panikar on site"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg></a></span></td>
+            </tr>
+            <tr>
+              <td><label class="hit"><input class="checkbox" type="checkbox" aria-label="Select K.M. Adimoolam"></label></td>
+              <td><img class="thumb portrait" src="https://picsum.photos/seed/arthouz49386c47/1200/1000" alt="" width="1200" height="1000" loading="lazy"></td>
+              <td class="title"><a href="./artist-edit.html">K.M. Adimoolam</a><span class="sortname">Sorted as KM Adimoolam</span></td>
+              <td class="sub">Drawing</td>
+              <td class="sub">Hyderabad</td>
+              <td class="num">11</td>
+              <td><span class="hstack"><label class="hit"><input class="switch" type="checkbox" role="switch" checked aria-label="Featured: K.M. Adimoolam" aria-describedby="r2-fo"></label><span class="fo" id="r2-fo" title="Featured order">5 of 6</span></span></td>
+              <td><label class="hit"><input class="switch" type="checkbox" role="switch" checked aria-label="Published: K.M. Adimoolam"></label></td>
+              <td class="sub">30 Oct 2026 <span class="by">by Priya</span></td>
+              <td class="actions"><span class="hstack"><a class="btn btn-ghost btn-icon hit-x" href="./artist-edit.html" aria-label="Edit K.M. Adimoolam"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></a><a class="btn btn-ghost btn-icon hit-x" href="#" aria-label="View K.M. Adimoolam on site"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg></a></span></td>
+            </tr>
+            <tr>
+              <td><label class="hit"><input class="checkbox" type="checkbox" aria-label="Select Kasa Vinay Kumar"></label></td>
+              <td><img class="thumb portrait" src="https://picsum.photos/seed/arthouz632a37ca/1200/1000" alt="" width="1200" height="1000" loading="lazy"></td>
+              <td class="title"><a href="./artist-edit.html">Kasa Vinay Kumar</a></td>
+              <td class="sub">Printmaking</td>
+              <td class="sub">Chennai</td>
+              <td class="num">10</td>
+              <td><span class="hstack"><label class="hit"><input class="switch" type="checkbox" role="switch" aria-label="Featured: Kasa Vinay Kumar"></label></span></td>
+              <td><label class="hit"><input class="switch" type="checkbox" role="switch" checked aria-label="Published: Kasa Vinay Kumar"></label></td>
+              <td class="sub">03 Aug 2026 <span class="by">by Arun</span></td>
+              <td class="actions"><span class="hstack"><a class="btn btn-ghost btn-icon hit-x" href="./artist-edit.html" aria-label="Edit Kasa Vinay Kumar"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></a><a class="btn btn-ghost btn-icon hit-x" href="#" aria-label="View Kasa Vinay Kumar on site"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg></a></span></td>
+            </tr>
+            <tr>
+              <td><label class="hit"><input class="checkbox" type="checkbox" aria-label="Select Laxman Aelay"></label></td>
+              <td><img class="thumb portrait" src="https://picsum.photos/seed/arthouz49386c47/1200/1000" alt="" width="1200" height="1000" loading="lazy"></td>
+              <td class="title"><a href="./artist-edit.html">Laxman Aelay</a></td>
+              <td class="sub">Installation</td>
+              <td class="sub">Kolkata</td>
+              <td class="num">4</td>
+              <td><span class="hstack"><label class="hit"><input class="switch" type="checkbox" role="switch" aria-label="Featured: Laxman Aelay"></label></span></td>
+              <td><label class="hit"><input class="switch" type="checkbox" role="switch" checked aria-label="Published: Laxman Aelay"></label></td>
+              <td class="sub">21 Jul 2026 <span class="by">by Priya</span></td>
+              <td class="actions"><span class="hstack"><a class="btn btn-ghost btn-icon hit-x" href="./artist-edit.html" aria-label="Edit Laxman Aelay"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></a><a class="btn btn-ghost btn-icon hit-x" href="#" aria-label="View Laxman Aelay on site"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg></a></span></td>
+            </tr>
+            <tr>
+              <td><label class="hit"><input class="checkbox" type="checkbox" aria-label="Select Madhvi Parekh"></label></td>
+              <td><img class="thumb portrait" src="https://picsum.photos/seed/arthouzb8ca5039/1200/1000" alt="" width="1200" height="1000" loading="lazy"></td>
+              <td class="title"><a href="./artist-edit.html">Madhvi Parekh</a></td>
+              <td class="sub">Painting</td>
+              <td class="sub">Bengaluru</td>
+              <td class="num">10</td>
+              <td><span class="hstack"><label class="hit"><input class="switch" type="checkbox" role="switch" checked aria-label="Featured: Madhvi Parekh" aria-describedby="r5-fo"></label><span class="fo" id="r5-fo" title="Featured order">6 of 6</span></span></td>
+              <td><label class="hit"><input class="switch" type="checkbox" role="switch" checked aria-label="Published: Madhvi Parekh"></label></td>
+              <td class="sub">29 Oct 2026 <span class="by">by Priya</span></td>
+              <td class="actions"><span class="hstack"><a class="btn btn-ghost btn-icon hit-x" href="./artist-edit.html" aria-label="Edit Madhvi Parekh"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></a><a class="btn btn-ghost btn-icon hit-x" href="#" aria-label="View Madhvi Parekh on site"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg></a></span></td>
+            </tr>
+            <tr>
+              <td><label class="hit"><input class="checkbox" type="checkbox" aria-label="Select Monica Ghule"></label></td>
+              <td><img class="thumb portrait" src="https://picsum.photos/seed/arthouz49386c47/1200/1000" alt="" width="1200" height="1000" loading="lazy"></td>
+              <td class="title"><a href="./artist-edit.html">Monica Ghule</a></td>
+              <td class="sub">Painting</td>
+              <td class="sub">Coimbatore</td>
+              <td class="num">11</td>
+              <td><span class="hstack"><label class="hit"><input class="switch" type="checkbox" role="switch" aria-label="Featured: Monica Ghule"></label></span></td>
+              <td><label class="hit"><input class="switch" type="checkbox" role="switch" checked aria-label="Published: Monica Ghule"></label></td>
+              <td class="sub">14 Jun 2026 <span class="by">by Arun</span></td>
+              <td class="actions"><span class="hstack"><a class="btn btn-ghost btn-icon hit-x" href="./artist-edit.html" aria-label="Edit Monica Ghule"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></a><a class="btn btn-ghost btn-icon hit-x" href="#" aria-label="View Monica Ghule on site"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg></a></span></td>
+            </tr>
+            <tr>
+              <td><label class="hit"><input class="checkbox" type="checkbox" aria-label="Select Mukesh Salvi"></label></td>
+              <td><img class="thumb portrait" src="https://picsum.photos/seed/arthouz768387ba/1200/1000" alt="" width="1200" height="1000" loading="lazy"></td>
+              <td class="title"><a href="./artist-edit.html">Mukesh Salvi</a> <span class="chip chip-draft">Draft</span></td>
+              <td class="sub">Painting</td>
+              <td class="sub">Vadodara</td>
+              <td class="num">4</td>
+              <td><span class="hstack"><label class="hit"><input class="switch" type="checkbox" role="switch" aria-label="Featured: Mukesh Salvi"></label></span></td>
+              <td><label class="hit"><input class="switch" type="checkbox" role="switch" aria-label="Published: Mukesh Salvi"></label></td>
+              <td class="sub">30 Oct 2026 <span class="by">by Priya</span></td>
+              <td class="actions"><span class="hstack"><a class="btn btn-ghost btn-icon hit-x" href="./artist-edit.html" aria-label="Edit Mukesh Salvi"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></a><a class="btn btn-ghost btn-icon hit-x" href="#" aria-label="View Mukesh Salvi on site"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg></a></span></td>
+            </tr>
+            <tr>
+              <td><label class="hit"><input class="checkbox" type="checkbox" aria-label="Select Murali Chinnaswamy"></label></td>
+              <td><img class="thumb portrait" src="https://picsum.photos/seed/arthouzc68f33ec/1200/1000" alt="" width="1200" height="1000" loading="lazy"></td>
+              <td class="title"><a href="./artist-edit.html">Murali Chinnaswamy</a></td>
+              <td class="sub">Painting</td>
+              <td class="sub">Kochi</td>
+              <td class="num">5</td>
+              <td><span class="hstack"><label class="hit"><input class="switch" type="checkbox" role="switch" aria-label="Featured: Murali Chinnaswamy"></label></span></td>
+              <td><label class="hit"><input class="switch" type="checkbox" role="switch" checked aria-label="Published: Murali Chinnaswamy"></label></td>
+              <td class="sub">02 May 2026 <span class="by">by Arun</span></td>
+              <td class="actions"><span class="hstack"><a class="btn btn-ghost btn-icon hit-x" href="./artist-edit.html" aria-label="Edit Murali Chinnaswamy"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></a><a class="btn btn-ghost btn-icon hit-x" href="#" aria-label="View Murali Chinnaswamy on site"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg></a></span></td>
+            </tr>
+            <tr>
+              <td><label class="hit"><input class="checkbox" type="checkbox" aria-label="Select N.K. Baskaran"></label></td>
+              <td><img class="thumb portrait" src="https://picsum.photos/seed/arthouz173ec65a/1200/1000" alt="" width="1200" height="1000" loading="lazy"></td>
+              <td class="title"><a href="./artist-edit.html">N.K. Baskaran</a></td>
+              <td class="sub">Mixed media</td>
+              <td class="sub">Kolkata</td>
+              <td class="num">6</td>
+              <td><span class="hstack"><label class="hit"><input class="switch" type="checkbox" role="switch" aria-label="Featured: N.K. Baskaran"></label></span></td>
+              <td><label class="hit"><input class="switch" type="checkbox" role="switch" checked aria-label="Published: N.K. Baskaran"></label></td>
+              <td class="sub">19 Mar 2026 <span class="by">by Priya</span></td>
+              <td class="actions"><span class="hstack"><a class="btn btn-ghost btn-icon hit-x" href="./artist-edit.html" aria-label="Edit N.K. Baskaran"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></a><a class="btn btn-ghost btn-icon hit-x" href="#" aria-label="View N.K. Baskaran on site"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg></a></span></td>
+            </tr>
+            <tr>
+              <td><label class="hit"><input class="checkbox" type="checkbox" aria-label="Select Parvathi Nayar"></label></td>
+              <td><img class="thumb portrait" src="https://picsum.photos/seed/arthouzfaf61d4e/1200/1000" alt="" width="1200" height="1000" loading="lazy"></td>
+              <td class="title"><a href="./artist-edit.html">Parvathi Nayar</a></td>
+              <td class="sub">Painting</td>
+              <td class="sub">Mumbai</td>
+              <td class="num">8</td>
+              <td><span class="hstack"><label class="hit"><input class="switch" type="checkbox" role="switch" checked aria-label="Featured: Parvathi Nayar" aria-describedby="r10-fo"></label><span class="fo" id="r10-fo" title="Featured order">3 of 6</span></span></td>
+              <td><label class="hit"><input class="switch" type="checkbox" role="switch" checked aria-label="Published: Parvathi Nayar"></label></td>
+              <td class="sub">27 Oct 2026 <span class="by">by Priya</span></td>
+              <td class="actions"><span class="hstack"><a class="btn btn-ghost btn-icon hit-x" href="./artist-edit.html" aria-label="Edit Parvathi Nayar"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></a><a class="btn btn-ghost btn-icon hit-x" href="#" aria-label="View Parvathi Nayar on site"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg></a></span></td>
+            </tr>
+            <tr>
+              <td><label class="hit"><input class="checkbox" type="checkbox" aria-label="Select Pa Sa Kumar"></label></td>
+              <td><img class="thumb portrait" src="https://picsum.photos/seed/arthouz768387ba/1200/1000" alt="" width="1200" height="1000" loading="lazy"></td>
+              <td class="title"><a href="./artist-edit.html">Pa Sa Kumar</a></td>
+              <td class="sub">Printmaking</td>
+              <td class="sub">Hyderabad</td>
+              <td class="num">4</td>
+              <td><span class="hstack"><label class="hit"><input class="switch" type="checkbox" role="switch" aria-label="Featured: Pa Sa Kumar"></label></span></td>
+              <td><label class="hit"><input class="switch" type="checkbox" role="switch" checked aria-label="Published: Pa Sa Kumar"></label></td>
+              <td class="sub">08 Feb 2026 <span class="by">by Arun</span></td>
+              <td class="actions"><span class="hstack"><a class="btn btn-ghost btn-icon hit-x" href="./artist-edit.html" aria-label="Edit Pa Sa Kumar"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></a><a class="btn btn-ghost btn-icon hit-x" href="#" aria-label="View Pa Sa Kumar on site"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg></a></span></td>
+            </tr>
+            <tr>
+              <td><label class="hit"><input class="checkbox" type="checkbox" aria-label="Select P Gnana"></label></td>
+              <td><img class="thumb portrait" src="https://picsum.photos/seed/arthouz768387ba/1200/1000" alt="" width="1200" height="1000" loading="lazy"></td>
+              <td class="title"><a href="./artist-edit.html">P Gnana</a></td>
+              <td class="sub">Installation</td>
+              <td class="sub">Kochi</td>
+              <td class="num">9</td>
+              <td><span class="hstack"><label class="hit"><input class="switch" type="checkbox" role="switch" aria-label="Featured: P Gnana"></label></span></td>
+              <td><label class="hit"><input class="switch" type="checkbox" role="switch" checked aria-label="Published: P Gnana"></label></td>
+              <td class="sub">11 Jan 2026 <span class="by">by Arun</span></td>
+              <td class="actions"><span class="hstack"><a class="btn btn-ghost btn-icon hit-x" href="./artist-edit.html" aria-label="Edit P Gnana"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></a><a class="btn btn-ghost btn-icon hit-x" href="#" aria-label="View P Gnana on site"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg></a></span></td>
+            </tr>
+            <tr>
+              <td><label class="hit"><input class="checkbox" type="checkbox" aria-label="Select P. Gopinath"></label></td>
+              <td><img class="thumb portrait" src="https://picsum.photos/seed/arthouz90bc0cec/1200/1000" alt="" width="1200" height="1000" loading="lazy"></td>
+              <td class="title"><a href="./artist-edit.html">P. Gopinath</a></td>
+              <td class="sub">Mixed media</td>
+              <td class="sub">Mumbai</td>
+              <td class="num">3</td>
+              <td><span class="hstack"><label class="hit"><input class="switch" type="checkbox" role="switch" aria-label="Featured: P. Gopinath"></label></span></td>
+              <td><label class="hit"><input class="switch" type="checkbox" role="switch" checked aria-label="Published: P. Gopinath"></label></td>
+              <td class="sub">24 Oct 2026 <span class="by">by Priya</span></td>
+              <td class="actions"><span class="hstack"><a class="btn btn-ghost btn-icon hit-x" href="./artist-edit.html" aria-label="Edit P. Gopinath"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></a><a class="btn btn-ghost btn-icon hit-x" href="#" aria-label="View P. Gopinath on site"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg></a></span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <nav class="pager" aria-label="Pagination">
+        <span>55 artists · page 3 of 4</span>
+        <span class="pages">
+          <button type="button" class="hit-x" aria-label="Previous page"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+          <button type="button" class="hit-x">1</button>
+          <button type="button" class="hit-x">2</button>
+          <button type="button" class="hit-x" aria-current="page">3</button>
+          <button type="button" class="hit-x">4</button>
+          <button type="button" class="hit-x" aria-label="Next page"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+        </span>
+      </nav>
+    </main>
+  </div>
+</div>
+<script>
+const all = document.getElementById('all');
+const rows = [...document.querySelectorAll('tbody tr')];
+const sync = () => rows.forEach(r => r.setAttribute('aria-selected', r.querySelector('.checkbox').checked));
+all.addEventListener('change', () => { rows.forEach(r => { r.querySelector('.checkbox').checked = all.checked; }); sync(); });
+rows.forEach(r => r.querySelector('.checkbox').addEventListener('change', sync));
+document.querySelectorAll('.az button:not([disabled])').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.az button[aria-pressed]').forEach(x => x.setAttribute('aria-pressed', x === b));
+}));
+</script>
+</body>
+</html>

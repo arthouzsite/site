@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="./mock.css">
+<title>Art Houz CMS — Sign in</title>
+<style>
+  .field p { margin: 0; }
+  table.data th { top: 0; }
+  .hit { min-width: 44px; min-height: 44px; display: inline-grid; place-items: center; }
+  .btn-icon.hit { width: 44px; height: 44px; }
+  .switch-hit { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; cursor: pointer; }
+  .field select.select { padding: 0 32px 0 12px; background: var(--surface-2) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235E5A54' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>") no-repeat right 12px center; appearance: none; }
+  .card-h h2 { margin: 0; font-size: var(--fs-12); letter-spacing: var(--track); text-transform: uppercase; font-weight: 500; }
+
+  .pw { position: relative; }
+  .pw .input { padding-right: 48px; }
+  .pw .toggle { position: absolute; right: 0; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; display: grid; place-items: center; border: none; background: none; color: var(--muted); }
+  .pw .toggle:hover { color: var(--ink); }
+  .login-card .btn-primary { width: 100%; height: 44px; }
+  .login-art .lock { display: flex; align-items: flex-end; gap: 10px; }
+  .login-notes { display: flex; flex-direction: column; gap: 6px; }
+</style>
+</head>
+<body>
+<div class="login">
+  <section class="login-art" aria-label="Art Houz">
+    <div class="lock"><span class="brand-mark"></span><span class="brand-word">ART HOUZ</span></div>
+    <p class="quote" style="margin:0">Contemporary art from South India. Chennai &amp; Bengaluru, since 2012.</p>
+    <p class="cap" style="margin:0">Art Houz CMS</p>
+  </section>
+  <main class="login-form">
+    <form class="login-card" action="./dashboard.html" method="post" novalidate>
+      <h1>Sign in</h1>
+      <div class="error-summary" role="alert" tabindex="-1" aria-labelledby="es-h">
+        <h4 id="es-h">There is a problem</h4>
+        <a href="#email">Enter a valid email address</a>
+      </div>
+      <div class="field" data-invalid><label for="email">Email</label><input class="input" type="email" id="email" aria-describedby="email-err" aria-invalid="true" value="priya@arthouz" autocomplete="username"><p class="err" id="email-err"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/></svg>Enter a valid email address</p></div>
+      <div class="field">
+        <label for="password">Password</label>
+        <div class="pw">
+          <input class="input" type="password" id="password" autocomplete="current-password" value="correcthorse">
+          <button type="button" class="toggle" aria-label="Show password" aria-pressed="false" aria-controls="password"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary">Sign in</button>
+      <div class="field login-notes">
+        <p class="err" id="rate" role="status"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Too many attempts. Try again in 4 minutes.</p>
+        <p class="small muted" style="margin:0">Access is by invitation. Ask an administrator.</p>
+      </div>
+    </form>
+  </main>
+</div>
+</body>
+</html>

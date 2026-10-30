@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Art Houz CMS — Mockups</title>
+<link rel="stylesheet" href="./mock.css">
+<style>
+  .cover { max-width: 1100px; margin: 0 auto; padding: 56px clamp(20px,4vw,56px) 96px; display: flex; flex-direction: column; gap: 40px; }
+  .cover h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(44px, 6vw, 84px); line-height: 0.95; letter-spacing: -0.015em; margin: 0; }
+  .cover .lede { font-family: var(--font-display); font-size: 24px; color: var(--body); max-width: 40em; margin: 0; }
+  .screens { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+  .screen { background: var(--surface); border: 1px solid var(--line); padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 8px; transition: border-color var(--dur) var(--ease); }
+  .screen:hover { border-color: var(--ink); }
+  .screen .n { font-family: var(--font-display); font-size: 24px; line-height: 1.05; }
+  .screen .d { font-size: var(--fs-13); color: var(--muted); }
+  .screen .k { margin-top: auto; padding-top: 10px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+</style>
+</head>
+<body>
+<div class="cover">
+  <div>
+    <div class="hstack" style="gap:10px;margin-bottom:28px"><span class="brand-mark"></span><span class="brand-word">ART HOUZ</span><span class="eyebrow" style="margin-left:12px">CMS mockups · 2026-10-30</span></div>
+    <h1>Content management for the Art Houz website</h1>
+    <p class="lede" style="margin-top:20px">Static HTML mockups of the admin. The public site is not mocked here: its design is the approved prototype, ported one-to-one.</p>
+  </div>
+
+  <div class="legend">
+    <span class="eyebrow">Status chips used throughout</span>
+    <span class="chip chip-current">Now on view</span><span class="chip chip-upcoming">Upcoming</span><span class="chip chip-past">Past</span><span class="chip chip-draft">Draft</span><span class="chip chip-live">Live</span>
+  </div>
+
+  <div>
+    <div class="section-rule"><h2>Screens</h2><span class="small muted">13 screens · open each in a new tab · resize to 375 / 768 / 1024 / 1440</span></div>
+    <div class="screens" style="margin-top:20px">
+      <a class="screen" href="./login.html"><span class="eyebrow">Auth</span><span class="n">Login</span><span class="d">Email + password, error summary, rate-limit message.</span><span class="k eyebrow amber">Open →</span></a>
+      <a class="screen" href="./dashboard.html"><span class="eyebrow">Overview</span><span class="n">Dashboard</span><span class="d">Now on view, upcoming, drafts, recently edited.</span><span class="k eyebrow amber">Open →</span></a>
+      <a class="screen" href="./exhibitions.html"><span class="eyebrow">Exhibitions</span><span class="n">Exhibitions list</span><span class="d">Filters, bulk publish, status chips, pager.</span><span class="k eyebrow amber">Open →</span></a>
+      <a class="screen" href="./exhibition-edit.html"><span class="eyebrow">Exhibitions</span><span class="n">Exhibition editor</span><span class="d">Dates, artists order, works picker, press, publish card.</span><span class="k eyebrow amber">Open →</span></a>
+      <a class="screen" href="./artists.html"><span class="eyebrow">Artists</span><span class="n">Artists list</span><span class="d">Search, featured toggle, A–Z letter.</span><span class="k eyebrow amber">Open →</span></a>
+      <a class="screen" href="./artist-edit.html"><span class="eyebrow">Artists</span><span class="n">Artist editor</span><span class="d">Profile fields, portrait, inline works grid.</span><span class="k eyebrow amber">Open →</span></a>
+      <a class="screen" href="./fairs.html"><span class="eyebrow">Fairs</span><span class="n">Fairs list</span><span class="d">Ordered list with move controls.</span><span class="k eyebrow amber">Open →</span></a>
+      <a class="screen" href="./news.html"><span class="eyebrow">News</span><span class="n">News list + editor</span><span class="d">Tamil titles, external link, exhibition link.</span><span class="k eyebrow amber">Open →</span></a>
+      <a class="screen" href="./locations.html"><span class="eyebrow">Locations</span><span class="n">Locations</span><span class="d">Chennai and Bengaluru cards with hours and map link.</span><span class="k eyebrow amber">Open →</span></a>
+      <a class="screen" href="./about.html"><span class="eyebrow">Pages</span><span class="n">About page</span><span class="d">Gallery, Proprietor, Services, Publications tabs.</span><span class="k eyebrow amber">Open →</span></a>
+      <a class="screen" href="./settings.html"><span class="eyebrow">Pages</span><span class="n">Home &amp; settings</span><span class="d">Hero layout, artist index, focus artist, footer.</span><span class="k eyebrow amber">Open →</span></a>
+      <a class="screen" href="./media.html"><span class="eyebrow">Library</span><span class="n">Media</span><span class="d">Upload, alt text, usage, delete guard.</span><span class="k eyebrow amber">Open →</span></a>
+      <a class="screen" href="./users.html"><span class="eyebrow">Admin only</span><span class="n">Users</span><span class="d">Invite, roles, disable; what each role can do.</span><span class="k eyebrow amber">Open →</span></a>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Art Houz CMS — Vijay Pichumani</title>
+<link rel="stylesheet" href="./mock.css">
+<style>
+.hit { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; cursor: pointer; }
+.hit-x { position: relative; }
+.hit-x::after { content: ''; position: absolute; inset: -6px; }
+.back { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-13); color: var(--muted); align-self: flex-start; min-height: 32px; }
+.back:hover { color: var(--ink); }
+.title-row { gap: 16px; flex-wrap: wrap; }
+.pub-toggle { gap: 10px; padding-right: 8px; }
+.cards { gap: 24px; }
+.born { max-width: 180px; }
+.textarea.lede { min-height: 0; font-family: var(--font-display); font-size: 18px; line-height: 1.4; }
+.works { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 24px 18px; }
+.work { display: flex; flex-direction: column; min-width: 0; }
+.work-cap { display: flex; align-items: flex-start; gap: 6px; padding-top: 10px; }
+.work-title { font-family: var(--font-display); font-style: italic; font-size: 17px; line-height: 1.2; }
+.work-meta { font-size: var(--fs-12); color: var(--muted); margin-top: 2px; }
+.work .move { display: flex; gap: 2px; opacity: 0.55; transition: opacity var(--dur) var(--ease); }
+.work:hover .move, .work:focus-within .move { opacity: 1; }
+.add-work { aspect-ratio: 1/1; justify-content: center; width: 100%; cursor: pointer; }
+.add-work span { font-size: var(--fs-12); }
+.focus-row { display: flex; align-items: center; gap: 14px; padding: 14px 20px; min-height: 64px; transition: border-color var(--dur) var(--ease); }
+.focus-row:hover { border-color: var(--ink); }
+.focus-ico { width: 36px; height: 36px; display: grid; place-items: center; background: var(--warn-bg); color: var(--rust); flex: none; }
+.focus-t { display: block; font-size: var(--fs-13); font-weight: 500; }
+.img-slot:focus-within .overlay { opacity: 1; }
+.kv { margin: 0; }
+.kv div { align-items: center; min-height: 48px; }
+@media (max-width: 1100px) { .aside { position: static; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" aria-label="CMS navigation">
+    <a class="brand" href="./dashboard.html" aria-label="Art Houz CMS home"><span class="brand-mark"></span><span class="brand-word">ART HOUZ</span></a>
+    <div class="brand-sub">Content</div>
+    <nav class="nav" aria-label="Sections">
+      <a href="./dashboard.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><span class="txt">Dashboard</span></span></a>
+      <a href="./exhibitions.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14"/><path d="M3 18l5-6 4 4 3-3 6 5"/></svg><span class="txt">Exhibitions</span></span><span class="count">9</span></a>
+      <a href="./artists.html" aria-current="page"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span class="txt">Artists</span></span><span class="count">55</span></a>
+      <a href="./fairs.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M3 21h18M5 21V8l7-4 7 4v13"/><path d="M9 21v-6h6v6"/></svg><span class="txt">Fairs</span></span><span class="count">4</span></a>
+      <a href="./news.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M4 5h13v14H4z"/><path d="M17 9h3v8a2 2 0 0 1-2 2H6"/><path d="M7 9h7M7 13h7"/></svg><span class="txt">News</span></span><span class="count">10</span></a>
+      <a href="./locations.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span class="txt">Locations</span></span><span class="count">2</span></a>
+      <a href="./about.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M9 12h6M9 16h6"/></svg><span class="txt">About page</span></span></a>
+      <a href="./settings.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="#161513"/><circle cx="15" cy="12" r="2" fill="#161513"/><circle cx="8" cy="18" r="2" fill="#161513"/></svg><span class="txt">Home &amp; settings</span></span></a>
+      <a href="./media.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14"/><circle cx="9" cy="10" r="1.5"/><path d="M21 16l-5-5-8 8"/></svg><span class="txt">Media</span></span><span class="count">128</span></a>
+      <a href="./users.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5"/><circle cx="17.5" cy="9" r="2.5"/><path d="M22 19c0-2.5-2-4-4.5-4"/></svg><span class="txt">Users</span></span></a>
+    </nav>
+    <div class="sidebar-foot">
+      <a href="#" class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg> View public site</a>
+      <span>Signed in as Priya · Editor</span>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <nav class="crumbs" aria-label="Breadcrumb"><a href="./dashboard.html">CMS</a><span class="sep">/</span><a href="./artists.html">Artists</a><span class="sep">/</span><span class="here">Vijay Pichumani</span></nav>
+      <div class="topbar-actions">
+        <button class="kbd-search" type="button" aria-label="Search all content"><svg class="icon" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg><span class="txt">Search records</span><kbd>⌘K</kbd></button>
+        <span class="avatar" aria-label="Priya">P</span>
+      </div>
+    </header>
+
+    <main class="page">
+      <a class="back hit-x" href="./artists.html"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> Artists</a>
+      <div class="page-head">
+        <div class="hstack title-row">
+          <h1 class="page-title">Vijay Pichumani</h1>
+          <span class="chip chip-live">Published</span>
+        </div>
+        <div class="page-actions">
+          <label class="hstack pub-toggle hit" for="pub-top"><input class="switch" type="checkbox" role="switch" id="pub-top" checked><span class="small">Published</span></label>
+          <a class="btn" href="#"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg> View on site</a>
+          <button class="btn btn-primary" type="button">Save</button>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="stack cards">
+          <section class="card" aria-labelledby="c-profile">
+            <div class="card-h"><h3 id="c-profile">Profile</h3></div>
+            <div class="card-b">
+              <div class="field">
+                <label for="name">Name <span class="req" aria-hidden="true">*</span></label>
+                <input class="input input-display" id="name" value="Vijay Pichumani" required>
+              </div>
+              <div class="row">
+                <div class="field">
+                  <label for="sort">Sort name</label>
+                  <input class="input" id="sort" value="Vijay Pichumani" aria-describedby="sort-help">
+                  <span class="help" id="sort-help">Controls the A–Z letter and ordering. Defaults to the name.</span>
+                </div>
+                <div class="field">
+                  <label for="slug">Slug</label>
+                  <div class="input-prefix"><span>arthouz.com/artists/</span><input id="slug" value="vijay-pichumani"></div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="field">
+                  <label for="medium">Medium</label>
+                  <input class="input" id="medium" value="Painting &amp; wood carving">
+                </div>
+                <div class="field">
+                  <label for="base">Base / lives and works in</label>
+                  <input class="input" id="base" value="Chennai">
+                </div>
+                <div class="field born">
+                  <label for="born">Born <span class="muted">(optional)</span></label>
+                  <input class="input" id="born" type="number" inputmode="numeric" min="1900" max="2026" value="1956">
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="card" aria-labelledby="c-text">
+            <div class="card-h"><h3 id="c-text">Text</h3></div>
+            <div class="card-b">
+              <div class="field">
+                <label for="lede">Lede</label>
+                <textarea class="textarea lede" id="lede" rows="2">Vijay Pichumani’s painting &amp; wood carving returns again and again to land, memory and the rituals of everyday life in South India.</textarea>
+              </div>
+              <div class="field">
+                <label for="bio">Bio</label>
+                <textarea class="textarea tall" id="bio">Born in 1956, Vijay Pichumani trained in fine arts before developing an independent practice in Chennai. The work has been shown across India and abroad, and is held in private and institutional collections. With Art Houz, the artist has taken part in group exhibitions in Chennai and Bengaluru and in presentations at international fairs.</textarea>
+              </div>
+            </div>
+          </section>
+
+          <section class="card" aria-labelledby="c-works">
+            <div class="card-h"><h3 id="c-works">Selected works</h3><span class="small muted">6 works</span></div>
+            <div class="card-b">
+              <ol class="works">
+            <li class="work">
+              <div class="img-slot r-1-1">
+                <img src="https://picsum.photos/seed/arthouz9b6f838e/1200/1000" alt="Red Earth, Acrylic on canvas, 2026" width="1200" height="1000" loading="lazy">
+                <div class="overlay">
+                  <button class="btn btn-sm" type="button" aria-label="Edit Red Earth">Edit</button>
+                  <button class="btn btn-sm" type="button" aria-label="Remove Red Earth">Remove</button>
+                </div>
+              </div>
+              <div class="work-cap">
+                <div class="grow">
+                  <div class="work-title">Red Earth</div>
+                  <div class="work-meta">2026 · Acrylic on canvas · 120 × 90 cm</div>
+                </div>
+                <span class="move">
+                  <button class="btn btn-ghost btn-icon btn-sm hit-x" type="button" aria-label="Move Red Earth earlier" disabled><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
+                  <button class="btn btn-ghost btn-icon btn-sm hit-x" type="button" aria-label="Move Red Earth later"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+                </span>
+              </div>
+            </li>
+            <li class="work">
+              <div class="img-slot r-1-1">
+                <img src="https://picsum.photos/seed/arthouz79b94ddd/1200/1000" alt="Kolam, Woodcut on paper, 2025" width="1200" height="1000" loading="lazy">
+                <div class="overlay">
+                  <button class="btn btn-sm" type="button" aria-label="Edit Kolam">Edit</button>
+                  <button class="btn btn-sm" type="button" aria-label="Remove Kolam">Remove</button>
+                </div>
+              </div>
+              <div class="work-cap">
+                <div class="grow">
+                  <div class="work-title">Kolam</div>
+                  <div class="work-meta">2025 · Woodcut on paper · 60 × 45 cm</div>
+                </div>
+                <span class="move">
+                  <button class="btn btn-ghost btn-icon btn-sm hit-x" type="button" aria-label="Move Kolam earlier"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
+                  <button class="btn btn-ghost btn-icon btn-sm hit-x" type="button" aria-label="Move Kolam later"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+                </span>
+              </div>
+            </li>
+            <li class="work">
+              <div class="img-slot r-1-1">
+                <img src="https://picsum.photos/seed/arthouz9694ca0c/1200/1000" alt="Field Notes, Acrylic on canvas, 2024" width="1200" height="1000" loading="lazy">
+                <div class="overlay">
+                  <button class="btn btn-sm" type="button" aria-label="Edit Field Notes">Edit</button>
+                  <button class="btn btn-sm" type="button" aria-label="Remove Field Notes">Remove</button>
+                </div>
+              </div>
+              <div class="work-cap">
+                <div class="grow">
+                  <div class="work-title">Field Notes</div>
+                  <div class="work-meta">2024 · Acrylic on canvas · 90 × 75 cm</div>
+                </div>
+                <span class="move">
+                  <button class="btn btn-ghost btn-icon btn-sm hit-x" type="button" aria-label="Move Field Notes earlier"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
+                  <button class="btn btn-ghost btn-icon btn-sm hit-x" type="button" aria-label="Move Field Notes later"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+                </span>
+              </div>
+            </li>
+            <li class="work">
+              <div class="img-slot r-1-1">
+                <img src="https://picsum.photos/seed/arthouz49386c47/1200/1000" alt="Night Garden, Woodcut on paper, 2023" width="1200" height="1000" loading="lazy">
+                <div class="overlay">
+                  <button class="btn btn-sm" type="button" aria-label="Edit Night Garden">Edit</button>
+                  <button class="btn btn-sm" type="button" aria-label="Remove Night Garden">Remove</button>
+                </div>
+              </div>
+              <div class="work-cap">
+                <div class="grow">
+                  <div class="work-title">Night Garden</div>
+                  <div class="work-meta">2023 · Woodcut on paper · 76 × 56 cm</div>
+                </div>
+                <span class="move">
+                  <button class="btn btn-ghost btn-icon btn-sm hit-x" type="button" aria-label="Move Night Garden earlier"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
+                  <button class="btn btn-ghost btn-icon btn-sm hit-x" type="button" aria-label="Move Night Garden later"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+                </span>
+              </div>
+            </li>
+            <li class="work">
+              <div class="img-slot r-1-1">
+                <img src="https://picsum.photos/seed/arthouzf534bce3/1200/1000" alt="Monsoon Study, Acrylic on canvas, 2021" width="1200" height="1000" loading="lazy">
+                <div class="overlay">
+                  <button class="btn btn-sm" type="button" aria-label="Edit Monsoon Study">Edit</button>
+                  <button class="btn btn-sm" type="button" aria-label="Remove Monsoon Study">Remove</button>
+                </div>
+              </div>
+              <div class="work-cap">
+                <div class="grow">
+                  <div class="work-title">Monsoon Study</div>
+                  <div class="work-meta">2021 · Acrylic on canvas · 150 × 120 cm</div>
+                </div>
+                <span class="move">
+                  <button class="btn btn-ghost btn-icon btn-sm hit-x" type="button" aria-label="Move Monsoon Study earlier"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
+                  <button class="btn btn-ghost btn-icon btn-sm hit-x" type="button" aria-label="Move Monsoon Study later"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+                </span>
+              </div>
+            </li>
+            <li class="work">
+              <div class="img-slot r-1-1">
+                <img src="https://picsum.photos/seed/arthouz632a37ca/1200/1000" alt="Salt Line, Acrylic on canvas, 2019" width="1200" height="1000" loading="lazy">
+                <div class="overlay">
+                  <button class="btn btn-sm" type="button" aria-label="Edit Salt Line">Edit</button>
+                  <button class="btn btn-sm" type="button" aria-label="Remove Salt Line">Remove</button>
+                </div>
+              </div>
+              <div class="work-cap">
+                <div class="grow">
+                  <div class="work-title">Salt Line</div>
+                  <div class="work-meta">2019 · Acrylic on canvas · 90 × 75 cm</div>
+                </div>
+                <span class="move">
+                  <button class="btn btn-ghost btn-icon btn-sm hit-x" type="button" aria-label="Move Salt Line earlier"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
+                  <button class="btn btn-ghost btn-icon btn-sm hit-x" type="button" aria-label="Move Salt Line later" disabled><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+                </span>
+              </div>
+            </li>
+                <li class="work">
+                  <button class="dropzone add-work" type="button"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><strong>Add work</strong><span>Image, title, year, medium, size</span></button>
+                </li>
+              </ol>
+            </div>
+          </section>
+
+          <section class="card" aria-labelledby="c-ex">
+            <div class="card-h"><h3 id="c-ex">Exhibitions with Art Houz</h3><span class="small muted">Managed from each exhibition</span></div>
+            <div class="card-b">
+              <ul class="list">
+            <li>
+              <img class="thumb" src="https://picsum.photos/seed/arthouz97314d3d/1200/1000" alt="" width="1200" height="1000" loading="lazy">
+              <div class="t"><a class="name" href="./exhibitions.html">By Nature's Force: Veli Vetridamakha Nagarkirathu</a><div class="sub">Chennai · February 2 – February 18, 2024</div></div>
+              <span class="chip chip-past">Past</span>
+            </li>
+            <li>
+              <img class="thumb" src="https://picsum.photos/seed/arthouzfaf61d4e/1200/1000" alt="" width="1200" height="1000" loading="lazy">
+              <div class="t"><a class="name" href="./exhibitions.html">Naan Yaar</a><div class="sub">Chennai · August 4 – August 26, 2023</div></div>
+              <span class="chip chip-past">Past</span>
+            </li>
+            <li>
+              <img class="thumb" src="https://picsum.photos/seed/arthouzf1a9dda2/1200/1000" alt="" width="1200" height="1000" loading="lazy">
+              <div class="t"><a class="name" href="./exhibitions.html">Kolvel</a><div class="sub">Chennai · November 6 – November 30, 2020</div></div>
+              <span class="chip chip-past">Past</span>
+            </li>
+              </ul>
+            </div>
+          </section>
+        </div>
+
+        <aside class="aside" aria-label="Portrait and visibility">
+          <section class="card" aria-labelledby="c-portrait">
+            <div class="card-h"><h3 id="c-portrait">Portrait</h3></div>
+            <div class="card-b">
+              <div>
+                <div class="img-slot r-4-5">
+                  <img src="https://picsum.photos/seed/arthouzb5bc6b66/1200/1000" alt="Vijay Pichumani in his Chennai studio" width="1200" height="1000" loading="lazy">
+                  <div class="overlay">
+                    <button class="btn btn-sm" type="button">Replace</button>
+                    <button class="btn btn-sm" type="button">Edit alt text</button>
+                  </div>
+                </div>
+                <div class="img-meta"><span>vijay-pichumani-portrait.jpg</span><span>1600×2000</span></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="card" aria-labelledby="c-vis">
+            <div class="card-h"><h3 id="c-vis">Visibility</h3></div>
+            <div class="card-b">
+              <dl class="kv mb-0">
+                <div><dt><label for="pub">Published</label></dt><dd><label class="hit"><input class="switch" type="checkbox" role="switch" id="pub" checked></label></dd></div>
+                <div><dt><label for="feat">Featured</label></dt><dd><label class="hit"><input class="switch" type="checkbox" role="switch" id="feat" checked></label></dd></div>
+                <div><dt>Featured order</dt><dd><a class="link" href="./artists.html">1 of 6</a></dd></div>
+                <div><dt>Last saved</dt><dd>30 Oct 2026, 10:42 by Priya</dd></div>
+              </dl>
+            </div>
+          </section>
+
+          <a class="card focus-row" href="./settings.html">
+            <span class="focus-ico"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-5h4v5"/></svg></span>
+            <span class="grow"><span class="focus-t">Shown on home as artist in focus</span><span class="small muted">Change in Home &amp; settings</span></span>
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg>
+          </a>
+        </aside>
+      </div>
+    </main>
+  </div>
+</div>
+</body>
+</html>

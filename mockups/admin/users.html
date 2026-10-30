@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Art Houz CMS — Users</title>
+<link rel="stylesheet" href="./mock.css">
+<style>
+  .users-grid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 24px; align-items: start; }
+  @media (max-width: 1100px) { .users-grid { grid-template-columns: 1fr; } }
+  .role { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-12); letter-spacing: 0.06em; }
+  .role::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--line-strong); }
+  .role.admin::before { background: var(--amber); }
+  .you { font-size: var(--fs-11); letter-spacing: var(--track); text-transform: uppercase; color: var(--rust); margin-left: 8px; }
+  .perm { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+  .perm li { display: grid; grid-template-columns: 1fr auto auto; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: var(--fs-13); align-items: center; }
+  .perm li span:not(:first-child) { width: 64px; text-align: center; font-size: var(--fs-11); letter-spacing: var(--track); text-transform: uppercase; color: var(--muted); }
+  .perm li .yes { color: var(--success); }
+  .perm .head span { color: var(--muted); }
+  .hit { position: relative; }
+  .hit::after { content: ''; position: absolute; inset: 50%; width: 44px; height: 44px; transform: translate(-50%, -50%); }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" aria-label="CMS navigation">
+    <a class="brand" href="./dashboard.html" aria-label="Art Houz CMS home"><span class="brand-mark"></span><span class="brand-word">ART HOUZ</span></a>
+    <div class="brand-sub">Content</div>
+    <nav class="nav" aria-label="Sections">
+      <a href="./dashboard.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><span class="txt">Dashboard</span></span></a>
+      <a href="./exhibitions.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14"/><path d="M3 18l5-6 4 4 3-3 6 5"/></svg><span class="txt">Exhibitions</span></span><span class="count">9</span></a>
+      <a href="./artists.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span class="txt">Artists</span></span><span class="count">55</span></a>
+      <a href="./fairs.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M3 21h18M5 21V8l7-4 7 4v13"/><path d="M9 21v-6h6v6"/></svg><span class="txt">Fairs</span></span><span class="count">4</span></a>
+      <a href="./news.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M4 5h13v14H4z"/><path d="M17 9h3v8a2 2 0 0 1-2 2H6"/><path d="M7 9h7M7 13h7"/></svg><span class="txt">News</span></span><span class="count">10</span></a>
+      <a href="./locations.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span class="txt">Locations</span></span><span class="count">2</span></a>
+      <a href="./about.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M9 12h6M9 16h6"/></svg><span class="txt">About page</span></span></a>
+      <a href="./settings.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="#161513"/><circle cx="15" cy="12" r="2" fill="#161513"/><circle cx="8" cy="18" r="2" fill="#161513"/></svg><span class="txt">Home &amp; settings</span></span></a>
+      <a href="./media.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14"/><circle cx="9" cy="10" r="1.5"/><path d="M21 16l-5-5-8 8"/></svg><span class="txt">Media</span></span><span class="count">128</span></a>
+      <a href="./users.html" aria-current="page"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5"/><circle cx="17.5" cy="9" r="2.5"/><path d="M22 19c0-2.5-2-4-4.5-4"/></svg><span class="txt">Users</span></span></a>
+    </nav>
+    <div class="sidebar-foot">
+      <a href="#" class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg> View public site</a>
+      <span>Signed in as Vincent · Admin</span>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <nav class="crumbs" aria-label="Breadcrumb"><a href="./dashboard.html">CMS</a><span class="sep">/</span><span class="here">Users</span></nav>
+      <div class="topbar-actions">
+        <button class="kbd-search" type="button" aria-label="Search all content"><svg class="icon" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg><span class="txt">Search records</span><kbd>⌘K</kbd></button>
+        <span class="avatar" aria-label="Vincent">V</span>
+      </div>
+    </header>
+
+    <main class="page">
+      <div class="page-head">
+        <div><h1 class="page-title">Users</h1><p class="page-sub">3 people can sign in</p></div>
+        <div class="page-actions"><button class="btn btn-primary" type="button"><svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Invite user</button></div>
+      </div>
+
+      <div class="users-grid">
+        <div class="table-wrap">
+          <table class="data">
+            <thead><tr><th scope="col">Name</th><th scope="col">Email</th><th scope="col">Role</th><th scope="col">Last sign-in</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>
+            <tbody>
+              <tr>
+                <td class="title" style="font-family:var(--font-ui);font-size:var(--fs-14)">Vincent Adaikalraj<span class="you">You</span></td>
+                <td class="sub">vincent@arthouz.com</td>
+                <td><span class="role admin">Admin</span></td>
+                <td class="sub">Today, 2:10 pm</td>
+                <td><span class="chip chip-live">Active</span></td>
+                <td class="actions"><button class="btn btn-ghost btn-sm btn-icon hit" type="button" aria-label="Edit Vincent Adaikalraj"><svg class="icon" viewBox="0 0 24 24"><path d="M4 20h4l10-10-4-4L4 16z"/><path d="M12 8l4 4"/></svg></button></td>
+              </tr>
+              <tr>
+                <td class="title" style="font-family:var(--font-ui);font-size:var(--fs-14)">Priya Raman</td>
+                <td class="sub">priya@arthouz.com</td>
+                <td><span class="role">Editor</span></td>
+                <td class="sub">Today, 1:42 pm</td>
+                <td><span class="chip chip-live">Active</span></td>
+                <td class="actions"><button class="btn btn-ghost btn-sm btn-icon hit" type="button" aria-label="Edit Priya Raman"><svg class="icon" viewBox="0 0 24 24"><path d="M4 20h4l10-10-4-4L4 16z"/><path d="M12 8l4 4"/></svg></button></td>
+              </tr>
+              <tr>
+                <td class="title" style="font-family:var(--font-ui);font-size:var(--fs-14)">Arun Kumar</td>
+                <td class="sub">arun@arthouz.com</td>
+                <td><span class="role">Editor</span></td>
+                <td class="sub">Never</td>
+                <td><span class="chip chip-draft">Invited</span></td>
+                <td class="actions"><button class="btn btn-ghost btn-sm btn-icon hit" type="button" aria-label="Edit Arun Kumar"><svg class="icon" viewBox="0 0 24 24"><path d="M4 20h4l10-10-4-4L4 16z"/><path d="M12 8l4 4"/></svg></button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="aside">
+          <section class="card" aria-labelledby="invite-h">
+            <div class="card-h"><h3 id="invite-h">Invite user</h3></div>
+            <form class="card-b" action="#" onsubmit="return false">
+              <div class="field"><label for="u-name">Name <span class="req" aria-hidden="true">*</span></label><input class="input" id="u-name" name="name" required placeholder="Full name"></div>
+              <div class="field"><label for="u-email">Email <span class="req" aria-hidden="true">*</span></label><input class="input" id="u-email" name="email" type="email" required placeholder="name@arthouz.com"></div>
+              <div class="field">
+                <label for="u-role">Role</label>
+                <select id="u-role" name="role" aria-describedby="u-role-help"><option>Editor</option><option>Admin</option></select>
+                <p class="help" id="u-role-help">Editors manage content and media. Admins also manage users and Home &amp; settings.</p>
+              </div>
+              <div class="field"><label for="u-pass">Temporary password <span class="req" aria-hidden="true">*</span></label><input class="input" id="u-pass" name="password" type="text" value="kolam-salt-line-2026" aria-describedby="u-pass-help"><p class="help" id="u-pass-help">Share it directly. They are asked to change it on first sign-in.</p></div>
+              <div class="hstack"><button class="btn btn-primary" type="submit">Send invite</button><button class="btn btn-ghost" type="button">Cancel</button></div>
+            </form>
+          </section>
+
+          <section class="card" aria-labelledby="perm-h">
+            <div class="card-h"><h3 id="perm-h">What each role can do</h3></div>
+            <div class="card-b">
+              <ul class="perm">
+                <li class="head"><span>Capability</span><span>Editor</span><span>Admin</span></li>
+                <li><span>Edit exhibitions, artists, fairs, news, locations, about</span><span class="yes">Yes</span><span class="yes">Yes</span></li>
+                <li><span>Publish and unpublish</span><span class="yes">Yes</span><span class="yes">Yes</span></li>
+                <li><span>Upload, edit and delete media</span><span class="yes">Yes</span><span class="yes">Yes</span></li>
+                <li><span>Delete records</span><span class="yes">Yes</span><span class="yes">Yes</span></li>
+                <li><span>Home &amp; settings</span><span>View</span><span class="yes">Yes</span></li>
+                <li><span>Invite and disable users</span><span>—</span><span class="yes">Yes</span></li>
+              </ul>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <div class="modal-backdrop" hidden>
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="dis-h">
+          <h3 id="dis-h">Disable Arun Kumar?</h3>
+          <p>They will be signed out and cannot sign in until re-enabled. Nothing they edited is changed.</p>
+          <div class="actions"><button class="btn btn-ghost" type="button">Cancel</button><button class="btn btn-danger" type="button">Disable</button></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</body>
+</html>

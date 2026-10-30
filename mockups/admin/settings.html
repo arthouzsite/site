@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Art Houz CMS — Home &amp; settings</title>
+<link rel="stylesheet" href="./mock.css">
+<style>
+  .field p { margin: 0; }
+  table.data th { top: 0; }
+  .hit { min-width: 44px; min-height: 44px; display: inline-grid; place-items: center; }
+  .btn-icon.hit { width: 44px; height: 44px; }
+  .switch-hit { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; cursor: pointer; }
+  .field select.select { padding: 0 32px 0 12px; background: var(--surface-2) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235E5A54' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>") no-repeat right 12px center; appearance: none; }
+  .card-h h2 { margin: 0; font-size: var(--fs-12); letter-spacing: var(--track); text-transform: uppercase; font-weight: 500; }
+
+  .settings { max-width: 920px; display: flex; flex-direction: column; gap: 24px; }
+  .radio-card { min-height: 44px; }
+  .radio-cards { max-width: 520px; }
+  .textarea.short { min-height: 80px; }
+  .savebar { position: sticky; bottom: 0; z-index: 10; display: flex; align-items: center; justify-content: flex-end; gap: 16px; padding: 14px 0; background: var(--bg); border-top: 1px solid var(--line); }
+  .savebar .btn { height: 44px; }
+  @media (max-width: 640px) { .savebar { bottom: 56px; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" aria-label="CMS navigation">
+    <a class="brand" href="./dashboard.html" aria-label="Art Houz CMS home"><span class="brand-mark"></span><span class="brand-word">ART HOUZ</span></a>
+    <div class="brand-sub">Content</div>
+    <nav class="nav" aria-label="Sections">
+      <a href="./dashboard.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><span class="txt">Dashboard</span></span></a>
+      <a href="./exhibitions.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14"/><path d="M3 18l5-6 4 4 3-3 6 5"/></svg><span class="txt">Exhibitions</span></span><span class="count">9</span></a>
+      <a href="./artists.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span class="txt">Artists</span></span><span class="count">55</span></a>
+      <a href="./fairs.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M3 21h18M5 21V8l7-4 7 4v13"/><path d="M9 21v-6h6v6"/></svg><span class="txt">Fairs</span></span><span class="count">4</span></a>
+      <a href="./news.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M4 5h13v14H4z"/><path d="M17 9h3v8a2 2 0 0 1-2 2H6"/><path d="M7 9h7M7 13h7"/></svg><span class="txt">News</span></span><span class="count">10</span></a>
+      <a href="./locations.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span class="txt">Locations</span></span><span class="count">2</span></a>
+      <a href="./about.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M9 12h6M9 16h6"/></svg><span class="txt">About page</span></span></a>
+      <a href="./settings.html" aria-current="page"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="#161513"/><circle cx="15" cy="12" r="2" fill="#161513"/><circle cx="8" cy="18" r="2" fill="#161513"/></svg><span class="txt">Home &amp; settings</span></span></a>
+      <a href="./media.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14"/><circle cx="9" cy="10" r="1.5"/><path d="M21 16l-5-5-8 8"/></svg><span class="txt">Media</span></span><span class="count">128</span></a>
+      <a href="./users.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5"/><circle cx="17.5" cy="9" r="2.5"/><path d="M22 19c0-2.5-2-4-4.5-4"/></svg><span class="txt">Users</span></span></a>
+    </nav>
+    <div class="sidebar-foot">
+      <a href="#" class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg> View public site</a>
+      <span>Signed in as Priya · Editor</span>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <nav class="crumbs" aria-label="Breadcrumb"><a href="./dashboard.html">CMS</a><span class="sep">/</span><span class="here">Home &amp; settings</span></nav>
+      <div class="topbar-actions">
+        <button class="kbd-search" type="button" aria-label="Search all content"><svg class="icon" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg><span class="txt">Search records</span><kbd>⌘K</kbd></button>
+        <span class="avatar" aria-label="Priya">P</span>
+      </div>
+    </header>
+
+    <main class="page">
+      
+      <div class="page-head">
+        <h1 class="page-title">Home &amp; settings</h1>
+      </div>
+      <form class="settings" action="#" method="post">
+        
+        <section class="card" aria-labelledby="hero-h">
+          <div class="card-h"><h2 id="hero-h">Home hero</h2></div>
+          <div class="card-b"><div class="field"><span class="label" id="hl-l">Hero layout</span><div class="radio-cards" role="radiogroup" aria-labelledby="hl-l"><div class="radio-card" role="radio" tabindex="0" aria-checked="true"><div class="mini" aria-hidden="true"><i style="left:6px;right:6px;top:6px;height:38px"></i><b style="left:6px;top:50px;width:55%"></b><b style="left:6px;top:60px;width:30%;opacity:.4"></b></div><span class="name">Full-bleed</span></div><div class="radio-card" role="radio" tabindex="-1" aria-checked="false"><div class="mini" aria-hidden="true"><b style="left:8px;top:16px;width:38%"></b><b style="left:8px;top:28px;width:30%"></b><b style="left:8px;top:44px;width:22%;opacity:.4"></b><i style="right:6px;top:6px;bottom:6px;width:44%"></i></div><span class="name">Split</span></div></div></div><div class="field"><label for="hero-ex">Hero exhibition</label><select class="select" id="hero-ex"><option selected>Automatic — most recent now on view (Tidewater)</option><option>Tidewater</option><option>The Weight of Light</option><option>Quiet Matter</option><option>Line, Land, Lineage</option><option>Reflections- A Journey in Two Perspectives</option><option>By Nature&#x27;s Force: Veli Vetridamakha Nagarkirathu</option><option>Naan Yaar</option><option>50 Indian Sculptors</option><option>Kolvel</option></select></div></div>
+        </section>
+        
+        <section class="card" aria-labelledby="focus-h">
+          <div class="card-h"><h2 id="focus-h">Artist in focus</h2></div>
+          <div class="card-b"><div class="field"><label for="f-artist">Artist</label><select class="select" id="f-artist"><option>Amol Pawar</option><option>A.V. Ilango</option><option>Bhaskara Rao Botcha</option><option>B.O. Shailesh</option><option>C. Douglas</option><option>Chandra Morkonda</option><option>Dhan Prasad</option><option>Dr. Sonali P. Chouhan</option><option>Gajraj Chavan</option><option>Gita Hudson</option><option>G. Subramaniam</option><option>Hanumantha Rao Devulapalli</option><option>Harish Ojha</option><option>Hemant Rao</option><option>Jasu Rawal</option><option>Kasa Vinay Kumar</option><option>K.C Murukeson</option><option>K.C.S. Panikar</option><option>K.M. Adimoolam</option><option>Laxman Aelay</option><option>Madhvi Parekh</option><option>Monica Ghule</option><option>Mukesh Salvi</option><option>Murali Chinnaswamy</option><option>N.K. Baskaran</option><option>Parvathi Nayar</option><option>Pa Sa Kumar</option><option>P Gnana</option><option>P. Gopinath</option><option>P.J. Stalin</option><option>Pradeep Unni</option><option>Priyendra Shukla</option><option>Rahul Mhetre</option><option>Raju Durshettiwar</option><option>Ranjith Raman</option><option>Ravindra Narayanan</option><option>R.M. Palaniappan</option><option>Romicon Revola</option><option>Sachin Baburao Akalekar</option><option>Sachin Jaltare</option><option>Santhosh D. Andrade</option><option>Seema Kohli</option><option>S.G. Vasudev</option><option>Sonal Varshneya</option><option>T. Athiveerapandian</option><option>Uttam Bhattacharya</option><option>Uttam Manna</option><option>V. Anamika</option><option>Venkatachalapathi</option><option selected>Vijay Pichumani</option><option>Visveswara Rao</option><option>Viswam</option><option>Vivek Nimbolkar</option><option>V. Madhu</option><option>Yuvan Bothysathuvar</option></select></div><div class="row"><div class="field"><label for="f-medium">Medium label</label><input class="input" type="text" id="f-medium" value="Painting &amp; wood carving"></div><div class="field"><label for="f-base">Base label</label><input class="input" type="text" id="f-base" value="Chennai"></div></div><div class="field"><label for="f-text">Text</label><textarea class="textarea" id="f-text">Vijay Pichumani has shown with Art Houz since 2020, from Kolvel, made during the lockdowns, to By Nature’s Force at Lalit Kala Akademi. His paintings and black-and-white wood carvings come out of long journeys by bike across Tamil Nadu, reading each region through the colour of its soil.</textarea></div><div class="field"><span class="label">Image</span><div class="img-slot r-1-1" style="width:200px"><img src="https://picsum.photos/seed/arthouz97314d3d/1200/1000" width="1200" height="1000" loading="lazy" alt="Work by Vijay Pichumani"><div class="overlay"><button type="button" class="btn">Replace</button><button type="button" class="btn">Edit alt</button><button type="button" class="btn">Remove</button></div></div></div></div>
+        </section>
+        
+        <section class="card" aria-labelledby="line-h">
+          <div class="card-h"><h2 id="line-h">Artists line on home</h2></div>
+          <div class="card-b"><div class="field"><label for="a-count">Number of artists</label><input class="input" type="number" id="a-count" aria-describedby="a-count-help" value="22" min="1" max="55" style="max-width:140px"><p class="help" id="a-count-help">Alphabetical by sort name</p></div></div>
+        </section>
+        
+        <section class="card" aria-labelledby="index-h">
+          <div class="card-h"><h2 id="index-h">Artists page</h2></div>
+          <div class="card-b"><div class="field"><span class="label" id="ai-l">Index layout</span><div class="radio-cards" role="radiogroup" aria-labelledby="ai-l"><div class="radio-card" role="radio" tabindex="0" aria-checked="true"><div class="mini" aria-hidden="true"><b style="left:8px;top:8px;width:10px;background:var(--amber);opacity:1"></b><b style="left:24px;top:8px;width:40%;opacity:.4"></b><b style="left:24px;top:18px;width:32%;opacity:.4"></b><b style="left:8px;top:36px;width:10px;background:var(--amber);opacity:1"></b><b style="left:24px;top:36px;width:44%;opacity:.4"></b><b style="left:24px;top:46px;width:28%;opacity:.4"></b><b style="left:24px;top:56px;width:36%;opacity:.4"></b></div><span class="name">Grouped A–Z</span></div><div class="radio-card" role="radio" tabindex="-1" aria-checked="false"><div class="mini" aria-hidden="true"><b style="left:8px;top:12px;width:26%;opacity:.4"></b><b style="left:38%;top:12px;width:22%;opacity:.4"></b><b style="left:64%;top:12px;width:28%;opacity:.4"></b><b style="left:8px;top:26px;width:34%;opacity:.4"></b><b style="left:46%;top:26px;width:20%;opacity:.4"></b><b style="left:70%;top:26px;width:22%;opacity:.4"></b><b style="left:8px;top:40px;width:20%;opacity:.4"></b><b style="left:32%;top:40px;width:30%;opacity:.4"></b><b style="left:66%;top:40px;width:18%;opacity:.4"></b><b style="left:8px;top:54px;width:28%;opacity:.4"></b><b style="left:40%;top:54px;width:24%;opacity:.4"></b></div><span class="name">Flowing</span></div></div></div></div>
+        </section>
+        
+        <section class="card" aria-labelledby="footer-h">
+          <div class="card-h"><h2 id="footer-h">Footer</h2></div>
+          <div class="card-b"><div class="field"><label for="ft-tag">Tagline</label><input class="input" type="text" id="ft-tag" value="Contemporary art from South India. Chennai &amp; Bengaluru, since 2012."></div><div class="row"><div class="field"><label for="ft-ig">Instagram URL</label><input class="input" type="url" id="ft-ig" value="https://www.instagram.com/"></div><div class="field"><label for="ft-fb">Facebook URL</label><input class="input" type="url" id="ft-fb" value="https://www.facebook.com/"></div></div><div class="field"><label for="ft-year">Copyright from year</label><input class="input" type="number" id="ft-year" aria-describedby="ft-year-help" value="2012" min="1990" max="2026" style="max-width:140px"><p class="help" id="ft-year-help">Renders as © 2012 – 2026</p></div></div>
+        </section>
+        
+        <section class="card" aria-labelledby="site-h">
+          <div class="card-h"><h2 id="site-h">Site</h2></div>
+          <div class="card-b"><div class="field"><label for="s-title">Title</label><input class="input" type="text" id="s-title" value="Art Houz"></div><div class="field"><label for="s-desc">Description</label><textarea class="textarea short" id="s-desc">Art Houz is one of the leading contemporary art galleries from South-India.</textarea></div><div class="field"><span class="label">Social share image</span><div class="img-slot r-3-2" style="width:280px;max-width:100%"><img src="https://picsum.photos/seed/arthouz6644829f/1200/1000" width="1200" height="1000" loading="lazy" alt="Art Houz gallery interior"><div class="overlay"><button type="button" class="btn">Replace</button><button type="button" class="btn">Edit alt</button><button type="button" class="btn">Remove</button></div></div></div></div>
+        </section>
+        <div class="savebar"><button type="submit" class="btn btn-primary">Save settings</button></div>
+      </form>
+
+    </main>
+  </div>
+</div>
+</body>
+</html>

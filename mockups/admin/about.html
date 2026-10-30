@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Art Houz CMS — About page</title>
+<link rel="stylesheet" href="./mock.css">
+<style>
+  .field p { margin: 0; }
+  table.data th { top: 0; }
+  .hit { min-width: 44px; min-height: 44px; display: inline-grid; place-items: center; }
+  .btn-icon.hit { width: 44px; height: 44px; }
+  .switch-hit { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; cursor: pointer; }
+  .field select.select { padding: 0 32px 0 12px; background: var(--surface-2) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235E5A54' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>") no-repeat right 12px center; appearance: none; }
+  .card-h h2 { margin: 0; font-size: var(--fs-12); letter-spacing: var(--track); text-transform: uppercase; font-weight: 500; }
+
+  .tabs button { min-height: 44px; }
+  .disp-area { height: auto; min-height: 0; padding: 10px 12px; line-height: 1.15; resize: vertical; }
+  .quote-area { font-family: var(--font-display); font-style: italic; font-size: 20px; line-height: 1.35; }
+  .btn.save { height: 44px; width: 100%; }
+  [role="tabpanel"][hidden] { display: none; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" aria-label="CMS navigation">
+    <a class="brand" href="./dashboard.html" aria-label="Art Houz CMS home"><span class="brand-mark"></span><span class="brand-word">ART HOUZ</span></a>
+    <div class="brand-sub">Content</div>
+    <nav class="nav" aria-label="Sections">
+      <a href="./dashboard.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><span class="txt">Dashboard</span></span></a>
+      <a href="./exhibitions.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14"/><path d="M3 18l5-6 4 4 3-3 6 5"/></svg><span class="txt">Exhibitions</span></span><span class="count">9</span></a>
+      <a href="./artists.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span class="txt">Artists</span></span><span class="count">55</span></a>
+      <a href="./fairs.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M3 21h18M5 21V8l7-4 7 4v13"/><path d="M9 21v-6h6v6"/></svg><span class="txt">Fairs</span></span><span class="count">4</span></a>
+      <a href="./news.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M4 5h13v14H4z"/><path d="M17 9h3v8a2 2 0 0 1-2 2H6"/><path d="M7 9h7M7 13h7"/></svg><span class="txt">News</span></span><span class="count">10</span></a>
+      <a href="./locations.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span class="txt">Locations</span></span><span class="count">2</span></a>
+      <a href="./about.html" aria-current="page"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M9 12h6M9 16h6"/></svg><span class="txt">About page</span></span></a>
+      <a href="./settings.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="#161513"/><circle cx="15" cy="12" r="2" fill="#161513"/><circle cx="8" cy="18" r="2" fill="#161513"/></svg><span class="txt">Home &amp; settings</span></span></a>
+      <a href="./media.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14"/><circle cx="9" cy="10" r="1.5"/><path d="M21 16l-5-5-8 8"/></svg><span class="txt">Media</span></span><span class="count">128</span></a>
+      <a href="./users.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5"/><circle cx="17.5" cy="9" r="2.5"/><path d="M22 19c0-2.5-2-4-4.5-4"/></svg><span class="txt">Users</span></span></a>
+    </nav>
+    <div class="sidebar-foot">
+      <a href="#" class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg> View public site</a>
+      <span>Signed in as Priya · Editor</span>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <nav class="crumbs" aria-label="Breadcrumb"><a href="./dashboard.html">CMS</a><span class="sep">/</span><span class="here">About page</span></nav>
+      <div class="topbar-actions">
+        <button class="kbd-search" type="button" aria-label="Search all content"><svg class="icon" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg><span class="txt">Search records</span><kbd>⌘K</kbd></button>
+        <span class="avatar" aria-label="Priya">P</span>
+      </div>
+    </header>
+
+    <main class="page">
+      
+      <div class="page-head">
+        <div><h1 class="page-title">About page</h1><p class="page-sub">Four tabs, as on the public site</p></div>
+      </div>
+      <div class="tabs" role="tablist" aria-label="About sections"><button type="button" role="tab" id="tab-gallery" aria-controls="panel-gallery" aria-selected="true">Gallery</button><button type="button" role="tab" id="tab-proprietor" aria-controls="panel-proprietor" aria-selected="false" tabindex="-1">Proprietor</button><button type="button" role="tab" id="tab-services" aria-controls="panel-services" aria-selected="false" tabindex="-1">Services</button><button type="button" role="tab" id="tab-publications" aria-controls="panel-publications" aria-selected="false" tabindex="-1">Publications</button></div>
+      
+      <section class="form-grid" role="tabpanel" id="panel-gallery" aria-labelledby="tab-gallery">
+        <div class="card">
+          <div class="card-h"><h2>Gallery</h2></div>
+          <div class="card-b"><div class="field"><label for="g-statement">Statement</label><textarea class="textarea input-display disp-area" id="g-statement" rows="2">Art Houz is one of the leading contemporary art galleries from South-India.</textarea></div><div class="field"><label for="g-body">Body</label><textarea class="textarea tall" id="g-body">Founded in 2012 by Vincent Adaikalraj, Art Houz has achieved significant importance, mounting some of the most important shows from the Indian art scene. Our focus is on young emerging artists with an experimental approach to practice and expand the horizons of South Indian art audience. Not confining its presence within its own local premises, Art Houz plans to represent artists under its brand at international fairs through collaborations with other galleries, art institutions and initiatives. Through this we aim to produce an essential component of ‘the contemporary’ at important art tangents.</textarea></div><div class="field"><label for="g-link">Locations link label</label><input class="input" type="text" id="g-link" aria-describedby="g-link-help" value="Our locations — Chennai &amp; Bengaluru"><p class="help" id="g-link-help">Links to Visit</p></div></div>
+        </div>
+        <div class="aside">
+          <div class="card"><div class="card-b">
+            <div class="field"><span class="label">Image</span><div class="img-slot r-4-3"><img src="https://picsum.photos/seed/arthouz6644829f/1200/1000" width="1200" height="1000" loading="lazy" alt="Art Houz gallery interior"><div class="overlay"><button type="button" class="btn">Replace</button><button type="button" class="btn">Edit alt</button><button type="button" class="btn">Remove</button></div></div></div>
+            <button type="submit" class="btn btn-primary save">Save section</button>
+          </div></div>
+        </div>
+      </section>
+      
+      <section class="form-grid" role="tabpanel" id="panel-proprietor" aria-labelledby="tab-proprietor" hidden>
+        <div class="card">
+          <div class="card-h"><h2>Proprietor</h2></div>
+          <div class="card-b"><div class="field"><label for="p-eyebrow">Eyebrow label</label><input class="input" type="text" id="p-eyebrow" value="Founder &amp; Proprietor"></div><div class="field"><label for="p-name">Name</label><input class="input input-display" type="text" id="p-name" value="Vincent Adaikalraj"></div><div class="field"><label for="p-quote">Quote</label><textarea class="textarea quote-area" id="p-quote">‘My vision is to create stimulating possibilities in every domain of business. My mission is to believe these possibilities already exist and are simply waiting to be discovered’.</textarea></div><div class="field"><label for="p-body">Body</label><textarea class="textarea tall" id="p-body">In Vincent Adaikalraj’s world, possibility is a state of being. An entrepreneur with a difference, Adaikalraj’s interests are wide-ranging and dominant as they are particular and subtle. His interest in the realm of contemporary art, for instance, is just one example of his multi-faceted personality and his relentless passion for uncompromising quality. With the establishment of Art Houz Gallery in Chennai, Vincent Adaikalraj was not merely running a space for art and all things related to art, but was making a statement - that which spoke of redefining existing norms and creating, well, possibilities. The gallery’s resounding success in Chennai was thanks to its predecesor in Coimbatore, eventually leading to another successful gallery in Bengaluru. Under the LA 5 Global Publications banner, Adaikalraj also publishes one of the country’s best arts and design magazine, Arts Illustrated, and runs Corel Academy, the first-of-its-kind digital art studio, giving budding artists an unparalleled platform for global recognition. Vincent Adaikalraj is also the owner of Jenney’s Residency and the popular Black Thunder amusement park in Coimbatore, the newly launched family entertainment zone in Ooty, Thunder World, apart from handling businesses in the sphere of education and beverages.</textarea></div></div>
+        </div>
+        <div class="aside">
+          <div class="card"><div class="card-b">
+            <div class="field"><span class="label">Image</span><div class="img-slot r-4-5"><img src="https://picsum.photos/seed/arthouz82af60b3/1200/1000" width="1200" height="1000" loading="lazy" alt="Vincent Adaikalraj"><div class="overlay"><button type="button" class="btn">Replace</button><button type="button" class="btn">Edit alt</button><button type="button" class="btn">Remove</button></div></div></div>
+            <button type="submit" class="btn btn-primary save">Save section</button>
+          </div></div>
+        </div>
+      </section>
+      
+      <section class="form-grid" role="tabpanel" id="panel-services" aria-labelledby="tab-services" hidden>
+        <div class="card">
+          <div class="card-h"><h2>Services</h2></div>
+          <div class="card-b"><div class="field"><label for="s-title">Title</label><input class="input input-display" type="text" id="s-title" value="Framing Services"></div><div class="field"><label for="s-body">Body</label><textarea class="textarea" id="s-body">Opt for our top-notch framing services, providing a diverse selection tailored to elevate your collection; our wooden frames with vinyl coating exude sophistication, customized to enhance your artwork&#x27;s aesthetic appeal, catering to contemporary and traditional styles.</textarea></div><div class="field"><label for="s-cta">CTA label</label><input class="input" type="text" id="s-cta" aria-describedby="s-cta-help" value="Enquire →"><p class="help" id="s-cta-help">Links to Visit</p></div></div>
+        </div>
+        <div class="aside">
+          <div class="card"><div class="card-b">
+            <div class="field"><span class="label">Image</span><div class="img-slot r-3-2"><img src="https://picsum.photos/seed/arthouz79b94ddd/1200/1000" width="1200" height="1000" loading="lazy" alt="Framed artwork"><div class="overlay"><button type="button" class="btn">Replace</button><button type="button" class="btn">Edit alt</button><button type="button" class="btn">Remove</button></div></div></div>
+            <button type="submit" class="btn btn-primary save">Save section</button>
+          </div></div>
+        </div>
+      </section>
+      
+      <section class="form-grid" role="tabpanel" id="panel-publications" aria-labelledby="tab-publications" hidden>
+        <div class="card">
+          <div class="card-h"><h2>Publications</h2></div>
+          <div class="card-b"><div class="field"><label for="u-title">Title</label><input class="input input-display" type="text" id="u-title" value="Arts Illustrated"></div><div class="field"><label for="u-body">Body</label><textarea class="textarea tall" id="u-body">Arts Illustrated is a pan-India magazine dedicated to the different facets of contemporary art. It delves deep into the visual art and design narrative, Offering a global and contemporary perspective. Taking on the topical and dynamic ideas currently shaping the cultural landscape, through the many facets of Art, Cinema, Architecture, Design, Photography, Theatre and Literature, It presents a carefully curated collection that makes for an exciting read. The magazine, out once every two months, Is published by LA 5 Global Publications and is distributed across India.</textarea></div><div class="field"><label for="u-url">External URL</label><input class="input" type="url" id="u-url" aria-describedby="u-url-help" value="" placeholder="https://"><p class="help" id="u-url-help">Shown as ‘View more ↗’</p></div></div>
+        </div>
+        <div class="aside">
+          <div class="card"><div class="card-b">
+            <div class="field"><span class="label">Image</span><div class="img-slot r-3-2"><img src="https://picsum.photos/seed/arthouzb2bc0fc2/1200/1000" width="1200" height="1000" loading="lazy" alt="Arts Illustrated covers"><div class="overlay"><button type="button" class="btn">Replace</button><button type="button" class="btn">Edit alt</button><button type="button" class="btn">Remove</button></div></div></div>
+            <button type="submit" class="btn btn-primary save">Save section</button>
+          </div></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+<script>
+(function () {
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('[role="tab"]'));
+  function select(tab) {
+    tabs.forEach(function (t) {
+      var on = t === tab;
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      t.tabIndex = on ? 0 : -1;
+      document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+    });
+    tab.focus();
+  }
+  tabs.forEach(function (t, i) {
+    t.addEventListener('click', function () { select(t); });
+    t.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowRight') select(tabs[(i + 1) % tabs.length]);
+      if (e.key === 'ArrowLeft') select(tabs[(i - 1 + tabs.length) % tabs.length]);
+    });
+  });
+})();
+</script>
+</body>
+</html>

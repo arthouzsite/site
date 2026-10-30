@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Art Houz CMS — Exhibitions</title>
+<link rel="stylesheet" href="./mock.css">
+<style>
+  .hit { display: inline-grid; place-items: center; min-width: 44px; min-height: 44px; cursor: pointer; }
+  .btn-sm, .seg button, .pager .pages button, .bulkbar .btn { position: relative; }
+  .btn-sm::before, .seg button::before, .pager .pages button::before, .bulkbar .btn::before {
+    content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, 44px); height: 44px; transform: translate(-50%, -50%);
+  }
+  table.data td.title .subline { display: block; margin-top: 3px; font-family: var(--font-ui); font-size: var(--fs-13); line-height: 1.35; color: var(--muted); }
+  table.data td.title { padding-top: 10px; padding-bottom: 10px; }
+  .field .help, .field .err { margin: 0; }
+  [hidden] { display: none !important; }
+  table.data .thumb { max-width: none; }
+  .table-wrap table.data th { top: 0; }
+  .bulkbar .count { white-space: nowrap; }
+  @media (max-width: 640px) {
+    .bulkbar { flex-wrap: wrap; height: auto; min-height: 48px; padding: 8px 16px; gap: 8px 16px; }
+    .toast { bottom: 72px; right: 16px; left: 16px; }
+    .topbar { gap: 12px; }
+    .crumbs { min-width: 0; overflow: hidden; white-space: nowrap; gap: 6px; }
+  }
+  .tool-field { display: flex; flex-direction: column; gap: 6px; }
+  .toolbar-left { align-items: flex-end; gap: 12px 20px; }
+  .bulkbar .count { font-weight: 500; }
+  table.data th, table.data td { padding-left: 10px; padding-right: 10px; }
+  table.data td.title { min-width: 220px; }
+  table.data td.dates { white-space: normal; min-width: 150px; max-width: 190px; line-height: 1.35; }
+  @media (max-width: 640px) { .search input { width: 100%; } .search, .tool-field { flex: 1 1 100%; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" aria-label="CMS navigation">
+    <a class="brand" href="./dashboard.html" aria-label="Art Houz CMS home"><span class="brand-mark"></span><span class="brand-word">ART HOUZ</span></a>
+    <div class="brand-sub">Content</div>
+    <nav class="nav" aria-label="Sections">
+      <a href="./dashboard.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><span class="txt">Dashboard</span></span></a>
+      <a href="./exhibitions.html" aria-current="page"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14"/><path d="M3 18l5-6 4 4 3-3 6 5"/></svg><span class="txt">Exhibitions</span></span><span class="count">9</span></a>
+      <a href="./artists.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span class="txt">Artists</span></span><span class="count">55</span></a>
+      <a href="./fairs.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M3 21h18M5 21V8l7-4 7 4v13"/><path d="M9 21v-6h6v6"/></svg><span class="txt">Fairs</span></span><span class="count">4</span></a>
+      <a href="./news.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M4 5h13v14H4z"/><path d="M17 9h3v8a2 2 0 0 1-2 2H6"/><path d="M7 9h7M7 13h7"/></svg><span class="txt">News</span></span><span class="count">10</span></a>
+      <a href="./locations.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span class="txt">Locations</span></span><span class="count">2</span></a>
+      <a href="./about.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M9 12h6M9 16h6"/></svg><span class="txt">About page</span></span></a>
+      <a href="./settings.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="#161513"/><circle cx="15" cy="12" r="2" fill="#161513"/><circle cx="8" cy="18" r="2" fill="#161513"/></svg><span class="txt">Home &amp; settings</span></span></a>
+      <a href="./media.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14"/><circle cx="9" cy="10" r="1.5"/><path d="M21 16l-5-5-8 8"/></svg><span class="txt">Media</span></span><span class="count">128</span></a>
+      <a href="./users.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5"/><circle cx="17.5" cy="9" r="2.5"/><path d="M22 19c0-2.5-2-4-4.5-4"/></svg><span class="txt">Users</span></span></a>
+    </nav>
+    <div class="sidebar-foot">
+      <a href="#" class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg> View public site</a>
+      <span>Signed in as Priya · Editor</span>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <nav class="crumbs" aria-label="Breadcrumb"><a href="./dashboard.html">CMS</a><span class="sep">/</span><span class="here">Exhibitions</span></nav>
+      <div class="topbar-actions">
+        <button class="kbd-search" type="button" aria-label="Search all content"><svg class="icon" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg><span class="txt">Search records</span><kbd>⌘K</kbd></button>
+        <span class="avatar" aria-label="Priya">P</span>
+      </div>
+    </header>
+
+    <main class="page">
+      <header class="page-head">
+        <h1 class="page-title">Exhibitions</h1>
+        <div class="page-actions">
+          <a class="btn btn-primary" href="./exhibition-edit.html"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> New exhibition</a>
+        </div>
+      </header>
+
+      <section class="toolbar" aria-label="Filter exhibitions">
+        <div class="toolbar-left">
+          <div class="tool-field">
+            <label class="label" for="q">Search</label>
+            <div class="search">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg>
+              <input id="q" type="search" placeholder="Title, artist or venue">
+            </div>
+          </div>
+          <div class="tool-field" role="group" aria-labelledby="status-label">
+            <span class="label" id="status-label">Status</span>
+            <div class="seg" data-seg>
+              <button type="button" aria-pressed="true">All</button>
+              <button type="button" aria-pressed="false">Now on view</button>
+              <button type="button" aria-pressed="false">Upcoming</button>
+              <button type="button" aria-pressed="false">Past</button>
+            </div>
+          </div>
+          <div class="tool-field">
+            <label class="label" for="city">City</label>
+            <select class="select" id="city">
+              <option>All cities</option><option>Bengaluru</option><option>Chennai</option><option>Dubai</option><option>London</option><option>Singapore</option>
+            </select>
+          </div>
+          <div class="tool-field">
+            <label class="label" for="pub">Published</label>
+            <select class="select" id="pub">
+              <option>Any</option><option>Published</option><option>Draft</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <div class="bulkbar" role="region" aria-label="Bulk actions">
+        <span class="count">2 selected</span>
+        <button class="btn btn-sm" type="button">Publish</button>
+        <button class="btn btn-sm" type="button">Unpublish</button>
+        <span class="spacer"></span>
+        <button class="btn btn-sm" type="button">Clear</button>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data">
+          <caption class="sr-only">Exhibitions, 9 records</caption>
+          <thead>
+            <tr>
+              <th scope="col"><label class="hit"><input class="checkbox" type="checkbox" aria-label="Select all exhibitions"></label></th>
+              <th scope="col"><span class="sr-only">Image</span></th>
+              <th scope="col">Title</th>
+              <th scope="col">Type</th>
+              <th scope="col">City</th>
+              <th scope="col" class="sorted" aria-sort="descending">Dates</th>
+              <th scope="col">Status</th>
+              <th scope="col">Published</th>
+              <th scope="col">Updated</th>
+              <th scope="col"><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><label class="hit"><input class="checkbox" type="checkbox" aria-label="Select Tidewater"></label></td>
+              <td><img class="thumb" src="https://picsum.photos/seed/arthouza45e5f55/1200/1000" width="56" height="42" alt="" loading="lazy"></td>
+              <td class="title"><a href="./exhibition-edit.html">Tidewater</a><span class="subline">New painting from the southern coast</span></td>
+              <td><span class="chip chip-group">Group</span></td>
+              <td>Chennai</td>
+              <td class="sub dates">October 3 – November 22, 2026</td>
+              <td><span class="chip chip-current">Now on view</span></td>
+              <td><span class="hstack"><label class="hit"><input class="switch" type="checkbox" role="switch" checked aria-label="Published: Tidewater"></label></span></td>
+              <td class="sub"><time datetime="2026-10-30T10:42">2 min ago</time></td>
+              <td class="actions"><span class="hstack">
+                <a class="btn btn-ghost btn-icon btn-sm" href="./exhibition-edit.html" aria-label="Edit Tidewater"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></a>
+                <a class="btn btn-ghost btn-icon btn-sm" href="#" aria-label="View Tidewater on site"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg></a>
+              </span></td>
+            </tr>
+            <tr>
+              <td><label class="hit"><input class="checkbox" type="checkbox" aria-label="Select The Weight of Light"></label></td>
+              <td><img class="thumb" src="https://picsum.photos/seed/arthouzd0e36029/1200/1000" width="56" height="42" alt="" loading="lazy"></td>
+              <td class="title"><a href="./exhibition-edit.html">The Weight of Light</a><span class="subline">A Solo Show by Seema Kohli</span></td>
+              <td><span class="chip chip-solo">Solo</span></td>
+              <td>Dubai</td>
+              <td class="sub dates">January 14 – February 28, 2027</td>
+              <td><span class="chip chip-upcoming">Upcoming</span></td>
+              <td><span class="hstack"><label class="hit"><input class="switch" type="checkbox" role="switch" aria-label="Published: The Weight of Light"></label><span class="chip chip-draft">Draft</span></span></td>
+              <td class="sub"><time datetime="2026-10-30T09:15">1 hr ago</time></td>
+              <td class="actions"><span class="hstack">
+                <a class="btn btn-ghost btn-icon btn-sm" href="./exhibition-edit.html" aria-label="Edit The Weight of Light"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></a>
+                <a class="btn btn-ghost btn-icon btn-sm" href="#" aria-label="View The Weight of Light on site"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg></a>
+              </span></td>
+            </tr>
+            <tr aria-selected="true">
+              <td><label class="hit"><input class="checkbox" type="checkbox" checked aria-label="Select Quiet Matter"></label></td>
+              <td><img class="thumb" src="https://picsum.photos/seed/arthouz72161599/1200/1000" width="56" height="42" alt="" loading="lazy"></td>
+              <td class="title"><a href="./exhibition-edit.html">Quiet Matter</a><span class="subline">Sculpture by Rahul Mhetre</span></td>
+              <td><span class="chip chip-solo">Solo</span></td>
+              <td>Singapore</td>
+              <td class="sub dates">June 12 – July 26, 2026</td>
+              <td><span class="chip chip-past">Past</span></td>
+              <td><span class="hstack"><label class="hit"><input class="switch" type="checkbox" role="switch" checked aria-label="Published: Quiet Matter"></label></span></td>
+              <td class="sub"><time datetime="2026-10-29T16:20">Yesterday</time></td>
+              <td class="actions"><span class="hstack">
+                <a class="btn btn-ghost btn-icon btn-sm" href="./exhibition-edit.html" aria-label="Edit Quiet Matter"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></a>
+                <a class="btn btn-ghost btn-icon btn-sm" href="#" aria-label="View Quiet Matter on site"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg></a>
+              </span></td>
+            </tr>
+            <tr aria-selected="true">
+              <td><label class="hit"><input class="checkbox" type="checkbox" checked aria-label="Select Line, Land, Lineage"></label></td>
+              <td><img class="thumb" src="https://picsum.photos/seed/arthouz768387ba/1200/1000" width="56" height="42" alt="" loading="lazy"></td>
+              <td class="title"><a href="./exhibition-edit.html">Line, Land, Lineage</a><span class="subline">Three generations of Indian modernism</span></td>
+              <td><span class="chip chip-group">Group</span></td>
+              <td>London</td>
+              <td class="sub dates">March 6 – April 18, 2026</td>
+              <td><span class="chip chip-past">Past</span></td>
+              <td><span class="hstack"><label class="hit"><input class="switch" type="checkbox" role="switch" checked aria-label="Published: Line, Land, Lineage"></label></span></td>
+              <td class="sub"><time datetime="2026-10-27T11:05">3 days ago</time></td>
+              <td class="actions"><span class="hstack">
+                <a class="btn btn-ghost btn-icon btn-sm" href="./exhibition-edit.html" aria-label="Edit Line, Land, Lineage"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></a>
+                <a class="btn btn-ghost btn-icon btn-sm" href="#" aria-label="View Line, Land, Lineage on site"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg></a>
+              </span></td>
+            </tr>
+            <tr>
+              <td><label class="hit"><input class="checkbox" type="checkbox" aria-label="Select Reflections- A Journey in Two Perspectives"></label></td>
+              <td><img class="thumb" src="https://picsum.photos/seed/arthouzc68f33ec/1200/1000" width="56" height="42" alt="" loading="lazy"></td>
+              <td class="title"><a href="./exhibition-edit.html">Reflections- A Journey in Two Perspectives</a><span class="subline">Two artists in conversation</span></td>
+              <td><span class="chip chip-group">Group</span></td>
+              <td>Bengaluru</td>
+              <td class="sub dates">September 14, 2024 – September 30, 2024</td>
+              <td><span class="chip chip-past">Past</span></td>
+              <td><span class="hstack"><label class="hit"><input class="switch" type="checkbox" role="switch" checked aria-label="Published: Reflections- A Journey in Two Perspectives"></label></span></td>
+              <td class="sub"><time datetime="2026-10-12T14:30">Oct 12</time></td>
+              <td class="actions"><span class="hstack">
+                <a class="btn btn-ghost btn-icon btn-sm" href="./exhibition-edit.html" aria-label="Edit Reflections- A Journey in Two Perspectives"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></a>
+                <a class="btn btn-ghost btn-icon btn-sm" href="#" aria-label="View Reflections- A Journey in Two Perspectives on site"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg></a>
+              </span></td>
+            </tr>
+            <tr>
+              <td><label class="hit"><input class="checkbox" type="checkbox" aria-label="Select By Nature's Force: Veli Vetridamakha Nagarkirathu"></label></td>
+              <td><img class="thumb" src="https://picsum.photos/seed/arthouz97314d3d/1200/1000" width="56" height="42" alt="" loading="lazy"></td>
+              <td class="title"><a href="./exhibition-edit.html">By Nature's Force: Veli Vetridamakha Nagarkirathu</a><span class="subline">A Solo Show by Vijay Pichumani</span></td>
+              <td><span class="chip chip-solo">Solo</span></td>
+              <td>Chennai</td>
+              <td class="sub dates">February 2 – February 18, 2024</td>
+              <td><span class="chip chip-past">Past</span></td>
+              <td><span class="hstack"><label class="hit"><input class="switch" type="checkbox" role="switch" checked aria-label="Published: By Nature's Force: Veli Vetridamakha Nagarkirathu"></label></span></td>
+              <td class="sub"><time datetime="2026-09-28T12:00">Sep 28</time></td>
+              <td class="actions"><span class="hstack">
+                <a class="btn btn-ghost btn-icon btn-sm" href="./exhibition-edit.html" aria-label="Edit By Nature's Force: Veli Vetridamakha Nagarkirathu"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></a>
+                <a class="btn btn-ghost btn-icon btn-sm" href="#" aria-label="View By Nature's Force: Veli Vetridamakha Nagarkirathu on site"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg></a>
+              </span></td>
+            </tr>
+            <tr>
+              <td><label class="hit"><input class="checkbox" type="checkbox" aria-label="Select Naan Yaar"></label></td>
+              <td><img class="thumb" src="https://picsum.photos/seed/arthouzfaf61d4e/1200/1000" width="56" height="42" alt="" loading="lazy"></td>
+              <td class="title"><a href="./exhibition-edit.html">Naan Yaar</a><span class="subline">A Solo Show by Vijay Pichumani</span></td>
+              <td><span class="chip chip-solo">Solo</span></td>
+              <td>Chennai</td>
+              <td class="sub dates">August 4 – August 26, 2023</td>
+              <td><span class="chip chip-past">Past</span></td>
+              <td><span class="hstack"><label class="hit"><input class="switch" type="checkbox" role="switch" checked aria-label="Published: Naan Yaar"></label></span></td>
+              <td class="sub"><time datetime="2026-09-28T11:40">Sep 28</time></td>
+              <td class="actions"><span class="hstack">
+                <a class="btn btn-ghost btn-icon btn-sm" href="./exhibition-edit.html" aria-label="Edit Naan Yaar"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></a>
+                <a class="btn btn-ghost btn-icon btn-sm" href="#" aria-label="View Naan Yaar on site"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg></a>
+              </span></td>
+            </tr>
+            <tr>
+              <td><label class="hit"><input class="checkbox" type="checkbox" aria-label="Select 50 Indian Sculptors"></label></td>
+              <td><img class="thumb" src="https://picsum.photos/seed/arthouzcf50f037/1200/1000" width="56" height="42" alt="" loading="lazy"></td>
+              <td class="title"><a href="./exhibition-edit.html">50 Indian Sculptors</a><span class="subline">A group exhibition and book launch</span></td>
+              <td><span class="chip chip-group">Group</span></td>
+              <td>Chennai</td>
+              <td class="sub dates">January 6 – February 4, 2023</td>
+              <td><span class="chip chip-past">Past</span></td>
+              <td><span class="hstack"><label class="hit"><input class="switch" type="checkbox" role="switch" checked aria-label="Published: 50 Indian Sculptors"></label></span></td>
+              <td class="sub"><time datetime="2026-08-19T17:10">Aug 19</time></td>
+              <td class="actions"><span class="hstack">
+                <a class="btn btn-ghost btn-icon btn-sm" href="./exhibition-edit.html" aria-label="Edit 50 Indian Sculptors"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></a>
+                <a class="btn btn-ghost btn-icon btn-sm" href="#" aria-label="View 50 Indian Sculptors on site"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg></a>
+              </span></td>
+            </tr>
+            <tr>
+              <td><label class="hit"><input class="checkbox" type="checkbox" aria-label="Select Kolvel"></label></td>
+              <td><img class="thumb" src="https://picsum.photos/seed/arthouzf1a9dda2/1200/1000" width="56" height="42" alt="" loading="lazy"></td>
+              <td class="title"><a href="./exhibition-edit.html">Kolvel</a><span class="subline">A Solo Show by Vijay Pichumani</span></td>
+              <td><span class="chip chip-solo">Solo</span></td>
+              <td>Chennai</td>
+              <td class="sub dates">November 6 – November 30, 2020</td>
+              <td><span class="chip chip-past">Past</span></td>
+              <td><span class="hstack"><label class="hit"><input class="switch" type="checkbox" role="switch" checked aria-label="Published: Kolvel"></label></span></td>
+              <td class="sub"><time datetime="2026-07-02T10:00">Jul 2</time></td>
+              <td class="actions"><span class="hstack">
+                <a class="btn btn-ghost btn-icon btn-sm" href="./exhibition-edit.html" aria-label="Edit Kolvel"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></a>
+                <a class="btn btn-ghost btn-icon btn-sm" href="#" aria-label="View Kolvel on site"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg></a>
+              </span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <nav class="pager" aria-label="Pagination">
+        <span>Showing 1–9 of 9</span>
+        <div class="pages">
+          <button type="button" aria-label="Previous page" disabled><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
+          <button type="button" aria-current="page">1</button>
+          <button type="button" aria-label="Next page" disabled><svg style="transform:scaleX(-1)" class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
+        </div>
+      </nav>
+    </main>
+  </div>
+</div>
+<div class="toast" role="status"><span class="dot" aria-hidden="true"></span>Saved · Tidewater</div>
+<script>
+document.querySelectorAll('[data-seg]').forEach(function (seg) {
+  seg.addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    seg.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+  });
+});
+</script>
+</body>
+</html>

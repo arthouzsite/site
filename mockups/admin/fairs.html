@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Art Houz CMS — Fairs</title>
+<link rel="stylesheet" href="./mock.css">
+<style>
+  .hit { display: inline-grid; place-items: center; min-width: 44px; min-height: 44px; cursor: pointer; }
+  .btn-sm, .seg button, .pager .pages button, .bulkbar .btn { position: relative; }
+  .btn-sm::before, .seg button::before, .pager .pages button::before, .bulkbar .btn::before {
+    content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, 44px); height: 44px; transform: translate(-50%, -50%);
+  }
+  table.data td.title .subline { display: block; margin-top: 3px; font-family: var(--font-ui); font-size: var(--fs-13); line-height: 1.35; color: var(--muted); }
+  table.data td.title { padding-top: 10px; padding-bottom: 10px; }
+  .field .help, .field .err { margin: 0; }
+  [hidden] { display: none !important; }
+  table.data .thumb { max-width: none; }
+  .table-wrap table.data th { top: 0; }
+  .bulkbar .count { white-space: nowrap; }
+  @media (max-width: 640px) {
+    .bulkbar { flex-wrap: wrap; height: auto; min-height: 48px; padding: 8px 16px; gap: 8px 16px; }
+    .toast { bottom: 72px; right: 16px; left: 16px; }
+    .topbar { gap: 12px; }
+    .crumbs { min-width: 0; overflow: hidden; white-space: nowrap; gap: 6px; }
+  }
+  .order { display: inline-flex; align-items: center; gap: 4px; }
+  .order .idx { width: 20px; font-size: var(--fs-12); color: var(--faint); font-variant-numeric: tabular-nums; }
+  .fair-preview { display: flex; flex-wrap: wrap; gap: 24px 48px; padding: 32px; background: var(--paper); border: 1px solid var(--line); }
+  .fair-preview .img-slot { flex: 1 1 320px; aspect-ratio: 3/2; min-width: 0; max-width: 520px; border: none; }
+  .fair-preview .copy { flex: 1 1 300px; display: flex; flex-direction: column; justify-content: center; gap: 14px; min-width: 0; }
+  .fair-preview .ftitle { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 44px; line-height: 1.02; }
+  .fair-preview .booth { margin: 0; font-size: var(--fs-14); color: var(--muted); }
+  .fair-preview .text { margin: 0; font-size: var(--fs-15); line-height: 1.6; color: var(--body); max-width: 560px; }
+  @media (max-width: 640px) { .fair-preview { padding: 20px; } .fair-preview .ftitle { font-size: 34px; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" aria-label="CMS navigation">
+    <a class="brand" href="./dashboard.html" aria-label="Art Houz CMS home"><span class="brand-mark"></span><span class="brand-word">ART HOUZ</span></a>
+    <div class="brand-sub">Content</div>
+    <nav class="nav" aria-label="Sections">
+      <a href="./dashboard.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><span class="txt">Dashboard</span></span></a>
+      <a href="./exhibitions.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14"/><path d="M3 18l5-6 4 4 3-3 6 5"/></svg><span class="txt">Exhibitions</span></span><span class="count">9</span></a>
+      <a href="./artists.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span class="txt">Artists</span></span><span class="count">55</span></a>
+      <a href="./fairs.html" aria-current="page"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M3 21h18M5 21V8l7-4 7 4v13"/><path d="M9 21v-6h6v6"/></svg><span class="txt">Fairs</span></span><span class="count">4</span></a>
+      <a href="./news.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M4 5h13v14H4z"/><path d="M17 9h3v8a2 2 0 0 1-2 2H6"/><path d="M7 9h7M7 13h7"/></svg><span class="txt">News</span></span><span class="count">10</span></a>
+      <a href="./locations.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span class="txt">Locations</span></span><span class="count">2</span></a>
+      <a href="./about.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M9 12h6M9 16h6"/></svg><span class="txt">About page</span></span></a>
+      <a href="./settings.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="#161513"/><circle cx="15" cy="12" r="2" fill="#161513"/><circle cx="8" cy="18" r="2" fill="#161513"/></svg><span class="txt">Home &amp; settings</span></span></a>
+      <a href="./media.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14"/><circle cx="9" cy="10" r="1.5"/><path d="M21 16l-5-5-8 8"/></svg><span class="txt">Media</span></span><span class="count">128</span></a>
+      <a href="./users.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5"/><circle cx="17.5" cy="9" r="2.5"/><path d="M22 19c0-2.5-2-4-4.5-4"/></svg><span class="txt">Users</span></span></a>
+    </nav>
+    <div class="sidebar-foot">
+      <a href="#" class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg> View public site</a>
+      <span>Signed in as Priya · Editor</span>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <nav class="crumbs" aria-label="Breadcrumb"><a href="./dashboard.html">CMS</a><span class="sep">/</span><span class="here">Fairs</span></nav>
+      <div class="topbar-actions">
+        <button class="kbd-search" type="button" aria-label="Search all content"><svg class="icon" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg><span class="txt">Search records</span><kbd>⌘K</kbd></button>
+        <span class="avatar" aria-label="Priya">P</span>
+      </div>
+    </header>
+
+    <main class="page">
+      <header class="page-head">
+        <h1 class="page-title">Fairs</h1>
+        <div class="page-actions">
+          <a class="btn btn-primary" href="#"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> New fair</a>
+        </div>
+      </header>
+
+      <div class="table-wrap">
+        <table class="data">
+          <caption class="sr-only">Fairs in site order, 4 records</caption>
+          <thead>
+            <tr>
+              <th scope="col" class="sorted" aria-sort="ascending">Order</th>
+              <th scope="col"><span class="sr-only">Image</span></th>
+              <th scope="col">Title</th>
+              <th scope="col">Booth</th>
+              <th scope="col">Published</th>
+              <th scope="col">Updated</th>
+              <th scope="col"><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="order">
+                <span class="idx">1</span>
+                <button class="btn btn-ghost btn-icon btn-sm" type="button" aria-label="Move Art Dubai 2026 up" disabled><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
+                <button class="btn btn-ghost btn-icon btn-sm" type="button" aria-label="Move Art Dubai 2026 down"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+              </span></td>
+              <td><img class="thumb" src="https://picsum.photos/seed/arthouza4bef587/1200/1000" width="56" height="42" alt="" loading="lazy"></td>
+              <td class="title"><a href="#">Art Dubai 2026</a><span class="subline">Madinat Jumeirah, Dubai · March 2026</span></td>
+              <td class="sub">Contemporary section</td>
+              <td><label class="hit"><input class="switch" type="checkbox" role="switch" checked aria-label="Published: Art Dubai 2026"></label></td>
+              <td class="sub"><time datetime="2026-10-21T15:00">Oct 21</time></td>
+              <td class="actions"><span class="hstack">
+                <a class="btn btn-ghost btn-icon btn-sm" href="#" aria-label="Edit Art Dubai 2026"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></a>
+                <a class="btn btn-ghost btn-icon btn-sm" href="#" aria-label="View Art Dubai 2026 on site"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg></a>
+              </span></td>
+            </tr>
+            <tr>
+              <td><span class="order">
+                <span class="idx">2</span>
+                <button class="btn btn-ghost btn-icon btn-sm" type="button" aria-label="Move India Art Fair 2025 up"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
+                <button class="btn btn-ghost btn-icon btn-sm" type="button" aria-label="Move India Art Fair 2025 down"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+              </span></td>
+              <td><img class="thumb" src="https://picsum.photos/seed/arthouz26dffbf4/1200/1000" width="56" height="42" alt="" loading="lazy"></td>
+              <td class="title"><a href="#">India Art Fair 2025</a><span class="subline">NSIC Grounds, New Delhi · February 2025</span></td>
+              <td class="sub">Main hall</td>
+              <td><label class="hit"><input class="switch" type="checkbox" role="switch" checked aria-label="Published: India Art Fair 2025"></label></td>
+              <td class="sub"><time datetime="2026-03-03T12:00">Mar 3</time></td>
+              <td class="actions"><span class="hstack">
+                <a class="btn btn-ghost btn-icon btn-sm" href="#" aria-label="Edit India Art Fair 2025"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></a>
+                <a class="btn btn-ghost btn-icon btn-sm" href="#" aria-label="View India Art Fair 2025 on site"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg></a>
+              </span></td>
+            </tr>
+            <tr>
+              <td><span class="order">
+                <span class="idx">3</span>
+                <button class="btn btn-ghost btn-icon btn-sm" type="button" aria-label="Move ART SG 2025 up"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
+                <button class="btn btn-ghost btn-icon btn-sm" type="button" aria-label="Move ART SG 2025 down"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+              </span></td>
+              <td><img class="thumb" src="https://picsum.photos/seed/arthouz90bc0cec/1200/1000" width="56" height="42" alt="" loading="lazy"></td>
+              <td class="title"><a href="#">ART SG 2025</a><span class="subline">Marina Bay Sands, Singapore · January 2025</span></td>
+              <td class="sub">Galleries section</td>
+              <td><label class="hit"><input class="switch" type="checkbox" role="switch" checked aria-label="Published: ART SG 2025"></label></td>
+              <td class="sub"><time datetime="2026-02-12T12:00">Feb 12</time></td>
+              <td class="actions"><span class="hstack">
+                <a class="btn btn-ghost btn-icon btn-sm" href="#" aria-label="Edit ART SG 2025"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></a>
+                <a class="btn btn-ghost btn-icon btn-sm" href="#" aria-label="View ART SG 2025 on site"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg></a>
+              </span></td>
+            </tr>
+            <tr>
+              <td><span class="order">
+                <span class="idx">4</span>
+                <button class="btn btn-ghost btn-icon btn-sm" type="button" aria-label="Move India Art Fair 2022 up"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
+                <button class="btn btn-ghost btn-icon btn-sm" type="button" aria-label="Move India Art Fair 2022 down" disabled><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+              </span></td>
+              <td><img class="thumb" src="https://picsum.photos/seed/arthouzb8ca5039/1200/1000" width="56" height="42" alt="" loading="lazy"></td>
+              <td class="title"><a href="#">India Art Fair 2022</a><span class="subline">New Delhi · 2022</span></td>
+              <td class="sub">Seven artists</td>
+              <td><label class="hit"><input class="switch" type="checkbox" role="switch" checked aria-label="Published: India Art Fair 2022"></label></td>
+              <td class="sub"><time datetime="2025-01-09T12:00">Jan 9, 2025</time></td>
+              <td class="actions"><span class="hstack">
+                <a class="btn btn-ghost btn-icon btn-sm" href="#" aria-label="Edit India Art Fair 2022"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></a>
+                <a class="btn btn-ghost btn-icon btn-sm" href="#" aria-label="View India Art Fair 2022 on site"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg></a>
+              </span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <section class="stack" aria-labelledby="h-preview" style="gap:16px">
+        <div class="section-rule"><h2 id="h-preview">Preview on site</h2><span class="small muted">Art Dubai 2026</span></div>
+        <article class="fair-preview" aria-label="Public fair card preview">
+          <div class="img-slot"><img src="https://picsum.photos/seed/arthouza4bef587/1200/1000" width="1200" height="1000" alt="Art Houz booth at Art Dubai 2026" loading="lazy"></div>
+          <div class="copy">
+            <p class="eyebrow amber mb-0" style="margin:0">Madinat Jumeirah, Dubai · March 2026</p>
+            <h3 class="ftitle">Art Dubai 2026</h3>
+            <p class="booth">Contemporary section</p>
+            <p class="text">Art Houz presented new paintings and works on paper by Seema Kohli, Parvathi Nayar and Vijay Pichumani, introducing South Indian contemporary practice to collectors across the Gulf.</p>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+</div>
+</body>
+</html>

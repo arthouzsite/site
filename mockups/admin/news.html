@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Art Houz CMS — News</title>
+<link rel="stylesheet" href="./mock.css">
+<style>
+  .field p { margin: 0; }
+  table.data th { top: 0; }
+  .hit { min-width: 44px; min-height: 44px; display: inline-grid; place-items: center; }
+  .btn-icon.hit { width: 44px; height: 44px; }
+  .switch-hit { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; cursor: pointer; }
+  .field select.select { padding: 0 32px 0 12px; background: var(--surface-2) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235E5A54' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>") no-repeat right 12px center; appearance: none; }
+  .card-h h2 { margin: 0; font-size: var(--fs-12); letter-spacing: var(--track); text-transform: uppercase; font-weight: 500; }
+
+  .table-wrap { position: relative; }
+  table.data td.title { max-width: 420px; }
+  table.data td.ex-cell { white-space: normal; min-width: 180px; max-width: 240px; }
+  table.data td.ex-cell .link { border-bottom: none; color: var(--body); }
+  table.data td.ex-cell .link:hover { color: var(--rust); }
+  .title-area { height: auto; min-height: 0; padding: 10px 12px; line-height: 1.15; resize: vertical; }
+  .date-set { border: none; padding: 0; margin: 0; }
+  .date-set legend { padding: 0; margin-bottom: 6px; }
+  .pub-row { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .form-grid .btn { height: 44px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" aria-label="CMS navigation">
+    <a class="brand" href="./dashboard.html" aria-label="Art Houz CMS home"><span class="brand-mark"></span><span class="brand-word">ART HOUZ</span></a>
+    <div class="brand-sub">Content</div>
+    <nav class="nav" aria-label="Sections">
+      <a href="./dashboard.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><span class="txt">Dashboard</span></span></a>
+      <a href="./exhibitions.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14"/><path d="M3 18l5-6 4 4 3-3 6 5"/></svg><span class="txt">Exhibitions</span></span><span class="count">9</span></a>
+      <a href="./artists.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span class="txt">Artists</span></span><span class="count">55</span></a>
+      <a href="./fairs.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M3 21h18M5 21V8l7-4 7 4v13"/><path d="M9 21v-6h6v6"/></svg><span class="txt">Fairs</span></span><span class="count">4</span></a>
+      <a href="./news.html" aria-current="page"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M4 5h13v14H4z"/><path d="M17 9h3v8a2 2 0 0 1-2 2H6"/><path d="M7 9h7M7 13h7"/></svg><span class="txt">News</span></span><span class="count">10</span></a>
+      <a href="./locations.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span class="txt">Locations</span></span><span class="count">2</span></a>
+      <a href="./about.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M9 12h6M9 16h6"/></svg><span class="txt">About page</span></span></a>
+      <a href="./settings.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="#161513"/><circle cx="15" cy="12" r="2" fill="#161513"/><circle cx="8" cy="18" r="2" fill="#161513"/></svg><span class="txt">Home &amp; settings</span></span></a>
+      <a href="./media.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14"/><circle cx="9" cy="10" r="1.5"/><path d="M21 16l-5-5-8 8"/></svg><span class="txt">Media</span></span><span class="count">128</span></a>
+      <a href="./users.html"><span class="hstack"><svg class="icon" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5"/><circle cx="17.5" cy="9" r="2.5"/><path d="M22 19c0-2.5-2-4-4.5-4"/></svg><span class="txt">Users</span></span></a>
+    </nav>
+    <div class="sidebar-foot">
+      <a href="#" class="hstack"><svg class="icon" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg> View public site</a>
+      <span>Signed in as Priya · Editor</span>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <nav class="crumbs" aria-label="Breadcrumb"><a href="./dashboard.html">CMS</a><span class="sep">/</span><span class="here">News</span></nav>
+      <div class="topbar-actions">
+        <button class="kbd-search" type="button" aria-label="Search all content"><svg class="icon" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg><span class="txt">Search records</span><kbd>⌘K</kbd></button>
+        <span class="avatar" aria-label="Priya">P</span>
+      </div>
+    </header>
+
+    <main class="page">
+      
+      <div class="page-head">
+        <h1 class="page-title">News</h1>
+        <div class="page-actions"><a class="btn btn-primary" href="#edit-news"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add news</a></div>
+      </div>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr>
+            <th scope="col"><input type="checkbox" class="checkbox" aria-label="Select all"></th>
+            <th scope="col"><span class="sr-only">Image</span></th>
+            <th scope="col">Title</th>
+            <th scope="col" class="sorted" aria-sort="descending">Date</th>
+            <th scope="col">Exhibition</th>
+            <th scope="col">Link</th>
+            <th scope="col">Published</th>
+            <th scope="col">Updated</th>
+            <th scope="col"><span class="sr-only">Actions</span></th>
+          </tr></thead>
+          <tbody><tr>
+  <td><input type="checkbox" class="checkbox" aria-label="Select n1"></td>
+  <td><img class="thumb" src="https://picsum.photos/seed/arthouz97314d3d/1200/1000" width="1200" height="1000" loading="lazy" alt=""></td>
+  <td class="title display" lang="ta"><a href="#edit-news">Pa Ranjith கூட இது ரொம்ப புடிச்சிருக்கு | வெளி வெற்றிடமாக நகர்கிறது | A Solo Show by Vijay Pichumani</a></td>
+  <td class="sub">February 2024</td>
+  <td class="sub ex-cell"><a class="link" href="./exhibition-edit.html">By Nature&#x27;s Force: Veli Vetridamakha Nagarkirathu</a></td>
+  <td><span class="hit" title="External article set"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg><span class="sr-only">External article set</span></span></td>
+  <td><label class="switch-hit"><input type="checkbox" role="switch" class="switch" checked aria-label="Published"></label></td>
+  <td class="sub">3 days ago</td>
+  <td class="actions"><a class="btn btn-ghost btn-icon hit" href="#edit-news" aria-label="Edit news item"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></a></td>
+</tr><tr aria-selected="true">
+  <td><input type="checkbox" class="checkbox" aria-label="Select n2" checked></td>
+  <td><img class="thumb" src="https://picsum.photos/seed/arthouz9694ca0c/1200/1000" width="1200" height="1000" loading="lazy" alt=""></td>
+  <td class="title"><a href="#edit-news">By Nature&#x27;s Force: Veli Vetridamaakha Nagarkirathu – The solo Art Show of artist Vijay Pichumani</a></td>
+  <td class="sub">February 2024</td>
+  <td class="sub ex-cell"><a class="link" href="./exhibition-edit.html">By Nature&#x27;s Force: Veli Vetridamakha Nagarkirathu</a></td>
+  <td><span class="hit" title="External article set"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg><span class="sr-only">External article set</span></span></td>
+  <td><label class="switch-hit"><input type="checkbox" role="switch" class="switch" checked aria-label="Published"></label></td>
+  <td class="sub">4 min ago</td>
+  <td class="actions"><a class="btn btn-ghost btn-icon hit" href="#edit-news" aria-label="Edit news item"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></a></td>
+</tr><tr>
+  <td><input type="checkbox" class="checkbox" aria-label="Select n3"></td>
+  <td><img class="thumb" src="https://picsum.photos/seed/arthouz9b6f838e/1200/1000" width="1200" height="1000" loading="lazy" alt=""></td>
+  <td class="title"><a href="#edit-news">Soil to canvas: Art show delves into earth’s essence</a></td>
+  <td class="sub">January 2024</td>
+  <td class="sub ex-cell"><span aria-label="None">—</span></td>
+  <td><span class="hit" title="External article set"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg><span class="sr-only">External article set</span></span></td>
+  <td><label class="switch-hit"><input type="checkbox" role="switch" class="switch" aria-label="Published"></label></td>
+  <td class="sub">yesterday</td>
+  <td class="actions"><a class="btn btn-ghost btn-icon hit" href="#edit-news" aria-label="Edit news item"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></a></td>
+</tr><tr>
+  <td><input type="checkbox" class="checkbox" aria-label="Select n7"></td>
+  <td><img class="thumb" src="https://picsum.photos/seed/arthouz65e58fc4/1200/1000" width="1200" height="1000" loading="lazy" alt=""></td>
+  <td class="title"><a href="#edit-news">Artist Trio Explores Women&#x27;s lives through Diverse Perspectives</a></td>
+  <td class="sub">September 2023</td>
+  <td class="sub ex-cell"><span aria-label="None">—</span></td>
+  <td><span class="hit" title="External article set"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg><span class="sr-only">External article set</span></span></td>
+  <td><label class="switch-hit"><input type="checkbox" role="switch" class="switch" checked aria-label="Published"></label></td>
+  <td class="sub">12 Oct 2026</td>
+  <td class="actions"><a class="btn btn-ghost btn-icon hit" href="#edit-news" aria-label="Edit news item"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></a></td>
+</tr><tr>
+  <td><input type="checkbox" class="checkbox" aria-label="Select n8"></td>
+  <td><img class="thumb" src="https://picsum.photos/seed/arthouzfaf61d4e/1200/1000" width="1200" height="1000" loading="lazy" alt=""></td>
+  <td class="title display" lang="ta"><a href="#edit-news">நான் யார்&#x27;: கலைஞர் விஜய் பிச்சுமணியின் எஸ் தனிக் கண்காட்சி வெள்ளிக்கிழமை முதல் சென்னை ஆர்ட் ஹவுஸில்</a></td>
+  <td class="sub">August 2023</td>
+  <td class="sub ex-cell"><a class="link" href="./exhibition-edit.html">Naan Yaar</a></td>
+  <td><span aria-label="None">—</span></td>
+  <td><label class="switch-hit"><input type="checkbox" role="switch" class="switch" checked aria-label="Published"></label></td>
+  <td class="sub">12 Oct 2026</td>
+  <td class="actions"><a class="btn btn-ghost btn-icon hit" href="#edit-news" aria-label="Edit news item"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></a></td>
+</tr><tr>
+  <td><input type="checkbox" class="checkbox" aria-label="Select n5"></td>
+  <td><img class="thumb" src="https://picsum.photos/seed/arthouzcf50f037/1200/1000" width="1200" height="1000" loading="lazy" alt=""></td>
+  <td class="title"><a href="#edit-news">50 sculptors from across country come together for a group show</a></td>
+  <td class="sub">January 2023</td>
+  <td class="sub ex-cell"><a class="link" href="./exhibition-edit.html">50 Indian Sculptors</a></td>
+  <td><span class="hit" title="External article set"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg><span class="sr-only">External article set</span></span></td>
+  <td><label class="switch-hit"><input type="checkbox" role="switch" class="switch" checked aria-label="Published"></label></td>
+  <td class="sub">2 Oct 2026</td>
+  <td class="actions"><a class="btn btn-ghost btn-icon hit" href="#edit-news" aria-label="Edit news item"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></a></td>
+</tr><tr>
+  <td><input type="checkbox" class="checkbox" aria-label="Select n6"></td>
+  <td><img class="thumb" src="https://picsum.photos/seed/arthouzbc06c92f/1200/1000" width="1200" height="1000" loading="lazy" alt=""></td>
+  <td class="title"><a href="#edit-news">50 Indian sculptors showcase their work at this art exhibition</a></td>
+  <td class="sub">January 2023</td>
+  <td class="sub ex-cell"><a class="link" href="./exhibition-edit.html">50 Indian Sculptors</a></td>
+  <td><span class="hit" title="External article set"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg><span class="sr-only">External article set</span></span></td>
+  <td><label class="switch-hit"><input type="checkbox" role="switch" class="switch" checked aria-label="Published"></label></td>
+  <td class="sub">2 Oct 2026</td>
+  <td class="actions"><a class="btn btn-ghost btn-icon hit" href="#edit-news" aria-label="Edit news item"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></a></td>
+</tr><tr>
+  <td><input type="checkbox" class="checkbox" aria-label="Select n9"></td>
+  <td><img class="thumb" src="https://picsum.photos/seed/arthouz3c27b499/1200/1000" width="1200" height="1000" loading="lazy" alt=""></td>
+  <td class="title"><a href="#edit-news">Exploring human connection with nature through art</a></td>
+  <td class="sub">March 2022</td>
+  <td class="sub ex-cell"><span aria-label="None">—</span></td>
+  <td><span class="hit" title="External article set"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg><span class="sr-only">External article set</span></span></td>
+  <td><label class="switch-hit"><input type="checkbox" role="switch" class="switch" checked aria-label="Published"></label></td>
+  <td class="sub">28 Sep 2026</td>
+  <td class="actions"><a class="btn btn-ghost btn-icon hit" href="#edit-news" aria-label="Edit news item"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></a></td>
+</tr><tr>
+  <td><input type="checkbox" class="checkbox" aria-label="Select n10"></td>
+  <td><img class="thumb" src="https://picsum.photos/seed/arthouz79b94ddd/1200/1000" width="1200" height="1000" loading="lazy" alt=""></td>
+  <td class="title"><a href="#edit-news">Fragrance of ‘anbu’</a></td>
+  <td class="sub">June 2021</td>
+  <td class="sub ex-cell"><span aria-label="None">—</span></td>
+  <td><span class="hit" title="External article set"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg><span class="sr-only">External article set</span></span></td>
+  <td><label class="switch-hit"><input type="checkbox" role="switch" class="switch" checked aria-label="Published"></label></td>
+  <td class="sub">28 Sep 2026</td>
+  <td class="actions"><a class="btn btn-ghost btn-icon hit" href="#edit-news" aria-label="Edit news item"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></a></td>
+</tr><tr>
+  <td><input type="checkbox" class="checkbox" aria-label="Select n4"></td>
+  <td><img class="thumb" src="https://picsum.photos/seed/arthouzf1a9dda2/1200/1000" width="1200" height="1000" loading="lazy" alt=""></td>
+  <td class="title"><a href="#edit-news">Chennai Artist presents works created during quarantine</a></td>
+  <td class="sub">November 2020</td>
+  <td class="sub ex-cell"><a class="link" href="./exhibition-edit.html">Kolvel</a></td>
+  <td><span class="hit" title="External article set"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg><span class="sr-only">External article set</span></span></td>
+  <td><label class="switch-hit"><input type="checkbox" role="switch" class="switch" checked aria-label="Published"></label></td>
+  <td class="sub">28 Sep 2026</td>
+  <td class="actions"><a class="btn btn-ghost btn-icon hit" href="#edit-news" aria-label="Edit news item"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></a></td>
+</tr></tbody>
+        </table>
+      </div>
+      <div class="pager"><span>10 items</span></div>
+      
+      <section class="card" id="edit-news" aria-labelledby="ed-h">
+        <div class="card-h"><h2 id="ed-h">Edit news</h2><span class="small muted">Last saved 4 min ago by Priya</span></div>
+        <div class="card-b">
+          <div class="form-grid">
+            <div class="stack" style="gap:18px">
+              <div class="field"><label for="n-title">Title <span class="req" aria-hidden="true">*</span></label><textarea class="textarea input-display title-area" id="n-title" rows="2">By Nature&#x27;s Force: Veli Vetridamaakha Nagarkirathu – The solo Art Show of artist Vijay Pichumani</textarea></div>
+              <div class="field"><label for="n-excerpt">Excerpt</label><textarea class="textarea" id="n-excerpt">Art Houz Gallery Chennai, has organized the solo show of artist Vijay Pichumani titled – ‘By Nature&#x27;s Force: Veli Vetridamaakha Nagarkirathu’ at Lalit Kala Akademi Regional Centre. The exhibition features a diverse…</textarea></div>
+              <fieldset class="field date-set">
+                <legend class="label">Published on</legend>
+                <div class="row">
+                  <div class="field"><label class="sr-only" for="n-month">Month</label><select class="select" id="n-month"><option>January</option><option selected>February</option><option>March</option><option>April</option><option>May</option><option>June</option><option>July</option><option>August</option><option>September</option><option>October</option><option>November</option><option>December</option></select></div>
+                  <div class="field"><label class="sr-only" for="n-year">Year</label><select class="select" id="n-year"><option>2026</option><option>2025</option><option selected>2024</option><option>2023</option><option>2022</option><option>2021</option><option>2020</option><option>2019</option><option>2018</option><option>2017</option><option>2016</option><option>2015</option><option>2014</option><option>2013</option><option>2012</option></select></div>
+                </div>
+              </fieldset>
+              <div class="field"><label for="n-url">External article URL</label><input class="input" type="url" id="n-url" aria-describedby="n-url-help" value="https://example.org/by-natures-force-vijay-pichumani"><p class="help" id="n-url-help">Shown as ‘Read article ↗’</p></div>
+              <div class="field"><label for="n-ex">Linked exhibition</label><select class="select" id="n-ex" aria-describedby="n-ex-help"><option>None</option><option>Tidewater</option><option>The Weight of Light</option><option>Quiet Matter</option><option>Line, Land, Lineage</option><option>Reflections- A Journey in Two Perspectives</option><option selected>By Nature&#x27;s Force: Veli Vetridamakha Nagarkirathu</option><option>Naan Yaar</option><option>50 Indian Sculptors</option><option>Kolvel</option></select><p class="help" id="n-ex-help">Adds ‘View exhibition →’ and lists this item under Press on the exhibition page</p></div>
+              <div class="field"><label for="n-slug">Slug</label><div class="input-prefix"><span>/news/</span><input type="text" id="n-slug" value="by-natures-force-the-solo-art-show-of-artist-vijay-pichumani"></div></div>
+            </div>
+            <div class="stack" style="gap:18px">
+              <div class="field"><span class="label" id="n-img-l">Image</span>
+                <div class="img-slot r-4-3"><img src="https://picsum.photos/seed/arthouz9694ca0c/1200/1000" width="1200" height="1000" loading="lazy" alt="Painting from By Nature&#x27;s Force by Vijay Pichumani"><div class="overlay"><button type="button" class="btn">Replace</button><button type="button" class="btn">Edit alt</button><button type="button" class="btn">Remove</button></div></div>
+                <div class="img-meta"><span>poplars-vijay-pichumani.jpg</span><span>1200 × 1000</span></div>
+              </div>
+              <div class="pub-row"><label for="n-pub" class="label">Published</label><label class="switch-hit"><input id="n-pub" type="checkbox" role="switch" class="switch" checked></label></div>
+              <div class="hstack" style="gap:10px">
+                <button type="submit" class="btn btn-primary grow">Save</button>
+                <a class="btn grow" href="./news.html">Cancel</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+</body>
+</html>
