@@ -1,0 +1,35 @@
+/* Design tokens: the only place colour literals live in apps/web. Values are the prototype's, verbatim. */
+@theme {
+  --color-*: initial;
+  --color-paper: #EDEAE4;
+  --color-ink: #161513;
+  --color-amber: #D98A2B;
+  --color-rust: #B4651A;
+  --color-body: #3B3833;
+  --color-muted: #5E5A54;
+  --color-faint: #8A857D;
+  --color-ondark: #C9C4BB;
+  --color-meta: #A8A39A;
+  --color-imgph: #D8D3CA;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  /* Hairlines */
+  --color-line-12: rgba(22, 21, 19, 0.12);
+  --color-line-14: rgba(22, 21, 19, 0.14);
+  --color-line-16: rgba(22, 21, 19, 0.16);
+  --color-line-18: rgba(22, 21, 19, 0.18);
+  --color-line-30: rgba(22, 21, 19, 0.3);
+  --color-line-dark-16: rgba(237, 234, 228, 0.16);
+  --color-line-dark-18: rgba(237, 234, 228, 0.18);
+  --color-line-dark-20: rgba(237, 234, 228, 0.2);
+
+  /* Fonts: next/font variables first (self-hosted files), then the prototype's stacks. */
+  --font-*: initial;
+  --font-display: var(--font-eb-garamond), 'EB Garamond', serif;
+  --font-display-tamil: var(--font-eb-garamond), 'EB Garamond', var(--font-noto-serif-tamil), 'Noto Serif Tamil', serif;
+  --font-ui: var(--font-space-grotesk), 'Space Grotesk', 'Noto Sans Tamil', sans-serif;
+
+  --breakpoint-*: initial;
+  --breakpoint-nav: 880px;
+}
