@@ -15,7 +15,7 @@ const nextConfig: NextConfig = {
   devIndicators: false,
   images: {
     remotePatterns,
-    unoptimized: !isProduction && process.env.NEXT_IMAGE_UNOPTIMIZED === '1',
+    unoptimized: process.env.NEXT_IMAGE_UNOPTIMIZED === '1' && (!isProduction || process.env.ALLOW_TEST_OVERRIDES === '1'),
   },
 }
 

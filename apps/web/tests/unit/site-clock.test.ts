@@ -12,8 +12,8 @@ describe('currentYear', () => {
     expect(currentYear(NOW, { NODE_ENV: 'production', TODAY_OVERRIDE: '2026-10-30' })).toBe(2031)
   })
 
-  it('honours TODAY_OVERRIDE under next start only with ALLOW_TODAY_OVERRIDE=1', () => {
-    expect(currentYear(NOW, { NODE_ENV: 'production', TODAY_OVERRIDE: '2026-10-30', ALLOW_TODAY_OVERRIDE: '1' })).toBe(2026)
+  it('honours TODAY_OVERRIDE under next start only with ALLOW_TEST_OVERRIDES=1', () => {
+    expect(currentYear(NOW, { NODE_ENV: 'production', TODAY_OVERRIDE: '2026-10-30', ALLOW_TEST_OVERRIDES: '1' })).toBe(2026)
   })
 
   it('falls back to the clock when the override is missing or malformed', () => {

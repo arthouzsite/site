@@ -25,7 +25,7 @@ rewrite the `data-props` defaults (`heroLayout`, `artistIndex`) in a further cop
 - **Frozen date:** the API runs with `TODAY_OVERRIDE=2026-10-30`, which makes Tidewater current
   and matches the prototype's hard-coded statuses. For the footer year the site reads the same `TODAY_OVERRIDE`
   outside production; because `next start` forces `NODE_ENV=production`, the visual web server
-  also sets `ALLOW_TODAY_OVERRIDE=1` (never set in deployments). The footer therefore matches the prototype's "2012 – 2026" in any year. Header clips use `header.boundingBox()`
+  also sets `ALLOW_TEST_OVERRIDES=1` (never set in deployments). The footer therefore matches the prototype's "2012 – 2026" in any year. Header clips use `header.boundingBox()`
   (77 px including the hairline).
 - **Browser:** installed Google Chrome (`channel: 'chrome'`), device scale factor 1, Asia/Kolkata.
   The bundled Playwright Chromium is not downloaded; both sides render in the same engine.
@@ -48,7 +48,7 @@ explicitly because Prisma's CLI, unlike libpq, does not default to it) before st
 4100 (`STORAGE_DRIVER=memory`); Playwright starts web servers before `globalSetup`, so
 `globalSetup` only verifies the API serves seeded data. The site is then built and served with
 `next build && next start` on 3100: `next dev` reload-looped under Turbopack's dev cache and its
-HMR keeps the network busy. In production `NEXT_IMAGE_UNOPTIMIZED` is ignored, so images go
+HMR keeps the network busy. In production `NEXT_IMAGE_UNOPTIMIZED` applies only with `ALLOW_TEST_OVERRIDES=1` (set by the harness); otherwise images go
 through the optimiser. Ports 3100 and 4100 must be free.
 
 The port is not awaited with `networkidle` (Next keeps link-prefetch requests open); it waits for

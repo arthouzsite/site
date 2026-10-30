@@ -4,11 +4,11 @@ type ClockEnv = {
   readonly NODE_ENV?: string
   readonly TODAY_OVERRIDE?: string
   /** `next start` always runs with NODE_ENV=production; the visual harness opts in explicitly. Never set in deployments. */
-  readonly ALLOW_TODAY_OVERRIDE?: string
+  readonly ALLOW_TEST_OVERRIDES?: string
 }
 
 function overrideAllowed(env: ClockEnv): boolean {
-  return env.NODE_ENV !== 'production' || env.ALLOW_TODAY_OVERRIDE === '1'
+  return env.NODE_ENV !== 'production' || env.ALLOW_TEST_OVERRIDES === '1'
 }
 
 /** Current year; honours TODAY_OVERRIDE (YYYY-MM-DD) outside production, as the API does. */

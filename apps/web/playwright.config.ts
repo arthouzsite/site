@@ -1,8 +1,8 @@
 import { defineConfig } from '@playwright/test'
-import { API_DIR, SEED_ADMIN, VISUAL_DATABASE_URL, VISUAL_REVALIDATE_SECRET, VISUAL_TODAY } from './tests/visual/env'
+import { API_DIR, SEED_ADMIN, VISUAL_API_PORT, VISUAL_DATABASE_URL, VISUAL_WEB_PORT, VISUAL_REVALIDATE_SECRET, VISUAL_TODAY } from './tests/visual/env'
 
-const API_PORT = 4100
-const WEB_PORT = 3100
+const API_PORT = VISUAL_API_PORT
+const WEB_PORT = VISUAL_WEB_PORT
 const SERVER_START_TIMEOUT_MS = 240_000
 const TEST_TIMEOUT_MS = 120_000
 const VISUAL_JWT_SECRET = 'visual-test-jwt-secret-at-least-32-characters'
@@ -47,7 +47,7 @@ export default defineConfig({
     },
     {
       // Production build: deterministic (no HMR/dev overlay). Static pages fetch the API at build
-      // time, so wait for it first. NEXT_IMAGE_UNOPTIMIZED is ignored in production by design.
+      // time, so wait for it first. NEXT_IMAGE_UNOPTIMIZED applies under `next start` only with ALLOW_TEST_OVERRIDES=1.
       command: `until curl -sf http://localhost:${API_PORT}/health >/dev/null; do sleep 1; done && pnpm exec next build && pnpm exec next start --port ${WEB_PORT}`,
       url: `http://localhost:${WEB_PORT}`,
       reuseExistingServer: false,
@@ -60,8 +60,8 @@ export default defineConfig({
         NEXT_PUBLIC_SITE_URL: `http://localhost:${WEB_PORT}`,
         REVALIDATE_SECRET: VISUAL_REVALIDATE_SECRET,
         TODAY_OVERRIDE: VISUAL_TODAY,
-        // next start forces NODE_ENV=production; opt in to the frozen date for the footer year.
-        ALLOW_TODAY_OVERRIDE: '1',
+        // next start forces NODE_ENV=production; opt in to the frozen date (footer year) and unoptimised images.
+        ALLOW_TEST_OVERRIDES: '1',
       },
     },
   ],
