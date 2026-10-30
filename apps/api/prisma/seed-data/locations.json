@@ -1,0 +1,26 @@
+[
+  {
+    "slug": "chennai",
+    "city": "Chennai",
+    "address": "No 123, The Brothers of Holy Cross, Sterling Rd, Nungambakkam, Chennai, Tamil Nadu 600034",
+    "phone": "73977 45684",
+    "tel": "tel:+917397745684",
+    "days": "Monday – Saturday",
+    "hours": "11:00 am – 7:00 pm",
+    "mapUrl": "https://www.google.com/maps/search/?api=1&query=Art+Houz+Sterling+Road+Nungambakkam+Chennai",
+    "image": "jatte",
+    "sortOrder": 0
+  },
+  {
+    "slug": "bengaluru",
+    "city": "Bengaluru",
+    "address": "No.63, Palace Road, Abshot Layout, Vasanth Nagar, Bengaluru 560052",
+    "phone": "98861 12400",
+    "tel": "tel:+919886112400",
+    "days": "Monday – Saturday",
+    "hours": "10:00 am – 6:00 pm",
+    "mapUrl": "https://www.google.com/maps/search/?api=1&query=Art+Houz+Palace+Road+Vasanth+Nagar+Bengaluru",
+    "image": "cezanne",
+    "sortOrder": 1
+  }
+]

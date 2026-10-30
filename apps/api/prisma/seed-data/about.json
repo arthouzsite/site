@@ -1,0 +1,27 @@
+{
+  "about.gallery": {
+    "statement": "Art Houz is one of the leading contemporary art galleries from South-India.",
+    "body": "Founded in 2012 by Vincent Adaikalraj, Art Houz has achieved significant importance, mounting some of the most important shows from the Indian art scene. Our focus is on young emerging artists with an experimental approach to practice and expand the horizons of South Indian art audience. Not confining its presence within its own local premises, Art Houz plans to represent artists under its brand at international fairs through collaborations with other galleries, art institutions and initiatives. Through this we aim to produce an essential component of ‘the contemporary’ at important art tangents.",
+    "locationsLabel": "Our locations — Chennai & Bengaluru",
+    "imageName": "bedroom"
+  },
+  "about.proprietor": {
+    "eyebrow": "Founder & Proprietor",
+    "name": "Vincent Adaikalraj",
+    "quote": "‘My vision is to create stimulating possibilities in every domain of business. My mission is to believe these possibilities already exist and are simply waiting to be discovered’.",
+    "body": "In Vincent Adaikalraj’s world, possibility is a state of being. An entrepreneur with a difference, Adaikalraj’s interests are wide-ranging and dominant as they are particular and subtle. His interest in the realm of contemporary art, for instance, is just one example of his multi-faceted personality and his relentless passion for uncompromising quality. With the establishment of Art Houz Gallery in Chennai, Vincent Adaikalraj was not merely running a space for art and all things related to art, but was making a statement - that which spoke of redefining existing norms and creating, well, possibilities. The gallery’s resounding success in Chennai was thanks to its predecesor in Coimbatore, eventually leading to another successful gallery in Bengaluru. Under the LA 5 Global Publications banner, Adaikalraj also publishes one of the country’s best arts and design magazine, Arts Illustrated, and runs Corel Academy, the first-of-its-kind digital art studio, giving budding artists an unparalleled platform for global recognition. Vincent Adaikalraj is also the owner of Jenney’s Residency and the popular Black Thunder amusement park in Coimbatore, the newly launched family entertainment zone in Ooty, Thunder World, apart from handling businesses in the sphere of education and beverages.",
+    "imageName": "dove"
+  },
+  "about.services": {
+    "title": "Framing Services",
+    "body": "Opt for our top-notch framing services, providing a diverse selection tailored to elevate your collection; our wooden frames with vinyl coating exude sophistication, customized to enhance your artwork's aesthetic appeal, catering to contemporary and traditional styles.",
+    "ctaLabel": "Enquire",
+    "imageName": "thistles"
+  },
+  "about.publications": {
+    "title": "Arts Illustrated",
+    "body": "Arts Illustrated is a pan-India magazine dedicated to the different facets of contemporary art. It delves deep into the visual art and design narrative, Offering a global and contemporary perspective. Taking on the topical and dynamic ideas currently shaping the cultural landscape, through the many facets of Art, Cinema, Architecture, Design, Photography, Theatre and Literature, It presents a carefully curated collection that makes for an exciting read. The magazine, out once every two months, Is published by LA 5 Global Publications and is distributed across India.",
+    "externalUrl": null,
+    "imageName": "apples"
+  }
+}

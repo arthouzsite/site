@@ -1,0 +1,59 @@
+import { PrismaPg } from '@prisma/adapter-pg'
+import { PrismaClient } from '../src/generated/prisma/client'
+import { seedDatabase } from '../prisma/seed'
+import { migrateTestDb, resetDb } from './helpers/db'
+
+const SEED_OPTS = { adminEmail: 'admin@example.com', adminPassword: 'change-me-now-please' }
+
+describe('seed', () => {
+  let prisma: PrismaClient
+
+  beforeAll(async () => {
+    migrateTestDb()
+    await resetDb()
+    prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL_TEST }) })
+  })
+
+  afterAll(async () => {
+    await prisma.$disconnect()
+  })
+
+  it('seeds the prototype content idempotently', async () => {
+    await seedDatabase(prisma, SEED_OPTS)
+    await seedDatabase(prisma, SEED_OPTS)
+
+    expect(await prisma.exhibition.count()).toBe(9)
+    expect(await prisma.artist.count()).toBe(55)
+    expect(await prisma.news.count()).toBe(10)
+    expect(await prisma.fair.count()).toBe(4)
+    expect(await prisma.location.count()).toBe(2)
+    expect(await prisma.artwork.count()).toBe(55 * 6)
+    expect(await prisma.exhibitionWork.count()).toBe(27)
+    expect(await prisma.user.count()).toBe(1)
+
+    const tide = await prisma.exhibition.findUniqueOrThrow({
+      where: { slug: 'tidewater' },
+      include: { artists: { orderBy: { sortOrder: 'asc' }, include: { artist: true } } },
+    })
+    expect(tide.artists.map((a) => a.artist.name)).toEqual(['Parvathi Nayar', 'Ranjith Raman', 'P. Gopinath', 'Pradeep Unni'])
+    expect(tide.isPublished).toBe(true)
+    expect(tide.startDate.toISOString().slice(0, 10)).toBe('2026-10-03')
+
+    const hero = await prisma.setting.findUniqueOrThrow({ where: { key: 'heroLayout' } })
+    expect(hero.value).toBe('FULL_BLEED')
+  })
+
+  it('keeps prototype fidelity for Tamil titles, featured artists and focus', async () => {
+    const tamil = await prisma.news.findFirstOrThrow({ where: { title: { startsWith: 'நான் யார்' } } })
+    expect(tamil.publishedAt.toISOString().slice(0, 10)).toBe('2023-08-01')
+    const reflections = await prisma.exhibition.findUniqueOrThrow({ where: { slug: 'reflections' } })
+    expect(reflections.datesLabel).toBe('September 14, 2024 – September 30, 2024')
+    const featured = await prisma.artist.findMany({ where: { isFeatured: true }, orderBy: { featuredOrder: 'asc' } })
+    expect(featured.map((a) => a.name)).toEqual([
+      'Vijay Pichumani', 'Seema Kohli', 'Parvathi Nayar', 'S.G. Vasudev', 'K.M. Adimoolam', 'Madhvi Parekh',
+    ])
+    const focus = await prisma.setting.findUniqueOrThrow({ where: { key: 'homeFocus' } })
+    const vijay = await prisma.artist.findUniqueOrThrow({ where: { slug: 'vijay-pichumani' } })
+    expect((focus.value as { artistId: string }).artistId).toBe(vijay.id)
+  })
+})

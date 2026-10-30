@@ -1,0 +1,182 @@
+[
+  {
+    "name": "troika",
+    "id": "a45e5f55-d02b-ce98-8bab-3af549684f58",
+    "alt": "Tidewater"
+  },
+  {
+    "name": "green",
+    "id": "c68f33ec-feb1-5277-334b-b71ac15ae394",
+    "alt": "Tidewater — view 1"
+  },
+  {
+    "name": "lilies",
+    "id": "3c27b499-af56-f0d5-93b5-a7f2f1ad5813",
+    "alt": "Tidewater — view 2"
+  },
+  {
+    "name": "mines",
+    "id": "9b6f838e-5424-d030-2d2f-c9380830d631",
+    "alt": "Tidewater — view 3"
+  },
+  {
+    "name": "aquarium",
+    "id": "d0e36029-27fc-bf4e-357a-55cfbaf7bdfd",
+    "alt": "The Weight of Light"
+  },
+  {
+    "name": "divan",
+    "id": "65e58fc4-4dd1-7149-b76b-94547745bece",
+    "alt": "The Weight of Light — view 1"
+  },
+  {
+    "name": "geranium",
+    "id": "d0049e0b-bd55-020e-aa8c-b137d06ae7df",
+    "alt": "The Weight of Light — view 2"
+  },
+  {
+    "name": "gauguin",
+    "id": "a4bef587-48a4-d186-813d-f297441b1ab3",
+    "alt": "The Weight of Light — view 3"
+  },
+  {
+    "name": "acrobat",
+    "id": "72161599-24cf-4ba7-5dd3-48052b37da6d",
+    "alt": "Quiet Matter"
+  },
+  {
+    "name": "elevation",
+    "id": "1f2b1e2f-4e91-c59f-057b-2833213e3219",
+    "alt": "Quiet Matter — view 1"
+  },
+  {
+    "name": "sorrow",
+    "id": "bf569bf0-3394-7c36-d4ac-e16c2c214095",
+    "alt": "Quiet Matter — view 2"
+  },
+  {
+    "name": "move10",
+    "id": "768387ba-f972-b43b-39f7-98cb37dad883",
+    "alt": "Line, Land, Lineage"
+  },
+  {
+    "name": "movement",
+    "id": "173ec65a-bc7e-067c-fed1-1677bf5f26a9",
+    "alt": "Line, Land, Lineage — view 1"
+  },
+  {
+    "name": "fluting",
+    "id": "26dffbf4-b8b4-889a-8faf-a9366d8114dd",
+    "alt": "Line, Land, Lineage — view 2"
+  },
+  {
+    "name": "murnau",
+    "id": "3f732b69-0ae7-7d1e-ad53-e20b0cc2de72",
+    "alt": "Line, Land, Lineage — view 3"
+  },
+  {
+    "name": "impro",
+    "id": "b5bc6b66-9e6e-fe57-dcec-fc49e820e904",
+    "alt": "Reflections- A Journey in Two Perspectives — view 1"
+  },
+  {
+    "name": "klange",
+    "id": "f1a9dda2-96c3-9fee-5eee-de7b812521dd",
+    "alt": "Reflections- A Journey in Two Perspectives — view 2"
+  },
+  {
+    "name": "still15",
+    "id": "2a328b12-cb68-19e8-3843-b2160f007813",
+    "alt": "Reflections- A Journey in Two Perspectives — view 3"
+  },
+  {
+    "name": "mountain",
+    "id": "97314d3d-dc9b-fd8e-644e-eb5150f16721",
+    "alt": "By Nature's Force: Veli Vetridamakha Nagarkirathu"
+  },
+  {
+    "name": "poplars",
+    "id": "9694ca0c-c4c4-e48d-566f-4d248990cff4",
+    "alt": "By Nature's Force: Veli Vetridamakha Nagarkirathu — view 2"
+  },
+  {
+    "name": "provincetown",
+    "id": "f534bce3-4746-cba6-6c46-c37a7c9199fb",
+    "alt": "By Nature's Force: Veli Vetridamakha Nagarkirathu — view 3"
+  },
+  {
+    "name": "munch",
+    "id": "faf61d4e-118f-4dff-5b72-dde12b07efa2",
+    "alt": "Naan Yaar"
+  },
+  {
+    "name": "untitledK",
+    "id": "49386c47-95b8-f868-e849-5dd583e2026a",
+    "alt": "Naan Yaar — view 1"
+  },
+  {
+    "name": "thistles",
+    "id": "79b94ddd-e208-1993-01ab-98f75174fe88",
+    "alt": "Naan Yaar — view 2"
+  },
+  {
+    "name": "nataraja",
+    "id": "cf50f037-5fb2-e197-0e56-3ae701edb3e2",
+    "alt": "50 Indian Sculptors"
+  },
+  {
+    "name": "krishnaD",
+    "id": "bc06c92f-4117-639f-9e9c-5fe927972be1",
+    "alt": "50 Indian Sculptors — view 1"
+  },
+  {
+    "name": "fruit",
+    "id": "632a37ca-e571-efb2-f52a-14b5e5e11fa1",
+    "alt": "Kolvel — view 2"
+  },
+  {
+    "name": "cezanne",
+    "id": "52ac8996-3460-cf71-cb42-5c4d0aa29b74",
+    "alt": "Kolvel — view 3"
+  },
+  {
+    "name": "auvers",
+    "id": "90bc0cec-0d4e-9af5-3912-52a082a428e5",
+    "alt": "ART SG 2025"
+  },
+  {
+    "name": "mondrian",
+    "id": "b8ca5039-1d0c-648d-ad46-838ecea3e14c",
+    "alt": "India Art Fair 2022"
+  },
+  {
+    "name": "jatte",
+    "id": "2d484387-2509-5e8e-2c43-22f9981972eb",
+    "alt": "Art Houz Chennai"
+  },
+  {
+    "name": "bedroom",
+    "id": "6644829f-f292-c5c4-a73c-0356a6fdbf0d",
+    "alt": "Gallery interior"
+  },
+  {
+    "name": "dove",
+    "id": "82af60b3-2e1d-fc8a-91ec-4892e70fc5bc",
+    "alt": "Vincent Adaikalraj"
+  },
+  {
+    "name": "apples",
+    "id": "b2bc0fc2-8d17-1fcd-8cae-8626421c11ef",
+    "alt": "Arts Illustrated covers"
+  },
+  {
+    "name": "juggler",
+    "id": "be8615b5-15e7-91f5-0157-d4a7f72080fe",
+    "alt": "Amol Pawar — work"
+  },
+  {
+    "name": "nobles",
+    "id": "5f2eb807-4027-bf11-e71b-166f7a7f799f",
+    "alt": "Harish Ojha — work"
+  }
+]

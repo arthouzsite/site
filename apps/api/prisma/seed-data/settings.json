@@ -1,0 +1,24 @@
+{
+  "heroLayout": "FULL_BLEED",
+  "artistIndexLayout": "GROUPED",
+  "homeHeroExhibitionId": null,
+  "homeArtistCount": 22,
+  "homeFocus": {
+    "artistName": "Vijay Pichumani",
+    "text": "Vijay Pichumani has shown with Art Houz since 2020, from Kolvel, made during the lockdowns, to By Nature’s Force at Lalit Kala Akademi. His paintings and black-and-white wood carvings come out of long journeys by bike across Tamil Nadu, reading each region through the colour of its soil.",
+    "imageName": "mountain",
+    "mediumLabel": "Painting & wood carving",
+    "baseLabel": "Chennai"
+  },
+  "footer": {
+    "tagline": "Contemporary art from South India. Chennai & Bengaluru, since 2012.",
+    "instagramUrl": "https://www.instagram.com/",
+    "facebookUrl": "https://www.facebook.com/",
+    "copyrightFrom": 2012
+  },
+  "site": {
+    "title": "Art Houz",
+    "description": "Art Houz is one of the leading contemporary art galleries from South-India.",
+    "ogImageName": null
+  }
+}
