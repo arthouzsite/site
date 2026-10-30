@@ -12,3 +12,4 @@ test-results/
 .DS_Store
 mockups/**/*.png
 apps/api/src/generated/
+dist-dev/
