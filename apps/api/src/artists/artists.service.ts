@@ -4,6 +4,7 @@ import { withMeta } from '../common/envelope.interceptor'
 import { parsePagination } from '../common/pagination'
 import { PrismaService } from '../common/prisma.service'
 import { uniqueSlug } from '../common/slugs'
+import { artistTagsWithExhibitions } from '../revalidate/related-tags'
 import { RevalidateService } from '../revalidate/revalidate.service'
 import { ARTIST_INCLUDE, toAdminArtist } from './artists.mapper'
 import { artistListWhere, type ArtistListQuery } from './artists.query'
@@ -58,14 +59,14 @@ export class ArtistsService {
     const wantsNewSlug = requested !== undefined && slugify(requested) !== existing.slug
     const slug = wantsNewSlug ? await uniqueSlug(this.prisma, 'artist', requested, id) : existing.slug
     const updated = await this.prisma.artist.update({ where: { id }, data: writableData(input, slug), include: ARTIST_INCLUDE })
-    this.revalidate.trigger([...tagsFor('artist', existing.slug), ...tagsFor('artist', updated.slug)])
+    this.revalidate.trigger(await artistTagsWithExhibitions(this.prisma, id, [existing.slug, updated.slug]))
     return toAdminArtist(updated)
   }
 
   async publish(id: string, isPublished: boolean) {
     const existing = await this.find(id)
     const updated = await this.prisma.artist.update({ where: { id }, data: { isPublished }, include: ARTIST_INCLUDE })
-    this.revalidate.trigger(tagsFor('artist', existing.slug))
+    this.revalidate.trigger(await artistTagsWithExhibitions(this.prisma, id, [existing.slug]))
     return toAdminArtist(updated)
   }
 
@@ -120,8 +121,9 @@ export class ArtistsService {
         details: { exhibitions: links.map((l) => ({ id: l.exhibition.id, title: l.exhibition.title })), workCount, artworkCount },
       })
     }
+    const tags = await artistTagsWithExhibitions(this.prisma, id, [existing.slug])
     await this.prisma.artist.delete({ where: { id } })
-    this.revalidate.trigger(tagsFor('artist', existing.slug))
+    this.revalidate.trigger(tags)
     return { id }
   }
 

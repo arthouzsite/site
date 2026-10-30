@@ -7,6 +7,7 @@ import { parsePagination } from '../common/pagination'
 import { PrismaService } from '../common/prisma.service'
 import { uniqueSlug } from '../common/slugs'
 import type { Prisma } from '../generated/prisma/client'
+import { exhibitionFanOutTags, exhibitionSlugsByIds } from '../revalidate/related-tags'
 import { RevalidateService } from '../revalidate/revalidate.service'
 import { NEWS_INCLUDE, toAdminNews } from './news.mapper'
 
@@ -70,7 +71,7 @@ export class NewsService {
       data: { ...writableFields(input, slug), isPublished: input.isPublished },
       include: NEWS_INCLUDE,
     })
-    this.revalidate.trigger(tagsFor('news', created.slug))
+    this.revalidate.trigger([...tagsFor('news', created.slug), ...(await this.exhibitionTags([created.exhibitionId]))])
     return toAdminNews(created)
   }
 
@@ -79,22 +80,31 @@ export class NewsService {
     await this.assertReferences(input)
     const slug = await this.nextSlug(existing, input, id)
     const updated = await this.prisma.news.update({ where: { id }, data: writableFields(input, slug), include: NEWS_INCLUDE })
-    this.revalidate.trigger([...tagsFor('news', existing.slug), ...tagsFor('news', updated.slug)])
+    this.revalidate.trigger([
+      ...tagsFor('news', existing.slug),
+      ...tagsFor('news', updated.slug),
+      ...(await this.exhibitionTags([existing.exhibitionId, updated.exhibitionId])),
+    ])
     return toAdminNews(updated)
   }
 
   async publish(id: string, isPublished: boolean) {
     const existing = await this.find(id)
     const updated = await this.prisma.news.update({ where: { id }, data: { isPublished }, include: NEWS_INCLUDE })
-    this.revalidate.trigger(tagsFor('news', existing.slug))
+    this.revalidate.trigger([...tagsFor('news', existing.slug), ...(await this.exhibitionTags([existing.exhibitionId]))])
     return toAdminNews(updated)
   }
 
   async remove(id: string) {
     const existing = await this.find(id)
     await this.prisma.news.delete({ where: { id } })
-    this.revalidate.trigger(tagsFor('news', existing.slug))
+    this.revalidate.trigger([...tagsFor('news', existing.slug), ...(await this.exhibitionTags([existing.exhibitionId]))])
     return { id }
+  }
+
+  // News is listed on its exhibition's page, so a linked exhibition (old or new) must refresh too.
+  private async exhibitionTags(exhibitionIds: ReadonlyArray<string | null>): Promise<string[]> {
+    return exhibitionFanOutTags(await exhibitionSlugsByIds(this.prisma, exhibitionIds), [])
   }
 
   private async assertReferences(input: NewsInput): Promise<void> {

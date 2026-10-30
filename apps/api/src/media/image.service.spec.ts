@@ -58,4 +58,22 @@ describe('ImageService', () => {
     const gif = await sharp({ create: { width: 8, height: 8, channels: 3, background: '#000' } }).gif().toBuffer()
     await expect(service.process(gif)).rejects.toMatchObject({ status: 400 })
   })
+
+  describe('heif container', () => {
+    const stubMetadata = (compression: string | undefined) =>
+      jest.spyOn(service as unknown as { decode: () => Promise<unknown> }, 'decode').mockResolvedValue({
+        meta: { format: 'heif', compression, width: 10, height: 8 },
+        thumb: Buffer.alloc(1),
+      })
+
+    it('maps heif with av1 compression to avif', async () => {
+      stubMetadata('av1')
+      await expect(service.process(Buffer.alloc(1))).resolves.toMatchObject({ ext: 'avif', mime: 'image/avif' })
+    })
+
+    it.each(['hevc', undefined])('rejects heif with %s compression as INVALID_IMAGE', async (compression) => {
+      stubMetadata(compression)
+      await expect(service.process(Buffer.alloc(1))).rejects.toMatchObject({ status: 400, response: { code: 'INVALID_IMAGE' } })
+    })
+  })
 })

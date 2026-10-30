@@ -21,7 +21,8 @@ export const PUBLIC_EXHIBITION_DETAIL_INCLUDE = {
   ...PUBLIC_EXHIBITION_INCLUDE,
   works: {
     ...BY_SORT_ORDER,
-    where: { artist: { isPublished: true } },
+    // Videos are library-only: never expose one as a work image even if a row points at it.
+    where: { artist: { isPublished: true }, image: { kind: 'IMAGE' } },
     include: { image: true, artist: { select: { name: true } } },
   },
 } satisfies Prisma.ExhibitionInclude

@@ -1,6 +1,6 @@
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '../src/generated/prisma/client'
-import { seedDatabase } from '../prisma/seed'
+import { runSeed, seedDatabase } from '../prisma/seed'
 import { migrateTestDb, resetDb } from './helpers/db'
 
 const SEED_OPTS = { adminEmail: 'admin@example.com', adminPassword: 'change-me-now-please' }
@@ -55,5 +55,30 @@ describe('seed', () => {
     const focus = await prisma.setting.findUniqueOrThrow({ where: { key: 'homeFocus' } })
     const vijay = await prisma.artist.findUniqueOrThrow({ where: { slug: 'vijay-pichumani' } })
     expect((focus.value as { artistId: string }).artistId).toBe(vijay.id)
+  })
+
+  it('without SEED_FORCE only upserts the admin when content exists and leaves edits alone', async () => {
+    await prisma.exhibition.update({ where: { slug: 'tidewater' }, data: { title: 'Edited by the gallery' } })
+
+    const outcome = await runSeed(prisma, { adminEmail: '  Second.Admin@Example.com ', adminPassword: 'change-me-now-please' }, false)
+
+    expect(outcome).toBe('skipped')
+    expect((await prisma.exhibition.findUniqueOrThrow({ where: { slug: 'tidewater' } })).title).toBe('Edited by the gallery')
+    expect(await prisma.user.findUnique({ where: { email: 'second.admin@example.com' } })).toMatchObject({ role: 'ADMIN' })
+  })
+
+  it('SEED_FORCE reloads the content over existing rows', async () => {
+    const outcome = await runSeed(prisma, SEED_OPTS, true)
+
+    expect(outcome).toBe('seeded')
+    expect((await prisma.exhibition.findUniqueOrThrow({ where: { slug: 'tidewater' } })).title).not.toBe('Edited by the gallery')
+  })
+
+  it('seeds everything into an empty database even without SEED_FORCE', async () => {
+    await resetDb()
+
+    expect(await runSeed(prisma, SEED_OPTS, false)).toBe('seeded')
+    expect(await prisma.exhibition.count()).toBe(9)
+    expect(await prisma.user.count()).toBe(1)
   })
 })

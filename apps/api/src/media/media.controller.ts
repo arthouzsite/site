@@ -28,7 +28,10 @@ const uploadSchema = z.object({
   alt: z.string('Alt text is required').trim().min(1, 'Alt text is required').max(500),
 })
 
+const MAX_SEARCH_LENGTH = 120
+
 const listQuerySchema = z.object({
+  q: z.string().trim().max(MAX_SEARCH_LENGTH).optional(),
   kind: z.enum(['image', 'video'], 'Kind must be image or video').optional(),
 })
 
@@ -61,10 +64,10 @@ export class MediaController {
 
   @Get()
   async list(@Query() query: { q?: string; page?: string; limit?: string; missingAlt?: string; kind?: string }) {
-    const { kind } = listQuerySchema.parse({ kind: query.kind })
+    const { kind, q } = listQuerySchema.parse({ q: query.q, kind: query.kind })
     const pagination = parsePagination(query)
     const { items, total } = await this.media.list({
-      q: query.q?.trim() || undefined,
+      q: q || undefined,
       missingAlt: query.missingAlt === 'true',
       kind: kind ? KIND_BY_QUERY[kind] : undefined,
       ...pagination,

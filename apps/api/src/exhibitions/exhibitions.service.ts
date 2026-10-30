@@ -1,12 +1,13 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common'
 import { z } from 'zod'
-import { EXHIBITION_STATUSES, slugify, tagsFor, type ExhibitionInput, type ExhibitionStatus } from '@arthouz/shared'
+import { EXHIBITION_STATUSES, slugify, type ExhibitionInput, type ExhibitionStatus } from '@arthouz/shared'
 import { withMeta } from '../common/envelope.interceptor'
 import { parsePagination } from '../common/pagination'
 import { PrismaService } from '../common/prisma.service'
 import { uniqueSlug } from '../common/slugs'
 import { today } from '../config/clock'
 import type { Prisma } from '../generated/prisma/client'
+import { exhibitionTagsWithArtists, linkedArtistSlugs } from '../revalidate/related-tags'
 import { RevalidateService } from '../revalidate/revalidate.service'
 import { EXHIBITION_INCLUDE, toAdminExhibition } from './exhibitions.mapper'
 import { assertMediaExists } from '../common/media-exists'
@@ -101,7 +102,7 @@ export class ExhibitionsService {
       },
       include: EXHIBITION_INCLUDE,
     })
-    this.revalidate.trigger(tagsFor('exhibition', created.slug))
+    this.revalidate.trigger(await exhibitionTagsWithArtists(this.prisma, created.id, [created.slug]))
     return toAdminExhibition(created)
   }
 
@@ -115,27 +116,29 @@ export class ExhibitionsService {
       data: updateData(input, slug),
       include: EXHIBITION_INCLUDE,
     })
-    this.revalidate.trigger([...tagsFor('exhibition', existing.slug), ...tagsFor('exhibition', updated.slug)])
+    this.revalidate.trigger(await exhibitionTagsWithArtists(this.prisma, id, [existing.slug, updated.slug]))
     return toAdminExhibition(updated)
   }
 
   async setArtists(id: string, requestedIds: string[]) {
     const existing = await this.find(id)
     const artistIds = await this.validArtistIds(requestedIds)
+    const previousArtistSlugs = await linkedArtistSlugs(this.prisma, id)
+    await this.assertNoWorksForRemoved(id, artistIds)
     await this.prisma.$transaction([
       this.prisma.exhibitionArtist.deleteMany({ where: { exhibitionId: id } }),
       this.prisma.exhibitionArtist.createMany({
         data: artistIds.map((artistId, sortOrder) => ({ exhibitionId: id, artistId, sortOrder })),
       }),
     ])
-    this.revalidate.trigger(tagsFor('exhibition', existing.slug))
+    this.revalidate.trigger(await exhibitionTagsWithArtists(this.prisma, id, [existing.slug], previousArtistSlugs))
     return this.get(id)
   }
 
   async publish(id: string, isPublished: boolean) {
     const existing = await this.find(id)
     const updated = await this.prisma.exhibition.update({ where: { id }, data: { isPublished }, include: EXHIBITION_INCLUDE })
-    this.revalidate.trigger(tagsFor('exhibition', existing.slug))
+    this.revalidate.trigger(await exhibitionTagsWithArtists(this.prisma, id, [existing.slug]))
     return toAdminExhibition(updated)
   }
 
@@ -154,15 +157,33 @@ export class ExhibitionsService {
       const result = await tx.exhibition.updateMany({ where: { id: { in: ids } }, data: { isPublished } })
       return { rows: found, count: result.count }
     })
-    this.revalidate.trigger(rows.flatMap((r) => tagsFor('exhibition', r.slug)))
+    const tags = await Promise.all(rows.map((r) => exhibitionTagsWithArtists(this.prisma, r.id, [r.slug])))
+    this.revalidate.trigger(tags.flat())
     return { updated: count }
   }
 
   async remove(id: string) {
     const existing = await this.find(id)
+    const tags = await exhibitionTagsWithArtists(this.prisma, id, [existing.slug])
     await this.prisma.exhibition.delete({ where: { id } })
-    this.revalidate.trigger(tagsFor('exhibition', existing.slug))
+    this.revalidate.trigger(tags)
     return { id }
+  }
+
+  // Works reference an artist of the exhibition (WORK_ARTIST_NOT_IN_EXHIBITION), so dropping that artist would orphan them.
+  private async assertNoWorksForRemoved(exhibitionId: string, keptArtistIds: string[]): Promise<void> {
+    const blocking = await this.prisma.exhibitionWork.findMany({
+      where: { exhibitionId, artistId: { notIn: keptArtistIds } },
+      select: { artistId: true },
+      distinct: ['artistId'],
+    })
+    if (blocking.length === 0) return
+    const artistIds = blocking.map((w) => w.artistId)
+    throw new ConflictException({
+      code: 'ARTIST_HAS_WORKS',
+      message: 'Remove or reassign this exhibition\'s works by these artists first',
+      details: { artistIds },
+    })
   }
 
   private async validArtistIds(requested: string[]): Promise<string[]> {

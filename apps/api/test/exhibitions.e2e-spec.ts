@@ -270,6 +270,48 @@ describe('exhibitions', () => {
     }
   })
 
+  describe('revalidation fan-out', () => {
+    it('create, publish and delete also revalidate every linked artist', async () => {
+      const a = await makeArtist('Aa')
+      const b = await makeArtist('Bb')
+      fetchMock.mockClear()
+      const ex = await create({ artistIds: [a.id, b.id] })
+      expect(postedTags()).toEqual(expect.arrayContaining(['exhibition:tidewater', 'artist:aa', 'artist:bb']))
+      fetchMock.mockClear()
+      await authed.patch(`/exhibitions/${ex.id}/publish`).send({ isPublished: true }).expect(200)
+      expect(postedTags()).toEqual(expect.arrayContaining(['exhibition:tidewater', 'artist:aa', 'artist:bb']))
+      fetchMock.mockClear()
+      await authed.del(`/exhibitions/${ex.id}`).expect(200)
+      expect(postedTags()).toEqual(expect.arrayContaining(['exhibition:tidewater', 'artist:aa', 'artist:bb']))
+    })
+
+    it('update revalidates the old slug, the new slug and the artists', async () => {
+      const a = await makeArtist('Aa')
+      const ex = await create({ artistIds: [a.id] })
+      fetchMock.mockClear()
+      await authed.patch(`/exhibitions/${ex.id}`).send(baseInput({ slug: 'renamed' })).expect(200)
+      expect(postedTags()).toEqual(expect.arrayContaining(['exhibition:tidewater', 'exhibition:renamed', 'artist:aa']))
+    })
+
+    it('setArtists revalidates both the removed and the added artists', async () => {
+      const a = await makeArtist('Aa')
+      const b = await makeArtist('Bb')
+      const ex = await create({ artistIds: [a.id] })
+      fetchMock.mockClear()
+      await authed.put(`/exhibitions/${ex.id}/artists`).send({ ids: [b.id] }).expect(200)
+      expect(postedTags()).toEqual(expect.arrayContaining(['exhibition:tidewater', 'artist:aa', 'artist:bb']))
+    })
+
+    it('work changes revalidate the exhibition artists', async () => {
+      const a = await makeArtist('Aa')
+      const img = await makeMedia('w')
+      const ex = await create({ artistIds: [a.id] })
+      fetchMock.mockClear()
+      await authed.post(`/exhibitions/${ex.id}/works`).send({ imageId: img.id, title: 'W', artistId: a.id }).expect(201)
+      expect(postedTags()).toEqual(expect.arrayContaining(['exhibition:tidewater', 'artist:aa']))
+    })
+  })
+
   describe('works', () => {
     it('work with an artist outside the exhibition -> 400 WORK_ARTIST_NOT_IN_EXHIBITION', async () => {
       const inside = await makeArtist('In')
@@ -320,6 +362,38 @@ describe('exhibitions', () => {
       expect(postedTags()).toContain('exhibition:tidewater')
       await authed.del(`/works/${ids[0]}`).expect(200)
       expect(await prisma.exhibitionWork.count()).toBe(2)
+    })
+
+    it('rejects a video or unknown media as the work image on create and update', async () => {
+      const artist = await makeArtist('Aa')
+      const img = await makeMedia('w')
+      const video = await makeVideo('v.mp4')
+      const ex = await create({ artistIds: [artist.id] })
+      const body = (imageId: string) => ({ imageId, title: 'W', artistId: artist.id })
+      const kind = await authed.post(`/exhibitions/${ex.id}/works`).send(body(video.id)).expect(400)
+      expect(kind.body.error.code).toBe('INVALID_MEDIA_KIND')
+      const unknown = await authed.post(`/exhibitions/${ex.id}/works`).send(body('3f2b8c1e-8a52-4f0e-9d3b-1c2d3e4f5a6b')).expect(400)
+      expect(unknown.body.error.code).toBe('UNKNOWN_MEDIA')
+      expect(await prisma.exhibitionWork.count()).toBe(0)
+      const ok = await authed.post(`/exhibitions/${ex.id}/works`).send(body(img.id)).expect(201)
+      const upd = await authed.patch(`/works/${ok.body.data.id}`).send(body(video.id)).expect(400)
+      expect(upd.body.error.code).toBe('INVALID_MEDIA_KIND')
+      const missing = await authed.patch(`/works/${ok.body.data.id}`).send(body('3f2b8c1e-8a52-4f0e-9d3b-1c2d3e4f5a6b')).expect(400)
+      expect(missing.body.error.code).toBe('UNKNOWN_MEDIA')
+    })
+
+    it('setArtists refuses to drop an artist who still has works -> 409 ARTIST_HAS_WORKS', async () => {
+      const keep = await makeArtist('Keep')
+      const drop = await makeArtist('Drop')
+      const img = await makeMedia('w')
+      const ex = await create({ artistIds: [keep.id, drop.id] })
+      const work = await authed.post(`/exhibitions/${ex.id}/works`).send({ imageId: img.id, title: 'W', artistId: drop.id }).expect(201)
+      const res = await authed.put(`/exhibitions/${ex.id}/artists`).send({ ids: [keep.id] }).expect(409)
+      expect(res.body.error.code).toBe('ARTIST_HAS_WORKS')
+      expect(res.body.error.details.artistIds).toEqual([drop.id])
+      expect(await prisma.exhibitionArtist.count({ where: { exhibitionId: ex.id } })).toBe(2)
+      await authed.del(`/works/${work.body.data.id}`).expect(200)
+      await authed.put(`/exhibitions/${ex.id}/artists`).send({ ids: [keep.id] }).expect(200)
     })
   })
 })

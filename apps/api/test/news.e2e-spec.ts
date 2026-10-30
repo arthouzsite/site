@@ -109,4 +109,25 @@ describe('news', () => {
     expect(await prisma.news.count()).toBe(0)
     await api.get(`/news/${UNKNOWN_UUID}`).expect(404)
   })
+
+  it('news linked to an exhibition also revalidates that exhibition (old and new)', async () => {
+    const mk = (slug: string) =>
+      prisma.exhibition.create({
+        data: { slug, title: slug, city: 'X', country: 'Y', type: 'SOLO', startDate: new Date('2026-01-01'), endDate: new Date('2026-02-01') },
+      })
+    const first = await mk('first-show')
+    const second = await mk('second-show')
+    fetchMock.mockClear()
+    const n = await create({ exhibitionId: first.id })
+    expect(postedTags()).toContain('exhibition:first-show')
+    fetchMock.mockClear()
+    await api.patch(`/news/${n.id}`).send({ title: 'Opening night', publishedAt: '2026-05-01', exhibitionId: second.id }).expect(200)
+    expect(postedTags()).toEqual(expect.arrayContaining(['exhibition:first-show', 'exhibition:second-show']))
+    fetchMock.mockClear()
+    await api.patch(`/news/${n.id}/publish`).send({ isPublished: true }).expect(200)
+    expect(postedTags()).toContain('exhibition:second-show')
+    fetchMock.mockClear()
+    await api.del(`/news/${n.id}`).expect(200)
+    expect(postedTags()).toContain('exhibition:second-show')
+  })
 })

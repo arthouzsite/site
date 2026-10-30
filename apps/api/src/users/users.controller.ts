@@ -28,8 +28,8 @@ export class UsersController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @ZodBody(userUpdateSchema) body: UserUpdate) {
-    return this.users.update(id, body)
+  update(@Param('id') id: string, @ZodBody(userUpdateSchema) body: UserUpdate, @CurrentUser() actor: PublicUser) {
+    return this.users.update(id, body, actor.id)
   }
 
   @Delete(':id')

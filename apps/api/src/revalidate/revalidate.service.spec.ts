@@ -47,3 +47,19 @@ describe('RevalidateService', () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 })
+
+describe('RevalidateService timeout', () => {
+  const realFetch = globalThis.fetch
+  afterEach(() => {
+    globalThis.fetch = realFetch
+  })
+
+  it('passes an abort signal so a hung web app cannot pile up requests', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({ ok: true, status: 200 })
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+    new RevalidateService().trigger(['a'])
+    await flush()
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    expect(init.signal).toBeInstanceOf(AbortSignal)
+  })
+})

@@ -1,12 +1,15 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
-import { tagsFor, type ExhibitionWorkInput } from '@arthouz/shared'
+import type { ExhibitionWorkInput } from '@arthouz/shared'
 import { PrismaService } from '../common/prisma.service'
+import { assertMediaExists } from '../common/media-exists'
+import { exhibitionTagsWithArtists } from '../revalidate/related-tags'
 import { RevalidateService } from '../revalidate/revalidate.service'
 import { assertExactOrder } from '../common/exact-order'
 
 const WORK_NOT_FOUND = 'Work not found'
 const EXHIBITION_NOT_FOUND = 'Exhibition not found'
 const ARTWORK_NOT_FOUND = 'Artwork not found'
+const WORK_IMAGE_LABEL = 'work image'
 
 @Injectable()
 export class ExhibitionWorksService {
@@ -26,12 +29,13 @@ export class ExhibitionWorksService {
 
   async create(exhibitionId: string, input: ExhibitionWorkInput) {
     const { slug } = await this.exhibition(exhibitionId)
+    await assertMediaExists(this.prisma, input.imageId, WORK_IMAGE_LABEL)
     await this.assertArtistInExhibition(exhibitionId, input.artistId)
     const last = await this.prisma.exhibitionWork.aggregate({ where: { exhibitionId }, _max: { sortOrder: true } })
     const created = await this.prisma.exhibitionWork.create({
       data: { ...input, exhibitionId, sortOrder: (last._max.sortOrder ?? -1) + 1 },
     })
-    this.revalidate.trigger(tagsFor('exhibition', slug))
+    await this.revalidateExhibition(exhibitionId, slug)
     return created
   }
 
@@ -56,22 +60,23 @@ export class ExhibitionWorksService {
         sortOrder: (last._max.sortOrder ?? -1) + 1,
       },
     })
-    this.revalidate.trigger(tagsFor('exhibition', slug))
+    await this.revalidateExhibition(exhibitionId, slug)
     return created
   }
 
   async update(workId: string, input: ExhibitionWorkInput) {
     const work = await this.findWork(workId)
+    await assertMediaExists(this.prisma, input.imageId, WORK_IMAGE_LABEL)
     await this.assertArtistInExhibition(work.exhibitionId, input.artistId)
     const updated = await this.prisma.exhibitionWork.update({ where: { id: workId }, data: input })
-    this.revalidate.trigger(tagsFor('exhibition', work.exhibition.slug))
+    await this.revalidateExhibition(work.exhibitionId, work.exhibition.slug)
     return updated
   }
 
   async remove(workId: string) {
     const work = await this.findWork(workId)
     await this.prisma.exhibitionWork.delete({ where: { id: workId } })
-    this.revalidate.trigger(tagsFor('exhibition', work.exhibition.slug))
+    await this.revalidateExhibition(work.exhibitionId, work.exhibition.slug)
     return { id: workId }
   }
 
@@ -82,8 +87,12 @@ export class ExhibitionWorksService {
     await this.prisma.$transaction(
       ids.map((id, sortOrder) => this.prisma.exhibitionWork.update({ where: { id }, data: { sortOrder } })),
     )
-    this.revalidate.trigger(tagsFor('exhibition', slug))
+    await this.revalidateExhibition(exhibitionId, slug)
     return this.list(exhibitionId)
+  }
+
+  private async revalidateExhibition(exhibitionId: string, slug: string): Promise<void> {
+    this.revalidate.trigger(await exhibitionTagsWithArtists(this.prisma, exhibitionId, [slug]))
   }
 
   private async exhibition(id: string) {

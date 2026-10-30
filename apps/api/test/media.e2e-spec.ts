@@ -3,7 +3,8 @@ import { randomBytes } from 'node:crypto'
 import sharp from 'sharp'
 import request from 'supertest'
 import { PrismaPg } from '@prisma/adapter-pg'
-import { PrismaClient } from '../src/generated/prisma/client'
+import { SETTING_DEFAULTS } from '@arthouz/shared'
+import { PrismaClient, type Prisma } from '../src/generated/prisma/client'
 import { MemoryStorage } from '../src/media/storage/memory.storage'
 import { STORAGE } from '../src/media/storage/storage.interface'
 import { createTestApp } from './helpers/app'
@@ -140,6 +141,52 @@ describe('media', () => {
     await http.patch(`/media/${created.id}`).send({ alt: '' }).expect(400)
     await http.get('/media/00000000-0000-0000-0000-000000000000').expect(404)
     await http.delete('/media/00000000-0000-0000-0000-000000000000').expect(404)
+  })
+
+  it('DELETE media referenced only by a setting -> 409 MEDIA_IN_USE naming the setting', async () => {
+    const created = (await upload(jpeg).expect(201)).body.data
+    const cases: [string, Record<string, unknown>, string][] = [
+      ['homeFocus', { artistId: null, imageId: created.id }, 'Home focus'],
+      ['about.proprietor', { imageId: created.id }, 'About: proprietor'],
+      ['site', { ogImageId: created.id }, 'Site social image'],
+    ]
+    for (const [key, partial, title] of cases) {
+      const value = { ...(SETTING_DEFAULTS[key as keyof typeof SETTING_DEFAULTS] as object), ...partial } as Prisma.InputJsonObject
+      await prisma.setting.upsert({ where: { key }, create: { key, value }, update: { value } })
+      const res = await http.delete(`/media/${created.id}`).expect(409)
+      expect(res.body.error.code).toBe('MEDIA_IN_USE')
+      expect(res.body.error.details.usedBy).toEqual([{ type: 'setting', id: key, title }])
+      await prisma.setting.delete({ where: { key } })
+    }
+    await http.delete(`/media/${created.id}`).expect(200)
+  })
+
+  it('PATCH alt revalidates the pages that use the media', async () => {
+    const realFetch = globalThis.fetch
+    const fetchMock = jest.fn().mockResolvedValue({ ok: true, status: 200 })
+    globalThis.fetch = ((url: string, init?: RequestInit) =>
+      String(url).includes('/api/revalidate') ? fetchMock(url, init) : realFetch(url, init)) as typeof fetch
+    try {
+      const created = (await upload(jpeg).expect(201)).body.data
+      await prisma.exhibition.create({
+        data: {
+          slug: 'sea', title: 'Sea', city: 'Dubai', country: 'UAE', type: 'SOLO',
+          startDate: new Date('2026-01-01'), endDate: new Date('2026-02-01'), heroImageId: created.id,
+        },
+      })
+      fetchMock.mockClear()
+      await http.patch(`/media/${created.id}`).send({ alt: 'Fresh alt' }).expect(200)
+      await new Promise((resolve) => setImmediate(resolve))
+      const tags = fetchMock.mock.calls.flatMap(([, init]) => (JSON.parse((init as RequestInit).body as string) as { tags: string[] }).tags)
+      expect(tags).toContain('exhibition:sea')
+    } finally {
+      globalThis.fetch = realFetch
+    }
+  })
+
+  it('rejects an over-long q with 400 VALIDATION', async () => {
+    await http.get(`/media?q=${'a'.repeat(121)}`).expect(400)
+    await http.get(`/media?q=${'a'.repeat(120)}`).expect(200)
   })
 
   it('deletes unused media and its storage objects', async () => {

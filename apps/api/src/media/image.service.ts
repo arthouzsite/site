@@ -13,6 +13,14 @@ const MIME_BY_EXT: Readonly<Record<ImageExt, string>> = {
 }
 const SWAPPED_ORIENTATION_MIN = 5
 const EXT_BY_FORMAT: Readonly<Record<string, ImageExt>> = { jpeg: 'jpg', png: 'png', webp: 'webp', heif: 'avif' }
+const AVIF_COMPRESSION = 'av1'
+
+// sharp reports HEIC and AVIF both as "heif"; only the av1 compression is AVIF.
+function extFor(meta: Metadata): ImageExt | undefined {
+  if (!meta.format) return undefined
+  if (meta.format === 'heif' && meta.compression !== AVIF_COMPRESSION) return undefined
+  return EXT_BY_FORMAT[meta.format]
+}
 
 @Injectable()
 export class ImageService {
@@ -20,7 +28,7 @@ export class ImageService {
 
   async process(buf: Buffer): Promise<ProcessedImage> {
     const { meta, thumb } = await this.decode(buf)
-    const ext = meta.format ? EXT_BY_FORMAT[meta.format] : undefined
+    const ext = extFor(meta)
     if (!ext) {
       this.logger.warn(`Rejected unsupported image format: ${meta.format}`)
       throw this.invalidImage()
@@ -35,7 +43,7 @@ export class ImageService {
   private async decode(buf: Buffer): Promise<{ meta: Metadata; thumb: Buffer }> {
     try {
       const meta = await sharp(buf).metadata()
-      if (!meta.format || !EXT_BY_FORMAT[meta.format]) return { meta, thumb: Buffer.alloc(0) }
+      if (!extFor(meta)) return { meta, thumb: Buffer.alloc(0) }
       const thumb = await sharp(buf)
         .rotate()
         .resize({ width: THUMB_WIDTH, withoutEnlargement: true })

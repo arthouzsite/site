@@ -48,6 +48,18 @@ describe('parseEnv', () => {
     expect(parseEnv(build({ NODE_ENV: 'test', TODAY_OVERRIDE: '2026-10-30' })).TODAY_OVERRIDE).toBe('2026-10-30')
   })
 
+  it('defaults TRUST_PROXY to 0 and parses a non-negative hop count', () => {
+    expect(parseEnv(build({ NODE_ENV: 'test' })).TRUST_PROXY).toBe(0)
+    expect(parseEnv(build({ NODE_ENV: 'test', TRUST_PROXY: '1' })).TRUST_PROXY).toBe(1)
+    expect(parseEnv(build({ NODE_ENV: 'test', TRUST_PROXY: '2' })).TRUST_PROXY).toBe(2)
+  })
+
+  it('rejects a negative, fractional or non-numeric TRUST_PROXY', () => {
+    for (const bad of ['-1', '1.5', 'true', 'loopback']) {
+      expect(() => parseEnv(build({ NODE_ENV: 'test', TRUST_PROXY: bad }))).toThrow(/TRUST_PROXY/)
+    }
+  })
+
   it('reports every missing required variable', () => {
     expect(() => parseEnv({ NODE_ENV: 'test' })).toThrow(/DATABASE_URL[\s\S]*SEED_ADMIN_EMAIL/)
   })

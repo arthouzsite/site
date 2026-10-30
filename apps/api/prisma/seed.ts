@@ -37,10 +37,12 @@ function toDate(iso: string): Date {
 }
 
 async function seedAdmin(prisma: PrismaClient, { adminEmail, adminPassword }: SeedOptions): Promise<void> {
+  // Same normalisation as loginSchema, otherwise the seeded admin could never sign in.
+  const email = adminEmail.trim().toLowerCase()
   const passwordHash = await argon2.hash(adminPassword, { type: argon2.argon2id })
   await prisma.user.upsert({
-    where: { email: adminEmail },
-    create: { email: adminEmail, passwordHash, name: ADMIN_NAME, role: 'ADMIN' },
+    where: { email },
+    create: { email, passwordHash, name: ADMIN_NAME, role: 'ADMIN' },
     update: {},
   })
 }
@@ -193,6 +195,23 @@ export async function seedDatabase(prisma: PrismaClient, opts: SeedOptions): Pro
   )
 }
 
+export type SeedOutcome = 'seeded' | 'skipped'
+
+async function hasContent(prisma: PrismaClient): Promise<boolean> {
+  const counts = await Promise.all([prisma.exhibition.count(), prisma.artist.count(), prisma.news.count(), prisma.fair.count()])
+  return counts.some((count) => count > 0)
+}
+
+// The content upserts overwrite editor changes, so on a live database only the admin user is ensured.
+export async function runSeed(prisma: PrismaClient, opts: SeedOptions, force: boolean): Promise<SeedOutcome> {
+  if (!force && (await hasContent(prisma))) {
+    await seedAdmin(prisma, opts)
+    return 'skipped'
+  }
+  await seedDatabase(prisma, opts)
+  return 'seeded'
+}
+
 function requiredEnv(name: string): string {
   const value = process.env[name]
   if (!value) throw new Error(`seed: ${name} is required`)
@@ -202,11 +221,12 @@ function requiredEnv(name: string): string {
 async function main(): Promise<void> {
   const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: requiredEnv('DATABASE_URL') }) })
   try {
-    await seedDatabase(prisma, {
-      adminEmail: requiredEnv('SEED_ADMIN_EMAIL'),
-      adminPassword: requiredEnv('SEED_ADMIN_PASSWORD'),
-    })
-    console.log('seed: done')
+    const outcome = await runSeed(
+      prisma,
+      { adminEmail: requiredEnv('SEED_ADMIN_EMAIL'), adminPassword: requiredEnv('SEED_ADMIN_PASSWORD') },
+      process.env.SEED_FORCE === '1',
+    )
+    console.log(outcome === 'skipped' ? 'seed: content already present; set SEED_FORCE=1 to reload content' : 'seed: done')
   } finally {
     await prisma.$disconnect()
   }

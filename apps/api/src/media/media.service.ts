@@ -13,6 +13,8 @@ import { randomUUID } from 'node:crypto'
 import type { MediaPatch } from '@arthouz/shared'
 import { PrismaService } from '../common/prisma.service'
 import type { Media, MediaKind, Prisma } from '../generated/prisma/client'
+import { mediaUsageTags } from '../revalidate/related-tags'
+import { RevalidateService } from '../revalidate/revalidate.service'
 import { ImageService } from './image.service'
 import { KEY_PREFIX, MAX_CONCURRENT_UPLOADS, MAX_IMAGE_UPLOAD_BYTES, VIDEO_EXT_BY_MIME, type VideoMime } from './media.constants'
 import { findMediaUsage, type MediaUsage } from './media.usage'
@@ -42,6 +44,7 @@ export class MediaService {
     private readonly prisma: PrismaService,
     private readonly images: ImageService,
     @Inject(STORAGE) private readonly storage: Storage,
+    private readonly revalidate: RevalidateService,
   ) {}
 
   async upload(file: UploadedFile, alt: string, userId: string | null): Promise<Media> {
@@ -147,10 +150,21 @@ export class MediaService {
 
   async patch(id: string, input: MediaPatch): Promise<Media> {
     await this.find(id)
-    return this.prisma.media.update({
+    const updated = await this.prisma.media.update({
       where: { id },
       data: { alt: input.alt, ...(input.caption !== undefined && { caption: input.caption }) },
     })
+    await this.revalidateUsers(id)
+    return updated
+  }
+
+  // Alt and caption render on every page that shows the media, so refresh those pages. Never fails the edit.
+  private async revalidateUsers(id: string): Promise<void> {
+    try {
+      this.revalidate.trigger(await mediaUsageTags(this.prisma, await this.usage(id)))
+    } catch (error) {
+      this.logger.warn(`Could not revalidate pages using media ${id}: ${String(error)}`)
+    }
   }
 
   usage(id: string): Promise<MediaUsage[]> {

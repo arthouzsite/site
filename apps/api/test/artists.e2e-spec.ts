@@ -164,4 +164,22 @@ describe('artists', () => {
     expect(await prisma.artist.count()).toBe(0)
     expect(postedTags().filter((t) => t === 'artist:free').length).toBeGreaterThan(1)
   })
+
+  it('update, publish and rename also revalidate the exhibitions that include the artist', async () => {
+    const artist = await make('Aa')
+    const exhibition = await prisma.exhibition.create({
+      data: {
+        slug: 'sea', title: 'Sea', city: 'Dubai', country: 'UAE', type: 'SOLO',
+        startDate: new Date('2026-01-01'), endDate: new Date('2026-02-01'),
+        artists: { create: [{ artistId: artist.id, sortOrder: 0 }] },
+      },
+    })
+    expect(exhibition.slug).toBe('sea')
+    fetchMock.mockClear()
+    await authed.patch(`/artists/${artist.id}/publish`).send({ isPublished: true }).expect(200)
+    expect(postedTags()).toEqual(expect.arrayContaining(['artist:aa', 'exhibition:sea']))
+    fetchMock.mockClear()
+    await authed.patch(`/artists/${artist.id}`).send({ name: 'Zed' }).expect(200)
+    expect(postedTags()).toEqual(expect.arrayContaining(['artist:aa', 'artist:zed', 'exhibition:sea']))
+  })
 })

@@ -4,7 +4,10 @@ import type { PrismaService } from '../common/prisma.service'
 import { ImageService } from './image.service'
 import { MAX_CONCURRENT_UPLOADS } from './media.constants'
 import { MediaService } from './media.service'
+import type { RevalidateService } from '../revalidate/revalidate.service'
 import { MemoryStorage } from './storage/memory.storage'
+
+const noRevalidate = { trigger: jest.fn() } as unknown as RevalidateService
 
 describe('MediaService upload cleanup', () => {
   it('deletes both keys when the thumbnail put rejects', async () => {
@@ -19,7 +22,7 @@ describe('MediaService upload cleanup', () => {
     const deleteSpy = jest.spyOn(storage, 'delete')
     const create = jest.fn()
     const prisma = { media: { create } } as unknown as PrismaService
-    const service = new MediaService(prisma, new ImageService(), storage)
+    const service = new MediaService(prisma, new ImageService(), storage, noRevalidate)
     const buffer = await sharp({ create: { width: 64, height: 64, channels: 3, background: '#fff' } }).jpeg().toBuffer()
 
     await expect(service.upload({ buffer, mimetype: 'image/jpeg' }, 'alt', null)).rejects.toThrow('thumb put failed')
@@ -45,7 +48,7 @@ function buildService() {
   const images = new ImageService()
   const processSpy = jest.spyOn(images, 'process')
   const prisma = { media: { create, findUnique, delete: remove } } as unknown as PrismaService
-  const service = new MediaService(prisma, images, storage)
+  const service = new MediaService(prisma, images, storage, noRevalidate)
   return { service, storage, putSpy, deleteSpy, create, findUnique, processSpy }
 }
 
@@ -236,7 +239,7 @@ describe('MediaService list kind filter', () => {
     const findMany = jest.fn(async (_args: unknown) => [])
     const count = jest.fn(async () => 0)
     const prisma = { media: { findMany, count } } as unknown as PrismaService
-    const service = new MediaService(prisma, new ImageService(), new MemoryStorage())
+    const service = new MediaService(prisma, new ImageService(), new MemoryStorage(), noRevalidate)
     await service.list({ kind: 'VIDEO', page: 1, limit: 10, skip: 0 })
     expect(findMany.mock.calls[0]![0]).toMatchObject({ where: { AND: [{ kind: 'VIDEO' }] } })
     await service.list({ page: 1, limit: 10, skip: 0 })

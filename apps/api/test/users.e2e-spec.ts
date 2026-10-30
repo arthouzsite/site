@@ -99,4 +99,21 @@ describe('users', () => {
     const list = await http().get('/users').set('Cookie', adminCookie).expect(200)
     expect(list.body.data).toHaveLength(1)
   })
+
+  it('refuses to change your own role or disable yourself -> 403 SELF_LOCKOUT', async () => {
+    await seedUser(app, { email: 'second@example.test', role: 'ADMIN' })
+    for (const body of [{ role: 'EDITOR' }, { isDisabled: true }]) {
+      const res = await http().patch(`/users/${adminId}`).set('Cookie', adminCookie).send(body).expect(403)
+      expect(res.body.error.code).toBe('SELF_LOCKOUT')
+    }
+    await http().patch(`/users/${adminId}`).set('Cookie', adminCookie).send({ name: 'Me', role: 'ADMIN', isDisabled: false }).expect(200)
+  })
+
+  it('an admin may demote or disable another admin while one stays enabled', async () => {
+    const other = await seedUser(app, { email: 'second@example.test', role: 'ADMIN' })
+    await http().patch(`/users/${other.id}`).set('Cookie', adminCookie).send({ role: 'EDITOR' }).expect(200)
+    await http().patch(`/users/${other.id}`).set('Cookie', adminCookie).send({ role: 'ADMIN' }).expect(200)
+    await http().patch(`/users/${other.id}`).set('Cookie', adminCookie).send({ isDisabled: true }).expect(200)
+    await http().delete(`/users/${other.id}`).set('Cookie', adminCookie).expect(200)
+  })
 })

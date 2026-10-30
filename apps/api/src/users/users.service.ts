@@ -1,7 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common'
 import type { UserInput } from '@arthouz/shared'
 import { hashPassword } from '../auth/password'
 import { PrismaService } from '../common/prisma.service'
+import type { Prisma } from '../generated/prisma/client'
 
 export const USER_SELECT = {
   id: true,
@@ -35,17 +36,48 @@ export class UsersService {
     })
   }
 
-  async update(id: string, input: UserUpdate) {
+  async update(id: string, input: UserUpdate, actorId: string) {
     const { password, ...rest } = input
     const data = password ? { ...rest, passwordHash: await hashPassword(password) } : rest
-    return this.prisma.user.update({ where: { id }, data, select: USER_SELECT })
+    return this.prisma.$transaction(async (tx) => {
+      const target = await this.lockedTarget(tx, id)
+      if (id === actorId && (input.isDisabled === true || (input.role !== undefined && input.role !== target.role))) {
+        throw new ForbiddenException({ code: 'SELF_LOCKOUT', message: 'You cannot change your own role or disable your own account' })
+      }
+      const losesAdmin = isEnabledAdmin(target) && (input.isDisabled === true || (input.role !== undefined && input.role !== 'ADMIN'))
+      if (losesAdmin) await assertAnotherAdmin(tx, id)
+      return tx.user.update({ where: { id }, data, select: USER_SELECT })
+    })
   }
 
   async remove(id: string, actorId: string): Promise<{ id: string }> {
     if (id === actorId) {
       throw new BadRequestException({ code: 'CANNOT_DELETE_SELF', message: 'You cannot delete your own account' })
     }
-    await this.prisma.user.delete({ where: { id } })
+    await this.prisma.$transaction(async (tx) => {
+      const target = await this.lockedTarget(tx, id)
+      if (isEnabledAdmin(target)) await assertAnotherAdmin(tx, id)
+      await tx.user.delete({ where: { id } })
+    })
     return { id }
+  }
+
+  // Row-locks every admin so two concurrent changes cannot each see the other as the remaining admin.
+  private async lockedTarget(tx: Prisma.TransactionClient, id: string): Promise<TargetUser> {
+    await tx.$queryRaw`SELECT id FROM "User" WHERE role = 'ADMIN' FOR UPDATE`
+    const target = await tx.user.findUnique({ where: { id }, select: { role: true, isDisabled: true } })
+    if (!target) throw new NotFoundException('User not found')
+    return target
+  }
+}
+
+type TargetUser = { role: string; isDisabled: boolean }
+
+const isEnabledAdmin = (user: TargetUser): boolean => user.role === 'ADMIN' && !user.isDisabled
+
+async function assertAnotherAdmin(tx: Prisma.TransactionClient, id: string): Promise<void> {
+  const others = await tx.user.count({ where: { role: 'ADMIN', isDisabled: false, id: { not: id } } })
+  if (others === 0) {
+    throw new ConflictException({ code: 'LAST_ADMIN', message: 'At least one enabled admin must remain' })
   }
 }

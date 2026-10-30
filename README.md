@@ -31,7 +31,7 @@ cp apps/admin/.env.example apps/admin/.env
 pnpm install
 pnpm build:shared
 pnpm --filter @arthouz/api exec prisma migrate deploy
-pnpm --filter @arthouz/api db:seed
+pnpm --filter @arthouz/api db:seed        # SEED_FORCE=1 reloads content over a database that already has it
 pnpm --filter @arthouz/api media:rehome   # with STORAGE_DRIVER=r2: moves the seed's placeholder images into the bucket
 pnpm dev                    # api, web and admin in parallel
 ```

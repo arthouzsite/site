@@ -3,6 +3,7 @@ import { env } from '../config/env'
 
 const REVALIDATE_PATH = '/api/revalidate'
 const SECRET_HEADER = 'x-revalidate-secret'
+const REVALIDATE_TIMEOUT_MS = 5_000
 
 @Injectable()
 export class RevalidateService {
@@ -21,6 +22,7 @@ export class RevalidateService {
       method: 'POST',
       headers: { 'content-type': 'application/json', [SECRET_HEADER]: env.REVALIDATE_SECRET },
       body: JSON.stringify({ tags }),
+      signal: AbortSignal.timeout(REVALIDATE_TIMEOUT_MS),
     })
     if (!response.ok) throw new Error(`HTTP ${response.status}`)
   }

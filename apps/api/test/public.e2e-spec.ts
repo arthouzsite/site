@@ -59,6 +59,26 @@ describe('public API', () => {
       expect(search.groups).toEqual([{ label: 'Exhibitions', items: [{ label: 'Visible Show', href: '/exhibitions/visible-show' }] }])
     })
 
+    it('exhibition detail never lists a work whose image is a video', async () => {
+      const a = await artist('film-artist')
+      const ex = await exhibition('film-show')
+      await prisma.exhibitionArtist.create({ data: { exhibitionId: ex.id, artistId: a.id, sortOrder: 0 } })
+      const image = await prisma.media.create({
+        data: { key: 'i1', url: 'https://x/i.jpg', thumbUrl: 'https://x/t.jpg', width: 10, height: 10, mime: 'image/jpeg', bytes: 1, alt: 'i' },
+      })
+      const video = await prisma.media.create({
+        data: { key: 'v1', url: 'https://x/v.mp4', thumbUrl: 'https://x/v.mp4', width: 0, height: 0, mime: 'video/mp4', kind: 'VIDEO', bytes: 1, alt: 'v' },
+      })
+      await prisma.exhibitionWork.createMany({
+        data: [
+          { exhibitionId: ex.id, imageId: image.id, title: 'Still', artistId: a.id, sortOrder: 0 },
+          { exhibitionId: ex.id, imageId: video.id, title: 'Film', artistId: a.id, sortOrder: 1 },
+        ],
+      })
+      const detail = await ok('/public/exhibitions/film-show', publicExhibitionDetailSchema)
+      expect(detail.works.map((w) => w.title)).toEqual(['Still'])
+    })
+
     it('unpublished rows never leak through nested artists, works, press, or exhibition links', async () => {
       const shown = await artist('shown-artist')
       const hidden = await artist('hidden-artist', { isPublished: false })

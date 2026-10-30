@@ -19,6 +19,7 @@ const baseSchema = z.object({
   ADMIN_ORIGIN: z.string().url().default(DEFAULT_ADMIN_ORIGIN),
   WEB_URL: z.string().url().default(DEFAULT_WEB_URL),
   REVALIDATE_SECRET: z.string().min(1),
+  TRUST_PROXY: z.coerce.number().int().min(0).default(0),
   STORAGE_DRIVER: z.enum(['r2', 'memory']).optional(),
   S3_ENDPOINT: optionalString,
   AWS_ACCESS_KEY_ID: optionalString,
