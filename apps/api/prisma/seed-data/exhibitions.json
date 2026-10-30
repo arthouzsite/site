@@ -1,0 +1,236 @@
+[
+  {
+    "slug": "tidewater",
+    "title": "Tidewater",
+    "subtitle": "New painting from the southern coast",
+    "city": "Chennai",
+    "country": "India",
+    "type": "Group",
+    "startDate": "2026-10-03",
+    "endDate": "2026-11-22",
+    "datesLabel": null,
+    "venue": "Art Houz Chennai",
+    "blurb": "Four painters return to the shoreline as a subject, a memory and a measure of time.",
+    "body": "Tidewater brings together recent canvases and works on paper that read the coast of Tamil Nadu and Kerala through colour, erosion and repetition. Some works are made on site over many months; others are built from archives, family photographs and fishing charts. The exhibition is accompanied by a catalogue with an essay by the curator and a series of walkthroughs with the artists every Saturday.",
+    "heroImage": "troika",
+    "artists": [
+      "Parvathi Nayar",
+      "Ranjith Raman",
+      "P. Gopinath",
+      "Pradeep Unni"
+    ],
+    "works": [
+      "green",
+      "lilies",
+      "mines"
+    ],
+    "sortOrder": 0,
+    "datesYear": "2026"
+  },
+  {
+    "slug": "weight-of-light",
+    "title": "The Weight of Light",
+    "subtitle": "A Solo Show by Seema Kohli",
+    "city": "Dubai",
+    "country": "UAE",
+    "type": "Solo",
+    "startDate": "2027-01-14",
+    "endDate": "2027-02-28",
+    "datesLabel": null,
+    "venue": "Alserkal Avenue, with a partner gallery",
+    "blurb": "Gold leaf, ink and myth meet in a new cycle of large-format works on canvas.",
+    "body": "Presented with a partner gallery in Dubai, The Weight of Light is the artist’s first solo exhibition in the Gulf. The works draw on the idea of the cosmic womb and on stories told by the women of her family, layered with gold and silver leaf. A preview evening for collectors will be held on January 13.",
+    "heroImage": "aquarium",
+    "artists": [
+      "Seema Kohli"
+    ],
+    "works": [
+      "divan",
+      "geranium",
+      "gauguin"
+    ],
+    "sortOrder": 1,
+    "datesYear": "2027"
+  },
+  {
+    "slug": "quiet-matter",
+    "title": "Quiet Matter",
+    "subtitle": "Sculpture by Rahul Mhetre",
+    "city": "Singapore",
+    "country": "Singapore",
+    "type": "Solo",
+    "startDate": "2026-06-12",
+    "endDate": "2026-07-26",
+    "datesLabel": null,
+    "venue": "Gillman Barracks, with a partner gallery",
+    "blurb": "Bronze, wood and found metal pared down to the weight of a gesture.",
+    "body": "Quiet Matter gathered twelve sculptures made over three years in the artist’s Pune studio. The works sit low to the ground and invite the viewer to walk around them slowly, each one marked by the process of casting and recasting.",
+    "heroImage": "acrobat",
+    "artists": [
+      "Rahul Mhetre"
+    ],
+    "works": [
+      "elevation",
+      "sorrow",
+      "acrobat"
+    ],
+    "sortOrder": 2,
+    "datesYear": "2026"
+  },
+  {
+    "slug": "line-land-lineage",
+    "title": "Line, Land, Lineage",
+    "subtitle": "Three generations of Indian modernism",
+    "city": "London",
+    "country": "UK",
+    "type": "Group",
+    "startDate": "2026-03-06",
+    "endDate": "2026-04-18",
+    "datesLabel": null,
+    "venue": "Mayfair, with a partner gallery",
+    "blurb": "Drawing, myth and the line as an inheritance.",
+    "body": "The exhibition placed works by three artists side by side to trace how line and narrative moved through South and West Indian modernism. It included rarely seen drawings from private collections in Chennai and Bengaluru.",
+    "heroImage": "move10",
+    "artists": [
+      "K.M. Adimoolam",
+      "S.G. Vasudev",
+      "Madhvi Parekh"
+    ],
+    "works": [
+      "movement",
+      "fluting",
+      "murnau"
+    ],
+    "sortOrder": 3,
+    "datesYear": "2026"
+  },
+  {
+    "slug": "reflections",
+    "title": "Reflections- A Journey in Two Perspectives",
+    "subtitle": "Two artists in conversation",
+    "city": "Bengaluru",
+    "country": "India",
+    "type": "Group",
+    "startDate": "2024-09-14",
+    "endDate": "2024-09-30",
+    "datesLabel": "September 14, 2024 – September 30, 2024",
+    "venue": "Art Houz Bengaluru",
+    "blurb": "Two painters, one city, and the space between how each of them sees it.",
+    "body": "Reflections paired two bodies of work made in parallel, one rooted in figuration and the other in abstraction, and hung them in dialogue across the Bengaluru gallery.",
+    "heroImage": "green",
+    "artists": [
+      "Uttam Manna",
+      "Sachin Jaltare"
+    ],
+    "works": [
+      "impro",
+      "klange",
+      "still15"
+    ],
+    "sortOrder": 4,
+    "datesYear": "2024"
+  },
+  {
+    "slug": "by-natures-force",
+    "title": "By Nature's Force: Veli Vetridamakha Nagarkirathu",
+    "subtitle": "A Solo Show by Vijay Pichumani",
+    "city": "Chennai",
+    "country": "India",
+    "type": "Solo",
+    "startDate": "2024-02-02",
+    "endDate": "2024-02-18",
+    "datesLabel": null,
+    "venue": "Lalit Kala Akademi Regional Centre, Chennai",
+    "blurb": "Art Houz Gallery Chennai, has organized the solo show of artist Vijay Pichumani titled – ‘By Nature's Force: Veli Vetridamaakha Nagarkirathu’ at Lalit Kala Akademi Regional Centre.",
+    "body": "The exhibition features a diverse body of paintings, drawings and wood carvings made over two years of travel across Tamil Nadu.",
+    "heroImage": "mountain",
+    "artists": [
+      "Vijay Pichumani"
+    ],
+    "works": [
+      "mines",
+      "poplars",
+      "provincetown"
+    ],
+    "sortOrder": 5,
+    "datesYear": "2024"
+  },
+  {
+    "slug": "naan-yaar",
+    "title": "Naan Yaar",
+    "subtitle": "A Solo Show by Vijay Pichumani",
+    "city": "Chennai",
+    "country": "India",
+    "type": "Solo",
+    "startDate": "2023-08-04",
+    "endDate": "2023-08-26",
+    "datesLabel": null,
+    "venue": "Art Houz Chennai",
+    "blurb": "Who am I? A sequence of black-and-white works on the self and its many faces.",
+    "body": "Naan Yaar continues the artist’s work in wood carving and ink, exploring self and personal identity through portraits and flowers.",
+    "heroImage": "munch",
+    "artists": [
+      "Vijay Pichumani"
+    ],
+    "works": [
+      "untitledK",
+      "thistles",
+      "munch"
+    ],
+    "sortOrder": 6,
+    "datesYear": "2023"
+  },
+  {
+    "slug": "fifty-sculptors",
+    "title": "50 Indian Sculptors",
+    "subtitle": "A group exhibition and book launch",
+    "city": "Chennai",
+    "country": "India",
+    "type": "Group",
+    "startDate": "2023-01-06",
+    "endDate": "2023-02-04",
+    "datesLabel": null,
+    "venue": "Art Houz Chennai",
+    "blurb": "Fifty Indian sculptors come together to showcase their work across the medium of metal, wood, ceramic, paper clay and fibreglass.",
+    "body": "The exhibition was launched alongside a new book that highlights the works of 50 sculptors from across the country.",
+    "heroImage": "nataraja",
+    "artists": [
+      "Jasu Rawal",
+      "Laxman Aelay",
+      "Monica Ghule",
+      "N.K. Baskaran"
+    ],
+    "works": [
+      "krishnaD",
+      "elevation",
+      "sorrow"
+    ],
+    "sortOrder": 7,
+    "datesYear": "2023"
+  },
+  {
+    "slug": "kolvel",
+    "title": "Kolvel",
+    "subtitle": "A Solo Show by Vijay Pichumani",
+    "city": "Chennai",
+    "country": "India",
+    "type": "Solo",
+    "startDate": "2020-11-06",
+    "endDate": "2020-11-30",
+    "datesLabel": null,
+    "venue": "Art Houz Chennai",
+    "blurb": "The body of work in the show is the artist's thoughts, experience and reflection of the pandemic and lockdowns.",
+    "body": "Made entirely during quarantine, the works in Kolvel were first shown online and then in the Chennai gallery as restrictions eased.",
+    "heroImage": "klange",
+    "artists": [
+      "Vijay Pichumani"
+    ],
+    "works": [
+      "impro",
+      "fruit",
+      "cezanne"
+    ],
+    "sortOrder": 8,
+    "datesYear": "2020"
+  }
+]

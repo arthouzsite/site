@@ -1,0 +1,46 @@
+[
+  {
+    "slug": "art-dubai-2026",
+    "title": "Art Dubai 2026",
+    "venue": "Madinat Jumeirah",
+    "city": "Dubai",
+    "dateLabel": "March 2026",
+    "booth": "Contemporary section",
+    "text": "Art Houz presented new paintings and works on paper by Seema Kohli, Parvathi Nayar and Vijay Pichumani, introducing South Indian contemporary practice to collectors across the Gulf.",
+    "image": "gauguin",
+    "sortOrder": 0
+  },
+  {
+    "slug": "iaf-2025",
+    "title": "India Art Fair 2025",
+    "venue": "NSIC Grounds",
+    "city": "New Delhi",
+    "dateLabel": "February 2025",
+    "booth": "Main hall",
+    "text": "A booth dedicated to sculpture and drawing, with works by Rahul Mhetre, Jasu Rawal, K.M. Adimoolam and S.G. Vasudev.",
+    "image": "fluting",
+    "sortOrder": 1
+  },
+  {
+    "slug": "art-sg-2025",
+    "title": "ART SG 2025",
+    "venue": "Marina Bay Sands",
+    "city": "Singapore",
+    "dateLabel": "January 2025",
+    "booth": "Galleries section",
+    "text": "Our first presentation in Southeast Asia, showing recent canvases by Ranjith Raman and P. Gopinath alongside wood carvings by Vijay Pichumani.",
+    "image": "auvers",
+    "sortOrder": 2
+  },
+  {
+    "slug": "iaf-2022",
+    "title": "India Art Fair 2022",
+    "venue": "",
+    "city": "New Delhi",
+    "dateLabel": "2022",
+    "booth": "Seven artists",
+    "text": "Art Houz was a part of the India Art Fair 2022, Delhi with the works of seven artists - Vijay Pichumani, G. Subramanian, Dhan Prasad,…",
+    "image": "mondrian",
+    "sortOrder": 3
+  }
+]
