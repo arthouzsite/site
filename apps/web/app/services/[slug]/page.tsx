@@ -16,6 +16,8 @@ const NOT_FOUND_STATUS = 404
 const DEFAULT_CTA_HREF = '/visit'
 const IMAGE_SIZES = '(min-width: 1024px) 45vw, 100vw'
 const HTTP_URL = /^https?:\/\//i
+/** Hrefs a CTA may use: web, mail, phone, or a same-site path (not protocol-relative). */
+const SAFE_CTA_HREF = /^(https?:|mailto:|tel:|\/(?![/\\]))/i
 
 async function loadService(slug: string) {
   try {
@@ -33,7 +35,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ServicePage({ params }: Props) {
   const service = await loadService((await params).slug)
-  const ctaHref = service.ctaHref || DEFAULT_CTA_HREF
+  const ctaHref = SAFE_CTA_HREF.test(service.ctaHref) ? service.ctaHref : DEFAULT_CTA_HREF
   return (
     <main>
       <Container className="pt-[clamp(28px,4vw,48px)] pb-[clamp(32px,4vw,56px)]">

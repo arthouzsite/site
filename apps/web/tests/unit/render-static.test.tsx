@@ -96,6 +96,7 @@ describe('artist components', () => {
     expect(html(<FeaturedGrid artists={[artist]} />)).toContain('/artists/parvathi-nayar')
     const flowing = html(<FlowingIndex artists={[artist, { ...artist, id: 'a2', slug: 'b', name: 'B' }]} />)
     expect(flowing).toContain('·')
+    expect(flowing.match(/<a [^>]*>/g)?.every((anchor) => anchor.includes('hit-44'))).toBe(true)
     expect(html(<GroupedIndex groups={[{ letter: 'N', items: [artist] }]} />)).toContain('id="L-N"')
   })
 

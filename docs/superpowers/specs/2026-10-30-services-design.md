@@ -61,8 +61,8 @@ Shared (`packages/shared`): `serviceInputSchema`, `servicePatchSchema`, `publicS
 - `/services`: index. Same rhythm as the About Services tab: one image-and-text row per service
   (image 3:2, title, summary, "Read more →" text link), alternating image side on desktop,
   `font-display` titles, existing `Container`/section spacing.
-- `/services/[slug]`: image (3:2 full row like a news/fair image), title, summary, body
-  paragraphs, contact block (name, `tel:` and `mailto:` links via the shared helpers) when any
+- `/services/[slug]`: title, summary, and the image (3:2) beside them in the same row rhythm as the
+  index, then body paragraphs, contact block (name, `tel:` and `mailto:` links via the shared helpers) when any
   contact field is set, `PrimaryButton` with `ctaLabel` → `ctaHref || '/visit'`. `notFound()`
   when the API returns 404. Metadata via `detailMetadata`. Sitemap entries. Fetch tags
   `[services, service:<slug>]` + the list page `[services]`.

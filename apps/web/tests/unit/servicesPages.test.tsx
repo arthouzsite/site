@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const apiGet = vi.fn<(path: string) => Promise<unknown>>()
 const apiTags: Array<[string, string[]]> = []
+const connection = vi.hoisted(() => vi.fn<() => Promise<void>>())
 
 vi.mock('next/image', () => ({
   default: ({ alt, src }: ImgHTMLAttributes<HTMLImageElement>) => (
@@ -21,7 +22,7 @@ vi.mock('next/navigation', () => ({
     if (error instanceof Error && error.message.startsWith('NEXT_')) throw error
   },
 }))
-vi.mock('next/server', () => ({ connection: () => Promise.resolve() }))
+vi.mock('next/server', () => ({ connection }))
 vi.mock('@/lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/api')>()),
   apiGet: (path: string, _schema: unknown, tags: string[]) => {
@@ -45,6 +46,8 @@ const html = (node: ReactElement) => renderToStaticMarkup(node)
 const params = <T,>(value: T) => Promise.resolve(value)
 
 beforeEach(() => {
+  connection.mockReset()
+  connection.mockResolvedValue(undefined)
   apiGet.mockReset()
   apiTags.length = 0
   apiGet.mockImplementation(async (path) => {
@@ -147,6 +150,21 @@ describe('/services/[slug]', () => {
     expect(mail).not.toContain('target="_blank"')
   })
 
+  it.each([
+    ['javascript:alert(1)', '/visit'],
+    ['data:text/html,x', '/visit'],
+    ['//evil.example/x', '/visit'],
+    ['/\\evil.example', '/visit'],
+    ['book-now', '/visit'],
+    ['tel:+914400000000', 'tel:+914400000000'],
+    ['/exhibitions', '/exhibitions'],
+  ])('guards ctaHref %s on render, falling back to /visit', async (ctaHref, expected) => {
+    apiGet.mockImplementation(async () => ({ ...service, ctaLabel: 'Go', ctaHref }))
+    const out = html(await ServicePage({ params: params({ slug: 'art-sales' }) }))
+    const cta = out.match(/<a [^>]*>Go/)?.[0]
+    expect(cta).toContain(`href="${expected}"`)
+  })
+
   it('splits the body only on blank lines and skips empty paragraphs', async () => {
     apiGet.mockImplementation(async () => ({ ...service, body: 'One\nstill one.\r\n\r\n\n  \nTwo.\n\n' }))
     const out = html(await ServicePage({ params: params({ slug: 'art-sales' }) }))
@@ -202,6 +220,18 @@ describe('header services list', () => {
     apiGet.mockRejectedValue(new ApiError('NETWORK', 'down', 0))
     expect(await loadNavServices()).toEqual([])
     expect(error).toHaveBeenCalledOnce()
+    error.mockRestore()
+  })
+
+  it('defers to request time on a degraded fetch so the shell is never cached, and not on success', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    await loadNavServices()
+    expect(connection).not.toHaveBeenCalled()
+    apiGet.mockRejectedValue(new ApiError('HTTP_ERROR', 'boom', 500))
+    expect(await loadNavServices()).toEqual([])
+    apiGet.mockRejectedValue(new ApiError('INVALID_RESPONSE', 'bad shape', 200))
+    expect(await loadNavServices()).toEqual([])
+    expect(connection).toHaveBeenCalledTimes(2)
     error.mockRestore()
   })
 

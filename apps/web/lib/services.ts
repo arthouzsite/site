@@ -1,5 +1,6 @@
 import { publicServiceListSchema, publicServiceSchema, type PublicService } from '@arthouz/shared'
 import { unstable_rethrow } from 'next/navigation'
+import { connection } from 'next/server'
 import { apiGet } from './api'
 import { TAGS } from './tags'
 
@@ -23,6 +24,8 @@ export async function loadNavServices(): Promise<NavService[]> {
     unstable_rethrow(error)
     const detail = error instanceof Error ? `${error.name}: ${error.message}` : String(error)
     console.error(`[web] services unavailable for the navigation, rendering the plain link: ${detail}`)
+    // A degraded shell must not be cached as the static page: render per request until the API is back.
+    await connection()
     return []
   }
 }

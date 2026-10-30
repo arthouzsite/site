@@ -1,3 +1,4 @@
+import { setArtistIndexLayout } from './artistLayout'
 import { API_URL } from './paths'
 
 const EXPECTED_SEEDED_LOCATIONS = 2
@@ -12,4 +13,6 @@ export default async function globalSetup(): Promise<void> {
   if (!body.ok || !Array.isArray(body.data) || body.data.length !== EXPECTED_SEEDED_LOCATIONS) {
     throw new Error(`visual global setup: ${API_URL} is not serving the seeded database (HTTP ${response.status})`)
   }
+  // The flowing-layout case flips this setting; an interrupted earlier run must not leave the database in FLOWING.
+  await setArtistIndexLayout('GROUPED')
 }

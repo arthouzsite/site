@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { AnchorHTMLAttributes } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -72,6 +72,8 @@ describe('desktop Services dropdown', () => {
     await user.tab()
     expect(document.activeElement).toBe(trigger)
     expect(trigger.getAttribute('aria-expanded')).toBe('true')
+    await user.tab()
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Show services' }))
     await user.tab()
     expect(document.activeElement).toBe(within(panel()!).getAllByRole('link')[0])
     expect(trigger.getAttribute('aria-expanded')).toBe('true')
@@ -158,6 +160,73 @@ describe('desktop Services dropdown', () => {
     const { trigger } = renderNav([])
     expect(trigger.hasAttribute('aria-expanded')).toBe(false)
     expect(trigger.hasAttribute('aria-controls')).toBe(false)
+  })
+})
+
+describe('Services dropdown touch toggle', () => {
+  const toggle = () => screen.getByRole('button', { name: 'Show services' })
+
+  it('is a separate button wired to the panel, after the link and before the list in the Tab order', () => {
+    const { trigger, panel } = renderNav()
+    expect(toggle().getAttribute('type')).toBe('button')
+    expect(toggle().getAttribute('aria-expanded')).toBe('false')
+    expect(toggle().getAttribute('aria-controls')).toBe(panel()?.id)
+    expect(trigger.compareDocumentPosition(toggle()) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(toggle().compareDocumentPosition(panel()!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(trigger.getAttribute('href')).toBe('/services')
+  })
+
+  it('opens and closes the panel on click', () => {
+    const { trigger, panel } = renderNav()
+    fireEvent.click(toggle())
+    expect(toggle().getAttribute('aria-expanded')).toBe('true')
+    expect(trigger.getAttribute('aria-expanded')).toBe('true')
+    expect(panel()?.hasAttribute('hidden')).toBe(false)
+    fireEvent.click(toggle())
+    expect(toggle().getAttribute('aria-expanded')).toBe('false')
+    expect(panel()?.hasAttribute('hidden')).toBe(true)
+  })
+
+  it('closes a panel that mouse hover opened when the chevron is clicked', async () => {
+    const { user, panel } = renderNav()
+    await user.click(toggle())
+    expect(panel()?.hasAttribute('hidden')).toBe(true)
+  })
+
+  it('opens on a touch tap (the compatibility hover and focus must not reopen it after the click closes it)', async () => {
+    const { user, panel } = renderNav()
+    await user.pointer({ keys: '[TouchA]', target: toggle() })
+    expect(panel()?.hasAttribute('hidden')).toBe(false)
+    await user.pointer({ keys: '[TouchA]', target: toggle() })
+    expect(panel()?.hasAttribute('hidden')).toBe(true)
+  })
+
+  it('is operable from the keyboard and closes on Escape', async () => {
+    const { user, panel } = renderNav()
+    act(() => toggle().focus())
+    expect(panel()?.hasAttribute('hidden')).toBe(false)
+    await user.keyboard('{Enter}')
+    expect(panel()?.hasAttribute('hidden')).toBe(true)
+    await user.keyboard(' ')
+    expect(panel()?.hasAttribute('hidden')).toBe(false)
+    await user.keyboard('{Escape}')
+    expect(panel()?.hasAttribute('hidden')).toBe(true)
+  })
+})
+
+describe('Services dropdown bounds', () => {
+  it('stays inside the viewport for a very long title: capped width, wrapping rows, still 44 px tall', () => {
+    const title = 'A very long service title '.repeat(8).slice(0, 200)
+    const { panel } = renderNav([{ slug: 'long', title }])
+    expect(panel()?.className).toContain('max-w-[min(360px,calc(100vw-40px))]')
+    expect(panel()?.className).toContain('right-0')
+    expect(panel()?.className).not.toContain('left-0')
+    const link = within(panel()!).getByRole('link', { hidden: true })
+    expect(link.textContent).toHaveLength(200)
+    expect(link.className).not.toContain('whitespace-nowrap')
+    expect(link.className).toContain('whitespace-normal')
+    expect(link.className).toContain('break-words')
+    expect(link.className).toContain('min-h-[44px]')
   })
 })
 
