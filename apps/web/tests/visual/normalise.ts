@@ -10,6 +10,8 @@ const ARTISTS_PATTERN = /const AH_ARTISTS = \[[^\]]*\];/g
 const NEWS_PATTERN = /const AH_NEWS = \[\n([\s\S]*?)\n\];/g
 const HOME_NEWS_SLICE = 'AH_NEWS.slice(1, 4)'
 const READ_ARTICLE_PATTERN = /<a href="#" onClick="\{\{ n\.read \}\}"[^>]*>Read article ↗<\/a>/g
+const VIEW_MORE_PATTERN = /<a href="#" style="[^"]*"[^>]*>View more ↗<\/a>/g
+const TAB_PUBLICATIONS_VALUE = 'tabPublications: s.tab === \'publications\','
 const SIGNED_BASE_INDEX = '(h >> 3) % AH_BASES.length'
 const NEWS_LIST_MAPPING = 'newsList: AH_NEWS.map(n => ({ ...n, '
 
@@ -91,6 +93,13 @@ export function hideReadArticle(source: string): string {
   return replaceOnce(wrapped, NEWS_LIST_MAPPING, (match) => `${match}hasUrl: !!n.externalUrl, `, 'newsList hasUrl')
 }
 
+/** Publications "View more ↗" is shown only when the page has an external URL; the seed has none, so `hasPubUrl` is false. */
+export function hidePublicationsLink(source: string): string {
+  const wrapped = replaceOnce(source, VIEW_MORE_PATTERN,
+    (anchor) => `<sc-if value="{{ hasPubUrl }}" hint-placeholder-val="{{ false }}">${anchor}</sc-if>`, 'View more anchor')
+  return replaceOnce(wrapped, TAB_PUBLICATIONS_VALUE, (match) => `${match} hasPubUrl: false,`, 'renderVals hasPubUrl')
+}
+
 /** The prototype's signed shift goes negative for large hashes, so `AH_BASES[...]` is undefined; the seed uses `>>>`. */
 export function fixArtistBaseIndex(source: string): string {
   return replaceOnce(source, SIGNED_BASE_INDEX, () => '(h >>> 3) % AH_BASES.length', 'artist base index')
@@ -103,7 +112,7 @@ export async function normaliseReference(apiUrl: string): Promise<string> {
     getData<NewsItem[]>(apiUrl, '/public/news'),
   ])
   const source = await readFile(REFERENCE_FILE, 'utf8')
-  const patched = fixArtistBaseIndex(hideReadArticle(patchHomeNewsSlice(reorderNews(reorderArtists(source, artists.flat.map((a) => a.name)), news.map((n) => n.title)))))
+  const patched = fixArtistBaseIndex(hidePublicationsLink(hideReadArticle(patchHomeNewsSlice(reorderNews(reorderArtists(source, artists.flat.map((a) => a.name)), news.map((n) => n.title))))))
   await mkdir(RESULTS_DIR, { recursive: true })
   await Promise.all(REFERENCE_ASSETS.map((asset) => copyFile(path.join(REFERENCE_DIR, asset), path.join(RESULTS_DIR, asset))))
   await writeFile(NORMALISED_FILE, patched, 'utf8')

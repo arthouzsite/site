@@ -19,6 +19,9 @@ scripts beside it) after five textual patches. Each patch must match exactly onc
 5. **(e) Artist base** — `(h >> 3) % AH_BASES.length` becomes `(h >>> 3) % AH_BASES.length`. The
    signed shift goes negative for large hashes (e.g. Vijay Pichumani), so the prototype's `base`
    was `undefined` ("practice in undefined"); the seed already uses the unsigned shift.
+6. **(f) Publications link** — the "View more ↗" anchor on the About Publications tab is wrapped in
+   `<sc-if value="{{ hasPubUrl }}">` and `hasPubUrl: false` is added to `renderVals()` (the seed has no
+   URL). The port renders the link only when `externalUrl` is set, like the news link.
 
 `renderPrototype` seeds `localStorage['arthouz-route']` (`{ page, param, city, status, aq }`) before load and can
 rewrite the `data-props` defaults (`heroLayout`, `artistIndex`) in a further copy.
