@@ -125,6 +125,15 @@ describe('settings', () => {
     expect(await prisma.setting.count()).toBe(1)
   })
 
+  it('an invalid stored value falls back to its default without breaking other keys', async () => {
+    await prisma.setting.create({ data: { key: 'heroLayout', value: 'BANANA' } })
+    await prisma.setting.create({ data: { key: 'artistIndexLayout', value: 'FLOWING' } })
+    const res = await as(adminCookie).get('/settings').expect(200)
+    expect(res.body.data.heroLayout).toBe('FULL_BLEED')
+    expect(res.body.data.artistIndexLayout).toBe('FLOWING')
+    expect((await as(adminCookie).get('/settings/heroLayout').expect(200)).body.data).toBe('FULL_BLEED')
+  })
+
   it('a write triggers revalidation of the setting tag; failed writes do not', async () => {
     await as(adminCookie).put('/settings/heroLayout').send({ value: 'BANANA' }).expect(400)
     expect(fetchMock).not.toHaveBeenCalled()
