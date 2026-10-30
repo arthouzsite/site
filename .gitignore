@@ -11,3 +11,4 @@ test-results/
 *.log
 .DS_Store
 mockups/**/*.png
+apps/api/src/generated/

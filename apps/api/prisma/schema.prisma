@@ -1,0 +1,234 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  EDITOR
+}
+
+enum ExhibitionType {
+  SOLO
+  GROUP
+}
+
+enum ExhibitionStatus {
+  CURRENT
+  UPCOMING
+  PAST
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  name         String
+  role         Role
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  uploads Media[]
+}
+
+model Media {
+  id           String   @id @default(uuid())
+  key          String   @unique
+  url          String
+  thumbUrl     String
+  width        Int
+  height       Int
+  mime         String
+  bytes        Int
+  alt          String
+  caption      String?
+  uploadedById String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  uploadedBy      User?            @relation(fields: [uploadedById], references: [id])
+  exhibitionHeros Exhibition[]
+  artistPortraits Artist[]
+  artworks        Artwork[]
+  exhibitionWorks ExhibitionWork[]
+  fairs           Fair[]
+  news            News[]
+  locations       Location[]
+}
+
+model Exhibition {
+  id             String            @id @default(uuid())
+  slug           String            @unique
+  title          String
+  subtitle       String            @default("")
+  city           String
+  country        String
+  type           ExhibitionType
+  startDate      DateTime          @db.Date
+  endDate        DateTime          @db.Date
+  datesLabel     String?
+  statusOverride ExhibitionStatus?
+  venue          String            @default("")
+  blurb          String            @default("")
+  body           String            @default("")
+  heroImageId    String?
+  isPublished    Boolean           @default(false)
+  sortOrder      Int               @default(0)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  heroImage Media?             @relation(fields: [heroImageId], references: [id], onDelete: Restrict)
+  artists   ExhibitionArtist[]
+  works     ExhibitionWork[]
+  news      News[]
+
+  @@index([startDate, endDate])
+  @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "Exhibition_title_trgm_idx")
+}
+
+model ExhibitionArtist {
+  exhibitionId String
+  artistId     String
+  sortOrder    Int    @default(0)
+
+  exhibition Exhibition @relation(fields: [exhibitionId], references: [id], onDelete: Cascade)
+  artist     Artist     @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@id([exhibitionId, artistId])
+  @@index([artistId])
+}
+
+model ExhibitionWork {
+  id           String   @id @default(uuid())
+  exhibitionId String
+  imageId      String
+  title        String
+  year         String   @default("")
+  artistId     String
+  medium       String   @default("")
+  sortOrder    Int      @default(0)
+  artworkId    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  exhibition Exhibition @relation(fields: [exhibitionId], references: [id], onDelete: Cascade)
+  image      Media      @relation(fields: [imageId], references: [id], onDelete: Restrict)
+  artist     Artist     @relation(fields: [artistId], references: [id])
+  artwork    Artwork?   @relation(fields: [artworkId], references: [id], onDelete: SetNull)
+
+  @@index([exhibitionId, sortOrder])
+}
+
+model Artist {
+  id              String   @id @default(uuid())
+  slug            String   @unique
+  name            String
+  sortName        String   @db.VarChar
+  medium          String   @default("")
+  base            String   @default("")
+  born            String?
+  lede            String   @default("")
+  bio             String   @default("")
+  portraitImageId String?
+  isFeatured      Boolean  @default(false)
+  featuredOrder   Int      @default(0)
+  isPublished     Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  portraitImage   Media?             @relation(fields: [portraitImageId], references: [id], onDelete: Restrict)
+  artworks        Artwork[]
+  exhibitions     ExhibitionArtist[]
+  exhibitionWorks ExhibitionWork[]
+
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "Artist_name_trgm_idx")
+}
+
+model Artwork {
+  id          String   @id @default(uuid())
+  artistId    String
+  title       String
+  year        String   @default("")
+  medium      String   @default("")
+  size        String   @default("")
+  imageId     String?
+  sortOrder   Int      @default(0)
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  artist          Artist           @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  image           Media?           @relation(fields: [imageId], references: [id], onDelete: Restrict)
+  exhibitionWorks ExhibitionWork[]
+
+  @@index([artistId, sortOrder])
+}
+
+model Fair {
+  id          String   @id @default(uuid())
+  slug        String   @unique
+  title       String
+  venue       String   @default("")
+  city        String   @default("")
+  dateLabel   String   @default("")
+  booth       String   @default("")
+  text        String   @default("")
+  imageId     String?
+  sortOrder   Int      @default(0)
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  image Media? @relation(fields: [imageId], references: [id], onDelete: Restrict)
+}
+
+model News {
+  id           String   @id @default(uuid())
+  slug         String   @unique
+  title        String
+  excerpt      String   @default("")
+  publishedAt  DateTime @db.Date
+  imageId      String?
+  externalUrl  String?
+  exhibitionId String?
+  isPublished  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  image      Media?      @relation(fields: [imageId], references: [id], onDelete: Restrict)
+  exhibition Exhibition? @relation(fields: [exhibitionId], references: [id], onDelete: SetNull)
+
+  @@index([publishedAt])
+  @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "News_title_trgm_idx")
+}
+
+model Location {
+  id        String   @id @default(uuid())
+  slug      String   @unique
+  city      String
+  address   String   @default("")
+  phone     String   @default("")
+  tel       String   @default("")
+  days      String   @default("")
+  hours     String   @default("")
+  mapUrl    String   @default("")
+  imageId   String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  image Media? @relation(fields: [imageId], references: [id], onDelete: Restrict)
+}
+
+model Setting {
+  key       String   @id
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
