@@ -20,7 +20,7 @@ export function FeaturedOrderCard() {
   return (
     <SectionCard title="Featured on the Artists page" note={featured.data ? `${items.length} featured` : undefined}>
       {featured.isError && <p role="alert" className="m-0 text-13 text-danger">Could not load the featured artists.</p>}
-      {featured.data && items.length === 0 && <p className="m-0 text-13 text-muted">No artists are featured. Turn on Featured for an artist in the table below.</p>}
+      {featured.data && items.length === 0 && <p className="m-0 text-13 text-muted">No artists are featured.</p>}
       {items.length > 0 && (
         <OrderedList
           label="Featured artists"

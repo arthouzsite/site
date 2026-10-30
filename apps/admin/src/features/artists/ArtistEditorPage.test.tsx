@@ -15,6 +15,7 @@ const routes = [
 
 function setup(initial: string, opts: { homeFocusArtistId?: string | null } = {}) {
   const calls: Call[] = []
+  const exhibitionQueries: URLSearchParams[] = []
   const record = async (method: string, path: string, request: Request) => {
     calls.push({ method, path, body: await request.json() })
   }
@@ -26,15 +27,13 @@ function setup(initial: string, opts: { homeFocusArtistId?: string | null } = {}
     http.get(`${API_URL}/artists`, () =>
       HttpResponse.json({ ...envelope([makeArtist({ id: 'a0', featuredOrder: 1, isFeatured: true, name: 'Other' }), artist]), meta: { total: 2, page: 1, limit: 100 } }),
     ),
-    http.get(`${API_URL}/exhibitions`, () =>
-      HttpResponse.json({
-        ...envelope([
-          { id: 'e1', title: 'Naan Yaar', city: 'Chennai', status: 'PAST', artists: [{ artist: { id: 'a1', name: 'Alpha Artist' } }] },
-          { id: 'e2', title: 'Unrelated', city: 'Pune', status: 'CURRENT', artists: [{ artist: { id: 'zz', name: 'Alpha Artistry' } }] },
-        ]),
-        meta: { total: 2, page: 1, limit: 50 },
-      }),
-    ),
+    http.get(`${API_URL}/exhibitions`, ({ request }) => {
+      exhibitionQueries.push(new URL(request.url).searchParams)
+      return HttpResponse.json({
+        ...envelope([{ id: 'e1', title: 'Naan Yaar', city: 'Chennai', status: 'PAST' }]),
+        meta: { total: 1, page: 1, limit: 50 },
+      })
+    }),
     http.get(`${API_URL}/settings/homeFocus`, () => HttpResponse.json(envelope({ artistId: opts.homeFocusArtistId ?? null }))),
     http.patch(`${API_URL}/artists/a1`, async ({ request }) => {
       const body = (await request.clone().json()) as { name: string }
@@ -54,7 +53,7 @@ function setup(initial: string, opts: { homeFocusArtistId?: string | null } = {}
       return HttpResponse.json(envelope({ ...artist, isFeatured: false }))
     }),
   )
-  return { calls, ...renderRoutes(routes, initial) }
+  return { calls, exhibitionQueries, ...renderRoutes(routes, initial) }
 }
 
 describe('ArtistEditorPage', () => {
@@ -99,7 +98,6 @@ describe('ArtistEditorPage', () => {
     await user.type(screen.getByLabelText('Medium'), ' on wood')
     expect(screen.getByRole('switch', { name: 'Published' })).toBeDisabled()
     expect(screen.getByRole('switch', { name: 'Featured' })).toBeDisabled()
-    expect(screen.getByText('Save your changes first')).toBeInTheDocument()
   })
 
   it('shows the featured position', async () => {
@@ -107,11 +105,12 @@ describe('ArtistEditorPage', () => {
     expect(await screen.findByText('2 of 2')).toBeInTheDocument()
   })
 
-  it('lists only the exhibitions this artist is part of', async () => {
-    setup('/artists/a1')
+  it('lists the exhibitions returned for this artist id', async () => {
+    const { exhibitionQueries } = setup('/artists/a1')
     const list = await screen.findByRole('list', { name: 'Exhibitions' })
     expect(within(list).getByText('Naan Yaar')).toBeInTheDocument()
-    expect(within(list).queryByText('Unrelated')).not.toBeInTheDocument()
+    expect(exhibitionQueries[0]!.get('artistId')).toBe('a1')
+    expect(exhibitionQueries[0]!.get('q')).toBeNull()
   })
 
   it('links to settings only when this artist is the home focus', async () => {

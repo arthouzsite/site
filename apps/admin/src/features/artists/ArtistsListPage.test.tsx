@@ -95,7 +95,35 @@ describe('ArtistsListPage', () => {
     await user.click(await screen.findByRole('button', { name: 'Delete Alpha Artist' }))
     await user.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Delete' }))
     const dialog = await screen.findByRole('alertdialog', { name: /can.t be deleted/i })
+    expect(within(dialog).getByText('Remove the artist from:')).toBeInTheDocument()
     expect(within(dialog).getByText('Naan Yaar')).toBeInTheDocument()
-    expect(within(dialog).getByText(/2 works/i)).toBeInTheDocument()
+    expect(within(dialog).getByText('Delete 2 selected works.')).toBeInTheDocument()
+    expect(within(dialog).getByText('3 exhibition works use this artist.')).toBeInTheDocument()
+  })
+
+  it('delete guard lists only the blocking parts that exist', async () => {
+    setup()
+    server.use(
+      http.delete(`${API_URL}/artists/a1`, () =>
+        HttpResponse.json(
+          { ok: false, data: null, error: { code: 'ARTIST_IN_USE', message: 'in use', details: { exhibitions: [], workCount: 0, artworkCount: 2 } } },
+          { status: 409 },
+        ),
+      ),
+    )
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: 'Delete Alpha Artist' }))
+    await user.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Delete' }))
+    const dialog = await screen.findByRole('alertdialog', { name: /can.t be deleted/i })
+    expect(within(dialog).getByText('Delete 2 selected works.')).toBeInTheDocument()
+    expect(within(dialog).queryByText('Remove the artist from:')).not.toBeInTheDocument()
+    expect(within(dialog).queryByText(/exhibition works?/)).not.toBeInTheDocument()
+  })
+
+  it('the # letter filters artists whose name starts with a non-letter', async () => {
+    const { listRequests } = setup()
+    await screen.findByRole('table', { name: 'Artists' })
+    await userEvent.click(screen.getByRole('button', { name: '#' }))
+    await waitFor(() => expect(listRequests.at(-1)!.searchParams.get('letter')).toBe('#'))
   })
 })

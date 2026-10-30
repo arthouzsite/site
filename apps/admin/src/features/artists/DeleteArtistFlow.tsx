@@ -58,17 +58,18 @@ function BlockedBody({ details }: { details: ArtistInUseDetails }) {
   const { exhibitions, workCount, artworkCount } = details
   return (
     <div className="flex flex-col gap-3">
-      <p className="m-0">
-        Remove the artist from {plural(exhibitions.length, 'exhibition')} and delete {plural(artworkCount, 'work')} first
-        {workCount > 0 ? `, including ${plural(workCount, 'exhibition work')}` : ''}.
-      </p>
       {exhibitions.length > 0 && (
-        <ul className="m-0 list-none p-0">
-          {exhibitions.map((e) => (
-            <li key={e.id} className="flex min-h-11 items-center border-b border-line text-14 text-ink">{e.title}</li>
-          ))}
-        </ul>
+        <div>
+          <p className="m-0">Remove the artist from:</p>
+          <ul className="m-0 list-none p-0">
+            {exhibitions.map((e) => (
+              <li key={e.id} className="flex min-h-11 items-center border-b border-line text-14 text-ink">{e.title}</li>
+            ))}
+          </ul>
+        </div>
       )}
+      {artworkCount > 0 && <p className="m-0">Delete {plural(artworkCount, 'selected work')}.</p>}
+      {workCount > 0 && <p className="m-0">{plural(workCount, 'exhibition work')} use this artist.</p>}
     </div>
   )
 }

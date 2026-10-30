@@ -41,7 +41,6 @@ export type ArtistExhibition = {
   status: 'CURRENT' | 'UPCOMING' | 'PAST'
   startDate?: string
   endDate?: string
-  artists: { artist: { id: string; name: string } }[]
 }
 
 export type ArtistInUseDetails = {

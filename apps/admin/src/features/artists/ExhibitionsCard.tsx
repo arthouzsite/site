@@ -14,7 +14,7 @@ function dates(e: ArtistExhibition): string | null {
 }
 
 export function ExhibitionsCard({ artist }: { artist: AdminArtist }) {
-  const exhibitions = useArtistExhibitions(artist.id, artist.name)
+  const exhibitions = useArtistExhibitions(artist.id)
   const rows = exhibitions.data ?? []
   return (
     <SectionCard title="Exhibitions with Art Houz" note="Managed from each exhibition">

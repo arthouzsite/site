@@ -15,6 +15,10 @@ function setup(disabled = false) {
       calls.push({ method: 'POST', path: '/artists/a1/artworks', body: await request.json() })
       return HttpResponse.json(envelope(makeArtwork({ id: 'w3' })), { status: 201 })
     }),
+    http.patch(`${API_URL}/artworks/w1`, async ({ request }) => {
+      calls.push({ method: 'PATCH', path: '/artworks/w1', body: await request.json() })
+      return HttpResponse.json(envelope(works[0]))
+    }),
     http.put(`${API_URL}/artists/a1/artworks/order`, async ({ request }) => {
       const body = (await request.json()) as { ids: string[] }
       calls.push({ method: 'PUT', path: '/artists/a1/artworks/order', body })
@@ -41,6 +45,20 @@ describe('WorksGrid', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Save work' }))
     await waitFor(() => expect(calls).toHaveLength(1))
     expect(calls[0]!.body).toMatchObject({ title: 'Salt Line', year: '2024', imageId: null })
+  })
+
+  it('edits an existing work with its values prefilled and keeps its publish state', async () => {
+    const { calls } = setup()
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: 'Edit Red Earth' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Edit work' })
+    expect(within(dialog).getByLabelText(/Title/)).toHaveValue('Red Earth')
+    expect(within(dialog).getByLabelText('Year')).toHaveValue('2026')
+    await user.clear(within(dialog).getByLabelText(/Title/))
+    await user.type(within(dialog).getByLabelText(/Title/), 'Red Earth II')
+    await user.click(within(dialog).getByRole('button', { name: 'Save work' }))
+    await waitFor(() => expect(calls).toHaveLength(1))
+    expect(calls[0]).toMatchObject({ method: 'PATCH', path: '/artworks/w1', body: { title: 'Red Earth II', isPublished: true } })
   })
 
   it('reorders with the move buttons and PUTs the full order', async () => {

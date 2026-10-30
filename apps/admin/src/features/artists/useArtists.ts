@@ -4,7 +4,7 @@ import { useToast } from '../../lib/toast'
 import { errorMessage } from './errors'
 import { FEATURED_LIMIT, type AdminArtist, type ArtistExhibition, type ArtistListParams, type Artwork } from './types'
 
-const EXHIBITION_SEARCH_LIMIT = 50
+const EXHIBITION_LIMIT = 50
 
 export type ArtistPayload = {
   name: string
@@ -71,14 +71,11 @@ export function useArtistArtworks(artistId: string | null) {
   })
 }
 
-export function useArtistExhibitions(artistId: string | undefined, name: string | undefined) {
+export function useArtistExhibitions(artistId: string | undefined) {
   return useQuery({
     queryKey: ['artist-exhibitions', artistId],
-    queryFn: async () => {
-      const rows = await api.get<ArtistExhibition[]>(`/exhibitions?${new URLSearchParams({ q: name ?? '', limit: String(EXHIBITION_SEARCH_LIMIT) })}`)
-      return rows.filter((row) => row.artists.some((entry) => entry.artist.id === artistId))
-    },
-    enabled: Boolean(artistId && name),
+    queryFn: () => api.get<ArtistExhibition[]>(`/exhibitions?${new URLSearchParams({ artistId: artistId ?? '', limit: String(EXHIBITION_LIMIT) })}`),
+    enabled: Boolean(artistId),
   })
 }
 

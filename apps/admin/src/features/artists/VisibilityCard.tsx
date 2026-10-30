@@ -26,7 +26,7 @@ export function VisibilityCard({ artist, dirty }: Props) {
   const homeFocus = useHomeFocus()
   const locked = !artist || dirty || publish.isPending || feature.isPending
   const position = artist ? (featured.data?.findIndex((a) => a.id === artist.id) ?? -1) + 1 : 0
-  const note = !artist ? 'Save the artist first' : dirty ? 'Save your changes first' : null
+  const note = !artist ? 'Save the artist first' : null
 
   return (
     <>
