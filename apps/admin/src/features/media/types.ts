@@ -27,13 +27,17 @@ export function fileName(m: Pick<Media, 'key'>): string {
   return m.key.split('/').pop() ?? m.key
 }
 
-const UPLOAD_ERRORS: Record<string, string> = {
-  VALIDATION: 'Alt text is required.',
-  INVALID_IMAGE: 'This file could not be read as an image.',
-  PAYLOAD_TOO_LARGE: 'This file is larger than 25 MB.',
-  UNSUPPORTED_MEDIA_TYPE: 'Use a JPEG, PNG, WebP or AVIF image.',
-}
+export type UploadErrorInfo = { status: number; code?: string; fields?: Record<string, string>; message: string }
 
-export function uploadErrorMessage(code: string | undefined, fallback: string): string {
-  return (code && UPLOAD_ERRORS[code]) || fallback
+/** Maps by status as well as code: a proxy can answer 413/415 without a JSON envelope. */
+export function uploadErrorMessage({ status, code, fields, message }: UploadErrorInfo): string {
+  if (status === 413 || code === 'PAYLOAD_TOO_LARGE') return 'This file is larger than 25 MB.'
+  if (status === 415 || code === 'UNSUPPORTED_MEDIA_TYPE') return 'Only JPEG, PNG, WebP and AVIF images are accepted.'
+  if (code === 'INVALID_IMAGE') return 'This file is not a valid image.'
+  if (code === 'VALIDATION') {
+    if (fields?.alt) return 'Alt text is required.'
+    const first = fields ? Object.values(fields)[0] : undefined
+    return first ?? message
+  }
+  return message
 }

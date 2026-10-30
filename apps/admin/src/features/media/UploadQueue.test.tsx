@@ -45,9 +45,9 @@ describe('UploadQueue', () => {
   })
 
   it.each([
-    ['INVALID_IMAGE', 400, 'could not be read'],
+    ['INVALID_IMAGE', 400, 'not a valid image'],
     ['PAYLOAD_TOO_LARGE', 413, '25 MB'],
-    ['UNSUPPORTED_MEDIA_TYPE', 415, 'JPEG, PNG, WebP or AVIF'],
+    ['UNSUPPORTED_MEDIA_TYPE', 415, 'Only JPEG, PNG, WebP and AVIF'],
     ['VALIDATION', 400, 'Alt text is required'],
   ])('maps %s to plain English inline', async (code, status, text) => {
     vi.spyOn(api, 'upload').mockRejectedValue(new ApiError(status, { code, message: 'raw', fields: { alt: 'x' } }))
@@ -59,6 +59,24 @@ describe('UploadQueue', () => {
     expect(alert).toHaveTextContent(new RegExp(text))
     const item = alert.closest('li')!
     expect(within(item).getByText('hero.jpg')).toBeInTheDocument()
+  })
+
+  it('maps a 413 without a JSON envelope', async () => {
+    vi.spyOn(api, 'upload').mockRejectedValue(new ApiError(413, { code: 'HTTP_ERROR', message: 'Request failed (413)' }))
+    renderWithProviders(<UploadQueue />)
+    const user = await choose([file()])
+    await user.type(screen.getByLabelText('Alt text for hero.jpg'), 'Alt')
+    await user.click(screen.getByRole('button', { name: /^upload 1 file/i }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('This file is larger than 25 MB.')
+  })
+
+  it('shows the server message for other validation fields', async () => {
+    vi.spyOn(api, 'upload').mockRejectedValue(new ApiError(400, { code: 'VALIDATION', message: 'bad', fields: { file: 'File is missing' } }))
+    renderWithProviders(<UploadQueue />)
+    const user = await choose([file()])
+    await user.type(screen.getByLabelText('Alt text for hero.jpg'), 'Alt')
+    await user.click(screen.getByRole('button', { name: /^upload 1 file/i }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('File is missing')
   })
 
   it('removes a queued file and reports uploaded media', async () => {

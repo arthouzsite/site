@@ -5,9 +5,8 @@ import { MediaGrid } from './MediaGrid'
 import { toMediaRef, type Media, type MediaRef } from './types'
 import { UploadQueue } from './UploadQueue'
 import { useDebouncedValue } from './useDebouncedValue'
-import { useMediaList } from './useMedia'
+import { PICKER_PAGE_SIZE, useMediaList } from './useMedia'
 
-const PAGE_SIZE = 12
 const SEARCH_DEBOUNCE_MS = 250
 const TABS = [
   { id: 'library', label: 'Library' },
@@ -22,7 +21,7 @@ export function MediaPicker({ open, onClose, onSelect }: Props) {
   const [page, setPage] = useState(1)
   const [selected, setSelected] = useState<Media | null>(null)
   const q = useDebouncedValue(search.trim(), SEARCH_DEBOUNCE_MS)
-  const list = useMediaList({ q, page, missingAlt: false, limit: PAGE_SIZE })
+  const list = useMediaList({ q, page, missingAlt: false, limit: PICKER_PAGE_SIZE })
   const missingAlt = selected !== null && selected.alt.trim() === ''
 
   const confirm = () => {
@@ -64,7 +63,7 @@ export function MediaPicker({ open, onClose, onSelect }: Props) {
               {list.data && list.data.items.length > 0 && (
                 <MediaGrid items={list.data.items} selectedId={selected?.id ?? null} onSelect={setSelected} label="Images" />
               )}
-              {list.data && <Pager page={page} limit={PAGE_SIZE} total={list.data.total} onPage={setPage} />}
+              {list.data && <Pager page={page} limit={PICKER_PAGE_SIZE} total={list.data.total} onPage={setPage} />}
             </>
           ) : (
             <UploadQueue onUploaded={(media) => { setSelected(media); setTab('library') }} />

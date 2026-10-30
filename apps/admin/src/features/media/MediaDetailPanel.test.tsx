@@ -57,10 +57,12 @@ describe('MediaDetailPanel', () => {
   })
 
   it('deletes unused media and copies the URL', async () => {
-    detail([])
+    let detailGets = 0
+    server.use(http.get(`${API_URL}/media/m1`, () => { detailGets += 1; return HttpResponse.json(envelope({ ...makeMedia(), usedBy: [] })) }))
     const onClose = vi.fn()
     server.use(http.delete(`${API_URL}/media/m1`, () => new HttpResponse(null, { status: 204 })))
-    renderWithProviders(<MediaDetailPanel id="m1" onClose={onClose} onSelect={() => {}} />)
+    const { client } = renderWithProviders(<MediaDetailPanel id="m1" onClose={onClose} onSelect={() => {}} />)
+    const remove = vi.spyOn(client, 'removeQueries')
     const user = userEvent.setup()
     await screen.findByDisplayValue('Tidewater hero')
     const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue()
@@ -70,5 +72,7 @@ describe('MediaDetailPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Delete' }))
     await user.click(screen.getByRole('button', { name: 'Delete image' }))
     await vi.waitFor(() => expect(onClose).toHaveBeenCalled())
+    expect(remove).toHaveBeenCalledWith({ queryKey: ['media', 'm1'], exact: true })
+    expect(detailGets).toBe(1)
   })
 })

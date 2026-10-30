@@ -20,7 +20,7 @@ function toItem(file: File): Item {
 }
 
 function describe(err: unknown): string {
-  if (err instanceof ApiError) return uploadErrorMessage(err.code, err.message)
+  if (err instanceof ApiError) return uploadErrorMessage(err)
   return 'Upload failed. Try again.'
 }
 

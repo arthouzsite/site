@@ -19,7 +19,7 @@ export default function MediaPage() {
   const [search, setSearch] = useState(q)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const debounced = useDebouncedValue(search.trim(), SEARCH_DEBOUNCE_MS)
-  const list = useMediaList({ q, page, missingAlt })
+  const list = useMediaList({ q, page, missingAlt, limit: MEDIA_PAGE_SIZE })
 
   const update = (changes: Record<string, string | null>) =>
     setParams((cur) => {

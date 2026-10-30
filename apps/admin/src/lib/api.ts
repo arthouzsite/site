@@ -36,14 +36,23 @@ function parseBody<T>(text: string): ApiEnvelope<T> | null {
   }
 }
 
-function settle<T>(status: number, path: string, text: string): T {
+export type ApiMeta = { total: number; page: number; limit: number }
+export type ApiResult<T> = { data: T; meta?: ApiMeta }
+
+function settleResult<T>(status: number, path: string, text: string): ApiResult<T> {
   const env = parseBody<T>(text)
-  if (status >= 200 && status < 300 && env?.ok !== false) return (env?.data ?? null) as T
+  if (status >= 200 && status < 300 && env?.ok !== false) {
+    return { data: (env?.data ?? null) as T, meta: (env as { meta?: ApiMeta } | null)?.meta }
+  }
   notifySessionExpired(status, path)
   throw new ApiError(status, env?.error ?? { code: 'HTTP_ERROR', message: `Request failed (${status})` })
 }
 
-async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+function settle<T>(status: number, path: string, text: string): T {
+  return settleResult<T>(status, path, text).data
+}
+
+async function send<T>(method: string, path: string, body?: unknown): Promise<ApiResult<T>> {
   const headers: Record<string, string> = {}
   if (body !== undefined) headers['Content-Type'] = 'application/json'
   let res: Response
@@ -57,7 +66,11 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   } catch {
     throw new ApiError(0, NETWORK_ERROR)
   }
-  return settle<T>(res.status, path, await res.text())
+  return settleResult<T>(res.status, path, await res.text())
+}
+
+async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  return (await send<T>(method, path, body)).data
 }
 
 function upload<T>(path: string, form: FormData, onProgress?: (fraction: number) => void): Promise<T> {
@@ -82,6 +95,7 @@ function upload<T>(path: string, form: FormData, onProgress?: (fraction: number)
 
 export const api = {
   get: <T>(path: string) => request<T>('GET', path),
+  getWithMeta: <T>(path: string) => send<T>('GET', path),
   post: <T>(path: string, body?: unknown) => request<T>('POST', path, body),
   put: <T>(path: string, body?: unknown) => request<T>('PUT', path, body),
   patch: <T>(path: string, body?: unknown) => request<T>('PATCH', path, body),

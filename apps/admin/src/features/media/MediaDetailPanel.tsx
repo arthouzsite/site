@@ -21,7 +21,9 @@ function shortUrl(url: string): string {
 
 export function MediaDetailPanel({ id, onClose, onSelect }: Props) {
   const toast = useToast()
-  const detail = useMediaDetail(id)
+  const [deleting, setDeleting] = useState(false)
+  // Pause the detail query while deleting so it is not refetched (and 404s) once the row is gone.
+  const detail = useMediaDetail(id, !deleting)
   const del = useDeleteMedia(id)
   const upload = useUploadMedia()
   const fileRef = useRef<HTMLInputElement>(null)
@@ -41,12 +43,14 @@ export function MediaDetailPanel({ id, onClose, onSelect }: Props) {
   }
 
   const confirmDelete = async () => {
+    setDeleting(true)
     try {
       await del.mutateAsync()
       setConfirming(false)
       toast.success('Image deleted')
       onClose()
     } catch (err) {
+      setDeleting(false)
       setConfirming(false)
       if (err instanceof ApiError && err.code === 'MEDIA_IN_USE') setBlockedBy(usageFrom(err))
       else toast.error(err instanceof ApiError ? err.message : 'Could not delete the image')

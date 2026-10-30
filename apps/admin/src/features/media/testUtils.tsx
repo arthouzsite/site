@@ -24,10 +24,11 @@ export function makeMedia(over: Partial<Media> = {}): Media {
 }
 
 export function renderWithProviders(ui: ReactElement) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(
+  const client = new QueryClient()
+  const result = render(
     <QueryClientProvider client={client}>
       <ToastProvider>{ui}</ToastProvider>
     </QueryClientProvider>,
   )
+  return { ...result, client }
 }

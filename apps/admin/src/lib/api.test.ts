@@ -48,6 +48,25 @@ describe('api', () => {
     await expect(api.get('/things')).rejects.toMatchObject({ status: 0, code: 'NETWORK_ERROR' })
   })
 
+  it('getWithMeta returns data and meta', async () => {
+    server.use(http.get(`${API_URL}/list`, () => HttpResponse.json({ ...envelope([1, 2]), meta: { total: 9, page: 1, limit: 2 } })))
+    await expect(api.getWithMeta<number[]>('/list')).resolves.toEqual({ data: [1, 2], meta: { total: 9, page: 1, limit: 2 } })
+  })
+
+  it('getWithMeta dispatches session-expired on 401', async () => {
+    server.use(http.get(`${API_URL}/list`, () => HttpResponse.json(errorEnvelope('UNAUTHENTICATED', 'No'), { status: 401 })))
+    const listener = vi.fn()
+    window.addEventListener(SESSION_EXPIRED_EVENT, listener)
+    await expect(api.getWithMeta('/list')).rejects.toMatchObject({ status: 401 })
+    expect(listener).toHaveBeenCalledTimes(1)
+    window.removeEventListener(SESSION_EXPIRED_EVENT, listener)
+  })
+
+  it('getWithMeta wraps a network failure', async () => {
+    server.use(http.get(`${API_URL}/list`, () => HttpResponse.error()))
+    await expect(api.getWithMeta('/list')).rejects.toMatchObject({ status: 0, code: 'NETWORK_ERROR' })
+  })
+
   it('supports put, patch and delete with JSON bodies', async () => {
     const seen: string[] = []
     for (const m of ['put', 'patch', 'delete'] as const) {
