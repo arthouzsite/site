@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { tagsFor, type ExhibitionWorkInput } from '@arthouz/shared'
 import { PrismaService } from '../common/prisma.service'
 import { RevalidateService } from '../revalidate/revalidate.service'
+import { assertExactOrder } from '../common/exact-order'
 
 const WORK_NOT_FOUND = 'Work not found'
 const EXHIBITION_NOT_FOUND = 'Exhibition not found'
@@ -77,11 +78,7 @@ export class ExhibitionWorksService {
   async reorder(exhibitionId: string, ids: string[]) {
     const { slug } = await this.exhibition(exhibitionId)
     const current = await this.prisma.exhibitionWork.findMany({ where: { exhibitionId }, select: { id: true } })
-    const expected = new Set(current.map((w) => w.id))
-    const isExactSet = ids.length === expected.size && new Set(ids).size === ids.length && ids.every((id) => expected.has(id))
-    if (!isExactSet) {
-      throw new BadRequestException({ code: 'INVALID_ORDER', message: 'ids must list every work of this exhibition exactly once' })
-    }
+    assertExactOrder(ids, current.map((r) => r.id), 'work of this exhibition')
     await this.prisma.$transaction(
       ids.map((id, sortOrder) => this.prisma.exhibitionWork.update({ where: { id }, data: { sortOrder } })),
     )

@@ -1,6 +1,7 @@
 import { formatDateRange, resolveExhibitionStatus, STATUS_BADGE } from '@arthouz/shared'
 import type { Prisma } from '../generated/prisma/client'
 import { today } from '../config/clock'
+import { toImage } from '../common/image.mapper'
 
 export const EXHIBITION_INCLUDE = {
   heroImage: true,
@@ -18,8 +19,6 @@ export function toAdminExhibition(row: ExhibitionRow) {
     statusLabel: STATUS_BADGE[status].label,
     datesLabel: row.datesLabel ?? formatDateRange(row.startDate, row.endDate),
     artistLine: row.artists.map((a) => a.artist.name).join(', '),
-    heroImage: heroImage
-      ? { id: heroImage.id, url: heroImage.url, thumbUrl: heroImage.thumbUrl, width: heroImage.width, height: heroImage.height, alt: heroImage.alt }
-      : null,
+    heroImage: toImage(heroImage),
   }
 }

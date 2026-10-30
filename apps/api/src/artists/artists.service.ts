@@ -7,10 +7,10 @@ import { uniqueSlug } from '../common/slugs'
 import { RevalidateService } from '../revalidate/revalidate.service'
 import { ARTIST_INCLUDE, toAdminArtist } from './artists.mapper'
 import { artistListWhere, type ArtistListQuery } from './artists.query'
+import { assertMediaExists } from '../common/media-exists'
 
 const NOT_FOUND = 'Artist not found'
 const UNKNOWN_ARTIST = 'UNKNOWN_ARTIST'
-const UNKNOWN_MEDIA = 'UNKNOWN_MEDIA'
 const NOT_FEATURED_ORDER = 0
 
 // Scalars written by create/PATCH. Publish and feature state have their own endpoints.
@@ -41,7 +41,7 @@ export class ArtistsService {
   }
 
   async create(input: ArtistInput) {
-    await this.assertMedia(input.portraitImageId)
+    await assertMediaExists(this.prisma, input.portraitImageId, 'portrait image')
     const slug = await uniqueSlug(this.prisma, 'artist', input.slug ?? input.name)
     const created = await this.prisma.artist.create({
       data: { ...writableData(input, slug), isPublished: input.isPublished },
@@ -53,7 +53,7 @@ export class ArtistsService {
 
   async update(id: string, input: ArtistInput) {
     const existing = await this.find(id)
-    await this.assertMedia(input.portraitImageId)
+    await assertMediaExists(this.prisma, input.portraitImageId, 'portrait image')
     const requested = input.slug ?? (input.name !== existing.name ? input.name : undefined)
     const wantsNewSlug = requested !== undefined && slugify(requested) !== existing.slug
     const slug = wantsNewSlug ? await uniqueSlug(this.prisma, 'artist', requested, id) : existing.slug
@@ -123,12 +123,6 @@ export class ArtistsService {
     await this.prisma.artist.delete({ where: { id } })
     this.revalidate.trigger(tagsFor('artist', existing.slug))
     return { id }
-  }
-
-  private async assertMedia(mediaId: string | null): Promise<void> {
-    if (!mediaId) return
-    const media = await this.prisma.media.findUnique({ where: { id: mediaId }, select: { id: true } })
-    if (!media) throw new BadRequestException({ code: UNKNOWN_MEDIA, message: `Unknown portrait image: ${mediaId}` })
   }
 
   private async find(id: string) {

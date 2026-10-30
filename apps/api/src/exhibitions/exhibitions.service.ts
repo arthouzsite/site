@@ -9,6 +9,7 @@ import { today } from '../config/clock'
 import type { Prisma } from '../generated/prisma/client'
 import { RevalidateService } from '../revalidate/revalidate.service'
 import { EXHIBITION_INCLUDE, toAdminExhibition } from './exhibitions.mapper'
+import { assertMediaExists } from '../common/media-exists'
 
 const STATUS_QUERY_VALUES = EXHIBITION_STATUSES.map((s) => s.toLowerCase()) as [string, ...string[]]
 const MAX_CITY_LENGTH = 80
@@ -30,7 +31,6 @@ export type ExhibitionListQuery = z.infer<typeof exhibitionListQuerySchema>
 
 const NOT_FOUND = 'Exhibition not found'
 const UNKNOWN_ARTIST = 'UNKNOWN_ARTIST'
-const UNKNOWN_MEDIA = 'UNKNOWN_MEDIA'
 
 // Status is computed from dates unless overridden, so it is filtered in SQL using the same rule
 // as resolveExhibitionStatus: an explicit override wins, otherwise compare dates with today().
@@ -90,7 +90,7 @@ export class ExhibitionsService {
 
   async create(input: ExhibitionInput, _userId: string) {
     const artistIds = await this.validArtistIds(input.artistIds)
-    await this.assertMedia(input.heroImageId)
+    await assertMediaExists(this.prisma, input.heroImageId, 'hero image')
     const slug = await uniqueSlug(this.prisma, 'exhibition', input.slug ?? input.title)
     const created = await this.prisma.exhibition.create({
       data: {
@@ -105,7 +105,7 @@ export class ExhibitionsService {
 
   async update(id: string, input: ExhibitionInput) {
     const existing = await this.find(id)
-    await this.assertMedia(input.heroImageId)
+    await assertMediaExists(this.prisma, input.heroImageId, 'hero image')
     const wantsNewSlug = input.slug !== undefined && slugify(input.slug) !== existing.slug
     const slug = wantsNewSlug ? await uniqueSlug(this.prisma, 'exhibition', input.slug ?? '', id) : existing.slug
     const updated = await this.prisma.exhibition.update({
@@ -172,12 +172,6 @@ export class ExhibitionsService {
       throw new BadRequestException({ code: UNKNOWN_ARTIST, message: `Unknown artist ids: ${missing.join(', ')}`, details: { missingIds: missing } })
     }
     return ids
-  }
-
-  private async assertMedia(mediaId: string | null): Promise<void> {
-    if (!mediaId) return
-    const media = await this.prisma.media.findUnique({ where: { id: mediaId }, select: { id: true } })
-    if (!media) throw new BadRequestException({ code: UNKNOWN_MEDIA, message: `Unknown hero image: ${mediaId}` })
   }
 
   private async find(id: string) {

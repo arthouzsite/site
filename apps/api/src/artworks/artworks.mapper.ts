@@ -1,4 +1,5 @@
 import type { Prisma } from '../generated/prisma/client'
+import { toImage } from '../common/image.mapper'
 
 export const ARTWORK_INCLUDE = { image: true } satisfies Prisma.ArtworkInclude
 
@@ -8,6 +9,6 @@ export function toAdminArtwork(row: ArtworkRow) {
   const { image } = row
   return {
     ...row,
-    image: image ? { id: image.id, url: image.url, thumbUrl: image.thumbUrl, width: image.width, height: image.height, alt: image.alt } : null,
+    image: toImage(image),
   }
 }

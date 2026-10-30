@@ -1,5 +1,6 @@
 import { indexLetter } from '@arthouz/shared'
 import type { Prisma } from '../generated/prisma/client'
+import { toImage } from '../common/image.mapper'
 
 export const ARTIST_INCLUDE = {
   portraitImage: true,
@@ -14,8 +15,6 @@ export function toAdminArtist(row: ArtistRow) {
     ...rest,
     artworkCount: _count.artworks,
     indexLetter: indexLetter(row.sortName),
-    portraitImage: portraitImage
-      ? { id: portraitImage.id, url: portraitImage.url, thumbUrl: portraitImage.thumbUrl, width: portraitImage.width, height: portraitImage.height, alt: portraitImage.alt }
-      : null,
+    portraitImage: toImage(portraitImage),
   }
 }

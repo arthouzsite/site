@@ -1,8 +1,10 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common'
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common'
 import { tagsFor, type ArtworkInput } from '@arthouz/shared'
 import { PrismaService } from '../common/prisma.service'
 import { RevalidateService } from '../revalidate/revalidate.service'
 import { ARTWORK_INCLUDE, toAdminArtwork } from './artworks.mapper'
+import { assertMediaExists } from '../common/media-exists'
+import { assertExactOrder } from '../common/exact-order'
 
 const ARTIST_NOT_FOUND = 'Artist not found'
 const ARTWORK_NOT_FOUND = 'Artwork not found'
@@ -34,7 +36,7 @@ export class ArtworksService {
 
   async create(artistId: string, input: ArtworkBody) {
     const { slug } = await this.artist(artistId)
-    await this.assertMedia(input.imageId)
+    await assertMediaExists(this.prisma, input.imageId, 'image')
     const last = await this.prisma.artwork.aggregate({ where: { artistId }, _max: { sortOrder: true } })
     const created = await this.prisma.artwork.create({
       data: { ...writableData(input), artistId, isPublished: input.isPublished, sortOrder: (last._max.sortOrder ?? -1) + 1 },
@@ -46,7 +48,7 @@ export class ArtworksService {
 
   async update(id: string, input: ArtworkBody) {
     const existing = await this.find(id)
-    await this.assertMedia(input.imageId)
+    await assertMediaExists(this.prisma, input.imageId, 'image')
     const updated = await this.prisma.artwork.update({ where: { id }, data: writableData(input), include: ARTWORK_INCLUDE })
     this.revalidate.trigger(tagsFor('artwork', existing.artist.slug))
     return toAdminArtwork(updated)
@@ -62,11 +64,7 @@ export class ArtworksService {
   async reorder(artistId: string, ids: string[]) {
     const { slug } = await this.artist(artistId)
     const current = await this.prisma.artwork.findMany({ where: { artistId }, select: { id: true } })
-    const expected = new Set(current.map((a) => a.id))
-    const isExactSet = ids.length === expected.size && new Set(ids).size === ids.length && ids.every((id) => expected.has(id))
-    if (!isExactSet) {
-      throw new BadRequestException({ code: 'INVALID_ORDER', message: 'ids must list every artwork of this artist exactly once' })
-    }
+    assertExactOrder(ids, current.map((r) => r.id), 'artwork of this artist')
     await this.prisma.$transaction(ids.map((id, sortOrder) => this.prisma.artwork.update({ where: { id }, data: { sortOrder } })))
     this.revalidate.trigger(tagsFor('artwork', slug))
     return this.list(artistId)
@@ -97,11 +95,5 @@ export class ArtworksService {
     const row = await this.prisma.artwork.findUnique({ where: { id }, include: { ...ARTWORK_INCLUDE, artist: { select: { slug: true } } } })
     if (!row) throw new NotFoundException(ARTWORK_NOT_FOUND)
     return row
-  }
-
-  private async assertMedia(mediaId: string | null): Promise<void> {
-    if (!mediaId) return
-    const media = await this.prisma.media.findUnique({ where: { id: mediaId }, select: { id: true } })
-    if (!media) throw new BadRequestException({ code: 'UNKNOWN_MEDIA', message: `Unknown image: ${mediaId}` })
   }
 }
