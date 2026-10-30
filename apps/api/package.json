@@ -14,7 +14,8 @@
     "lint": "tsc --noEmit -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "prisma:migrate": "prisma migrate dev",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "media:rehome": "tsx prisma/rehome-media.ts"
   },
   "dependencies": {
     "@arthouz/shared": "workspace:^",

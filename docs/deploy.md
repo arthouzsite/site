@@ -44,7 +44,7 @@ Secrets are marked **secret**; keep them out of the repository and out of the ad
 | `TODAY_OVERRIDE` | never in production | `YYYY-MM-DD`; test-only |
 | `DATABASE_URL_TEST` | never in production | API e2e tests only |
 
-`SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` are required by the API's environment schema, so the API will not start without them. Run `db:seed` once for a new database; it creates the admin user and loads the prototype content.
+`SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` are required by the API's environment schema, so the API will not start without them. Run `db:seed` once for a new database; it creates the admin user and loads the prototype content. Then run `pnpm --filter @arthouz/api media:rehome` with the production R2 keys so every seeded image is served from the bucket instead of the placeholder host.
 
 ### apps/web
 
