@@ -17,7 +17,7 @@ import { PressCard } from './PressCard'
 import { PublishCard } from './PublishCard'
 import { TextCard } from './TextCard'
 import { STATUS_TO_CHIP, type AdminExhibition, type ArtistLite } from './types'
-import { useCreateExhibition, useDeleteExhibition, usePublishExhibition, useSetExhibitionArtists, useUpdateExhibition } from './useExhibitions'
+import { ArtistsNotSavedError, useCreateExhibition, useDeleteExhibition, usePublishExhibition, useSaveExhibition } from './useExhibitions'
 import { WorksCard } from './WorksCard'
 
 const FORM_ID = 'exhibition-form'
@@ -27,7 +27,9 @@ const sameIds = (a: ArtistLite[], b: ArtistLite[]) => a.length === b.length && a
 const messageOf = (err: unknown) => (err instanceof ApiError ? err.message : 'Something went wrong. Try again.')
 
 /** `exhibition` is undefined on /exhibitions/new. */
-export function ExhibitionForm({ exhibition }: { exhibition?: AdminExhibition }) {
+type Props = { exhibition?: AdminExhibition; onSaved?: () => void }
+
+export function ExhibitionForm({ exhibition, onSaved }: Props) {
   const isNew = !exhibition
   const navigate = useNavigate()
   const toast = useToast()
@@ -37,8 +39,7 @@ export function ExhibitionForm({ exhibition }: { exhibition?: AdminExhibition })
   const [artists, setArtists] = useState<ArtistLite[]>(savedArtists)
   const [hero, setHero] = useState<MediaRef | null>(exhibition?.heroImage ?? null)
   const create = useCreateExhibition()
-  const update = useUpdateExhibition(exhibition?.id ?? '')
-  const setArtistOrder = useSetExhibitionArtists(exhibition?.id ?? '')
+  const saveExisting = useSaveExhibition(exhibition?.id ?? '')
   const publish = usePublishExhibition()
   const remove = useDeleteExhibition()
 
@@ -62,11 +63,16 @@ export function ExhibitionForm({ exhibition }: { exhibition?: AdminExhibition })
         navigate(`/exhibitions/${created.id}`, { replace: true })
         return
       }
-      await update.mutateAsync(body)
-      if (!sameIds(artists, savedArtists)) await setArtistOrder.mutateAsync(artists)
-      form.reset(form.getValues())
+      await saveExisting.mutateAsync({ body, artists: sameIds(artists, savedArtists) ? null : artists })
       toast.success(`Saved · ${values.title}`)
+      onSaved?.()
     } catch (err) {
+      if (err instanceof ArtistsNotSavedError) {
+        // Details are saved: mark the form clean but keep the unsaved artist order for a retry.
+        form.reset(form.getValues())
+        toast.error(err.message)
+        return
+      }
       form.applyServerErrors(err)
       if (!(err instanceof ApiError && err.fields)) toast.error(messageOf(err))
     }
@@ -111,7 +117,7 @@ export function ExhibitionForm({ exhibition }: { exhibition?: AdminExhibition })
             {status && <StatusChip status={STATUS_TO_CHIP[status]} />}
           </div>
         </div>
-        <Button variant="primary" type="submit" form={FORM_ID} disabled={create.isPending || update.isPending || setArtistOrder.isPending}>Save</Button>
+        <Button variant="primary" type="submit" form={FORM_ID} disabled={create.isPending || saveExisting.isPending}>Save</Button>
       </header>
 
       <ErrorSummary errors={summaryErrors(errors, FIELD_PROMPTS)} focusKey={submitCount} />

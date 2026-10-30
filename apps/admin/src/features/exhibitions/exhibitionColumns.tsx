@@ -33,7 +33,7 @@ export function exhibitionColumns({ onTogglePublished }: Options): ColumnDef<Adm
     {
       id: 'dates',
       header: 'Dates',
-      cell: ({ row }) => <span className="block min-w-[150px] max-w-[190px] whitespace-normal text-13 leading-snug text-body">{row.original.datesLabel}</span>,
+      cell: ({ row }) => <span className="block min-w-[150px] max-w-[190px] whitespace-normal text-13 leading-snug text-body">{row.original.datesLabelResolved}</span>,
     },
     { id: 'status', header: 'Status', cell: ({ row }) => <StatusChip status={STATUS_TO_CHIP[row.original.status]} label={row.original.statusLabel} /> },
     {

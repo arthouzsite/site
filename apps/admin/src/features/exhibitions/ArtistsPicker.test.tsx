@@ -1,7 +1,7 @@
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
-import { API_URL, HttpResponse, envelope, http, server } from '../../test/msw'
+import { API_URL, HttpResponse, envelope, errorEnvelope, http, server } from '../../test/msw'
 import ExhibitionEditorPage from './ExhibitionEditorPage'
 import { ID, makeExhibition, renderRoutes, useEditorHandlers } from './testUtils'
 
@@ -22,6 +22,24 @@ describe('ArtistsPicker', () => {
     await user.click(await screen.findByRole('button', { name: 'Move Ranjith Raman up' }))
     await user.click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(put).toEqual({ ids: [ID.a2, ID.a1, ID.a3] }))
+    expect(await screen.findAllByText('Saved · Tidewater')).toHaveLength(1)
+  })
+
+  it('keeps the reordered artists and reports when only the artist list failed to save', async () => {
+    const ex = makeExhibition()
+    useEditorHandlers(ex)
+    server.use(
+      http.patch(`${API_URL}/exhibitions/${ex.id}`, () => HttpResponse.json(envelope(ex))),
+      http.put(`${API_URL}/exhibitions/${ex.id}/artists`, () => HttpResponse.json(errorEnvelope('UNKNOWN_ARTIST', 'Unknown artist'), { status: 400 })),
+    )
+    renderRoutes(`/exhibitions/${ex.id}`, [{ path: '/exhibitions/:id', element: <ExhibitionEditorPage /> }])
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: 'Move Ranjith Raman up' }))
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+    expect(await screen.findByText('Details saved, but the artist list was not — try again')).toBeInTheDocument()
+    expect(screen.queryByText('Saved · Tidewater')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Move Ranjith Raman up' })).toBeDisabled()
+    expect(screen.getByRole('switch', { name: 'Published' })).toBeDisabled()
   })
 
   it('adds a searched artist and removes one', async () => {

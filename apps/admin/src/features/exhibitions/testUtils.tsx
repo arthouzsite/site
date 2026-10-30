@@ -1,10 +1,13 @@
-import { render } from '@testing-library/react'
+import { configure, render } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactElement } from 'react'
 import { RouterProvider, createMemoryRouter } from 'react-router'
 import { ToastProvider } from '../../lib/toast'
 import { API_URL, HttpResponse, envelope, http, server } from '../../test/msw'
 import type { AdminExhibition, ExhibitionWork } from './types'
+
+// Lazy imports and debounced searches get slow when the whole suite runs under coverage.
+configure({ asyncUtilTimeout: 4000 })
 
 export const ID = {
   ex: '11111111-1111-4111-8111-111111111111',
@@ -27,7 +30,8 @@ export function makeExhibition(over: Partial<AdminExhibition> = {}): AdminExhibi
     type: 'GROUP',
     startDate: '2026-10-03T00:00:00.000Z',
     endDate: '2026-11-22T00:00:00.000Z',
-    datesLabel: 'October 3 – November 22, 2026',
+    datesLabel: null,
+    datesLabelResolved: 'October 3 – November 22, 2026',
     statusOverride: null,
     venue: 'Art Houz Chennai',
     blurb: 'Recent canvases.',

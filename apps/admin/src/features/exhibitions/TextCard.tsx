@@ -6,7 +6,7 @@ export function TextCard({ form }: { form: ExhibitionZodForm }) {
   const { register, formState: { errors } } = form
   return (
     <FormCard title="Text">
-      <Field name="blurb" label="Blurb" help="One or two lines shown on cards and in search results." error={errors.blurb?.message}>
+      <Field name="blurb" label="Blurb" error={errors.blurb?.message}>
         <Textarea {...register('blurb')} />
       </Field>
       <Field name="body" label="Body" error={errors.body?.message}>

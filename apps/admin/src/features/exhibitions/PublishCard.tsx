@@ -39,8 +39,6 @@ export function PublishCard({ status, isPublished, isSaved, dirty, busy, updated
         <Switch label="Published" checked={isPublished} disabled={!isSaved || dirty || busy} onChange={(e) => onTogglePublished(e.target.checked)} />
         {!isPublished && <StatusChip status="draft" />}
       </div>
-      {isSaved && dirty && <p className="m-0 text-12 text-muted">Save first</p>}
-      {!isSaved && <p className="m-0 text-12 text-muted">Save the exhibition to publish it.</p>}
       {slug && isSaved && (
         <a href={exhibitionUrl(slug)} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center gap-2 self-start text-13 underline-offset-2 hover:underline">
           View on site <Icon name="external" />

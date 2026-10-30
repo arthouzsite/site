@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { PageHead } from '../../components/PageHead'
 import { ApiError } from '../../lib/api'
@@ -7,12 +8,13 @@ import { useExhibition } from './useExhibitions'
 export default function ExhibitionEditorPage() {
   const { id } = useParams()
   const query = useExhibition(id)
+  const [saves, setSaves] = useState(0)
 
   if (!id) return <ExhibitionForm key="new" />
   if (query.data) {
     const ex = query.data
-    // Remount on server changes so defaults, artists and the hero reflect what was saved.
-    return <ExhibitionForm key={`${ex.id}:${ex.updatedAt}:${ex.artists.map((a) => a.artistId).join(',')}`} exhibition={ex} />
+    // Remount only after a whole save succeeded, so a failed step never discards the editor's input.
+    return <ExhibitionForm key={`${ex.id}:${saves}`} exhibition={ex} onSaved={() => setSaves((n) => n + 1)} />
   }
   const notFound = query.error instanceof ApiError && query.error.status === 404
   return (

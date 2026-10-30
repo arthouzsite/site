@@ -45,19 +45,34 @@ export function useCreateExhibition() {
   })
 }
 
-export function useUpdateExhibition(id: string) {
-  const client = useQueryClient()
-  return useMutation({
-    mutationFn: (body: ExhibitionInput) => api.patch<AdminExhibition>(`/exhibitions/${id}`, body),
-    onSuccess: () => Promise.all([client.invalidateQueries({ queryKey: ['exhibitions'] }), client.invalidateQueries({ queryKey: ['exhibition', id] })]),
-  })
+/** Thrown when the details saved but the artist order did not. */
+export class ArtistsNotSavedError extends Error {
+  readonly cause: unknown
+  constructor(cause: unknown) {
+    super('Details saved, but the artist list was not — try again')
+    this.name = 'ArtistsNotSavedError'
+    this.cause = cause
+  }
 }
 
-export function useSetExhibitionArtists(id: string) {
+type SaveArgs = { body: ExhibitionInput; artists: ArtistLite[] | null }
+
+/** PATCH, then (when the order changed) PUT artists, then invalidate once so nothing remounts mid-sequence. */
+export function useSaveExhibition(id: string) {
   const client = useQueryClient()
   return useMutation({
-    mutationFn: (artists: ArtistLite[]) => api.put(`/exhibitions/${id}/artists`, { ids: artists.map((a) => a.id) }),
-    onSuccess: () => Promise.all([client.invalidateQueries({ queryKey: ['exhibitions'] }), client.invalidateQueries({ queryKey: ['exhibition', id] })]),
+    mutationFn: async ({ body, artists }: SaveArgs) => {
+      await api.patch<AdminExhibition>(`/exhibitions/${id}`, body)
+      if (artists) {
+        try {
+          await api.put(`/exhibitions/${id}/artists`, { ids: artists.map((a) => a.id) })
+        } catch (err) {
+          void client.invalidateQueries({ queryKey: ['exhibitions'] })
+          throw new ArtistsNotSavedError(err)
+        }
+      }
+      await Promise.all([client.invalidateQueries({ queryKey: ['exhibition', id] }), client.invalidateQueries({ queryKey: ['exhibitions'] })])
+    },
   })
 }
 

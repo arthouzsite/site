@@ -13,8 +13,9 @@ export type AdminExhibition = {
   type: ExhibitionType
   startDate: string
   endDate: string
-  /** Resolved label: the override when set, otherwise the formatted range. */
-  datesLabel: string
+  /** The editor's override, or null to use the computed range. */
+  datesLabel: string | null
+  datesLabelResolved: string
   statusOverride: ExhibitionStatus | null
   venue: string
   blurb: string

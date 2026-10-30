@@ -1,4 +1,4 @@
-import { formatDateRange, type exhibitionInputSchema } from '@arthouz/shared'
+import type { exhibitionInputSchema } from '@arthouz/shared'
 import type { z } from 'zod'
 import type { ZodForm } from '../../lib/useZodForm'
 import type { AdminExhibition } from './types'
@@ -30,12 +30,6 @@ export function defaultValues(): ExhibitionFormValues {
   }
 }
 
-/** The API returns the resolved dates label; an override exists only when it differs from the computed range. */
-function datesOverride(ex: AdminExhibition): string | null {
-  const computed = formatDateRange(new Date(ex.startDate), new Date(ex.endDate))
-  return ex.datesLabel && ex.datesLabel !== computed ? ex.datesLabel : null
-}
-
 export function valuesFromExhibition(ex: AdminExhibition): ExhibitionFormValues {
   return {
     slug: ex.slug,
@@ -46,7 +40,7 @@ export function valuesFromExhibition(ex: AdminExhibition): ExhibitionFormValues 
     type: ex.type,
     startDate: ex.startDate.slice(0, DATE_INPUT_LENGTH),
     endDate: ex.endDate.slice(0, DATE_INPUT_LENGTH),
-    datesLabel: datesOverride(ex),
+    datesLabel: ex.datesLabel,
     statusOverride: ex.statusOverride,
     venue: ex.venue,
     blurb: ex.blurb,
