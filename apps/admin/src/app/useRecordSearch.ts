@@ -5,6 +5,7 @@ import type { AdminArtist } from '../features/artists/types'
 import type { AdminExhibition } from '../features/exhibitions/types'
 import { STATUS_TO_CHIP } from '../features/exhibitions/types'
 import type { AdminFair } from '../features/fairs/types'
+import type { AdminService } from '../features/services/types'
 import type { AdminNews } from '../features/news/types'
 
 export const SEARCH_MIN_CHARS = 2
@@ -26,10 +27,11 @@ const exhibitionHit = (e: AdminExhibition): SearchHit => ({
 const artistHit = (a: AdminArtist): SearchHit => ({ id: a.id, title: a.name, to: `/artists/${a.id}`, chips: [published(a.isPublished)] })
 const newsHit = (n: AdminNews): SearchHit => ({ id: n.id, title: n.title, to: `/news/${n.id}`, chips: [published(n.isPublished)] })
 const fairHit = (f: AdminFair): SearchHit => ({ id: f.id, title: f.title, to: `/fairs/${f.id}`, chips: [published(f.isPublished)] })
+const serviceHit = (s: AdminService): SearchHit => ({ id: s.id, title: s.title, to: `/services/${s.id}`, chips: [published(s.isPublished)] })
 
 const searchPath = (path: string, term: string) => `${path}?${new URLSearchParams({ q: term, limit: String(SEARCH_LIMIT) })}`
 
-/** Searches the four record types in parallel. `term` is already trimmed and debounced by the caller. */
+/** Searches the five record types in parallel. `term` is already trimmed and debounced by the caller. */
 export function useRecordSearch(term: string): SearchGroup[] {
   const enabled = term.length >= SEARCH_MIN_CHARS
   // The first three endpoints search server-side; the fairs endpoint takes no query, so its (small) list is filtered here.
@@ -45,9 +47,10 @@ export function useRecordSearch(term: string): SearchGroup[] {
         retry: false,
         select: (d: AdminFair[]) => d.filter((f) => matches(term, f.title, f.venue, f.city)).slice(0, SEARCH_LIMIT).map(fairHit),
       },
+      { queryKey: ['palette', 'services', term], queryFn: () => api.get<AdminService[]>(searchPath('/services', term)), enabled, retry: false, select: (d: AdminService[]) => d.map(serviceHit) },
     ],
   })
-  const labels = [['exhibitions', 'Exhibitions'], ['artists', 'Artists'], ['news', 'News'], ['fairs', 'Fairs']] as const
+  const labels = [['exhibitions', 'Exhibitions'], ['artists', 'Artists'], ['news', 'News'], ['fairs', 'Fairs'], ['services', 'Services']] as const
   return results.map((r, i) => ({
     key: labels[i]![0],
     label: labels[i]![1],
