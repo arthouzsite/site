@@ -4,7 +4,7 @@ import { settle, PORT_SETTLE } from '../visual/harness'
 import { PORT_URL } from '../visual/paths'
 import { findSmallTargets } from './hit-area'
 
-const ROUTES = ['/', '/exhibitions', '/exhibitions/tidewater', '/artists', '/artists/vijay-pichumani', '/fairs', '/news', '/about', '/visit'] as const
+const ROUTES = ['/', '/exhibitions', '/exhibitions/tidewater', '/artists', '/artists/vijay-pichumani', '/fairs', '/news', '/services', '/services/art-sales', '/about', '/visit'] as const
 const WIDTHS = [375, 1440] as const
 const VIEWPORT_HEIGHT = 900
 const BLOCKING_IMPACTS = new Set(['serious', 'critical'])

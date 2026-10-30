@@ -1,6 +1,6 @@
 import type {
   PublicAbout, PublicArtist, PublicArtistDetail, PublicArtistList, PublicExhibition, PublicExhibitionDetail,
-  PublicFair, PublicHome, PublicImage, PublicLocation, PublicNews,
+  PublicFair, PublicHome, PublicImage, PublicLocation, PublicNews, PublicService,
 } from '@arthouz/shared'
 
 export const image: PublicImage = { url: 'https://picsum.photos/seed/a/1200/800', thumbUrl: 'https://picsum.photos/seed/a/480/320', width: 1200, height: 800, alt: 'Installation view' }
@@ -70,3 +70,16 @@ export const about: PublicAbout = {
   services: { title: 'Framing', body: 'Services body.', ctaLabel: 'Enquire', image },
   publications: { title: 'Arts Illustrated', body: 'Publications body.', externalUrl: 'https://pub.example', image },
 }
+
+export const service: PublicService = {
+  slug: 'art-sales', title: 'Art sales', summary: 'Acquire work from our artists.', body: 'First paragraph.\n\nSecond paragraph.',
+  image, ctaLabel: 'Enquire →', ctaHref: '',
+  contact: { name: 'A. Seller', phone: '+914411112222', email: 'sales@arthouz.example' },
+}
+
+export const bareService: PublicService = {
+  ...service, slug: 'gallery-on-rent', title: 'Gallery on rent', summary: '', body: '', image: null,
+  contact: { name: '', phone: '', email: '' },
+}
+
+export const publicServiceList: PublicService[] = [service, bareService, { ...service, slug: 'art-for-rent', title: 'Art for rent' }]

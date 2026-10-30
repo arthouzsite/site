@@ -9,6 +9,7 @@ vi.mock('next/image', () => ({
   ),
 }))
 
+vi.mock('@/lib/services', () => ({ loadNavServices: async () => [{ slug: 'art-sales', title: 'Art sales' }] }))
 vi.mock('next/navigation', () => ({ usePathname: () => '/', useRouter: () => ({ push: vi.fn(), replace: vi.fn() }) }))
 
 import { GalleryTab } from '@/components/about/GalleryTab'
@@ -206,8 +207,11 @@ describe('site chrome', () => {
     expect(html(<FooterLocation location={{ ...location, tel: null }} />)).not.toContain('href=')
   })
 
-  it('renders the header with the home link', () => {
-    expect(html(<Header />)).toContain('aria-label="Art Houz, home"')
+  it('renders the header with the home link and the Services link', async () => {
+    const out = html(await Header())
+    expect(out).toContain('aria-label="Art Houz, home"')
+    expect(out).toContain('href="/services"')
+    expect(out).toContain('href="/services/art-sales"')
   })
 })
 

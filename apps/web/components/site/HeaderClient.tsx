@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation'
 import { useState, type MouseEvent } from 'react'
 import { createPortal } from 'react-dom'
+import type { NavService } from '@/lib/services'
 import { HeaderNav } from './HeaderNav'
 import { MobileMenu } from './MobileMenu'
 import { OutlineButton } from './OutlineButton'
@@ -13,7 +14,7 @@ type Overlay = 'none' | 'menu' | 'search'
 type OverlayState = { kind: Overlay; pathname: string; trigger: HTMLElement | null }
 
 /** Owns the open/closed state of the mobile menu and the search overlay; both close on navigation. */
-export function HeaderClient() {
+export function HeaderClient({ services }: { services: readonly NavService[] }) {
   const pathname = usePathname()
   // `trigger` is the control that opened the overlay; focus returns to it on close.
   const [overlay, setOverlay] = useState<OverlayState>({ kind: 'none', pathname, trigger: null })
@@ -25,7 +26,7 @@ export function HeaderClient() {
 
   return (
     <>
-      <HeaderNav pathname={pathname} onSearch={openFrom('search')} />
+      <HeaderNav pathname={pathname} services={services} onSearch={openFrom('search')} />
       <div className="flex items-center gap-2 nav:hidden">
         <SearchButton variant="mobile" onClick={openFrom('search')} />
         <OutlineButton tone="ink" onClick={openFrom('menu')} aria-haspopup="dialog" aria-expanded={open === 'menu'}>
@@ -33,7 +34,7 @@ export function HeaderClient() {
         </OutlineButton>
       </div>
       {/* Portalled: the header's backdrop-filter would otherwise contain these fixed overlays. */}
-      {open === 'menu' && createPortal(<MobileMenu pathname={pathname} onClose={close} returnFocus={overlay.trigger} />, document.body)}
+      {open === 'menu' && createPortal(<MobileMenu pathname={pathname} services={services} onClose={close} returnFocus={overlay.trigger} />, document.body)}
       {open === 'search' && createPortal(<SearchOverlay onClose={close} returnFocus={overlay.trigger} />, document.body)}
     </>
   )

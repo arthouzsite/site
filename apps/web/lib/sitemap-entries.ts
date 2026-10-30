@@ -1,3 +1,4 @@
+import { publicServiceListSchema } from '@arthouz/shared'
 import { z } from 'zod'
 import type { MetadataRoute } from 'next'
 import { unstable_rethrow } from 'next/navigation'
@@ -5,7 +6,7 @@ import { apiGet } from './api'
 import { siteUrl } from './site-url'
 import { TAGS } from './tags'
 
-const STATIC_PATHS = ['/', '/exhibitions', '/artists', '/fairs', '/news', '/about', '/visit'] as const
+const STATIC_PATHS = ['/', '/exhibitions', '/artists', '/fairs', '/news', '/services', '/about', '/visit'] as const
 const slugs = z.array(z.object({ slug: z.string().min(1) }))
 const exhibitionSlugs = z.object({ items: slugs })
 const artistSlugs = z.object({ flat: slugs })
@@ -22,12 +23,13 @@ async function sectionPaths(load: () => Promise<{ slug: string }[]>, prefix: str
   }
 }
 
-/** Static routes followed by every published exhibition and artist page. */
+/** Static routes followed by every published exhibition, artist and service page. */
 export async function buildSitemap(): Promise<MetadataRoute.Sitemap> {
-  const [exhibitions, artists] = await Promise.all([
+  const [exhibitions, artists, services] = await Promise.all([
     sectionPaths(async () => (await apiGet('/public/exhibitions', exhibitionSlugs, [TAGS.exhibitions])).items, '/exhibitions'),
     sectionPaths(async () => (await apiGet('/public/artists', artistSlugs, [TAGS.artists])).flat, '/artists'),
+    sectionPaths(() => apiGet('/public/services', publicServiceListSchema, [TAGS.services]), '/services'),
   ])
   const origin = siteUrl()
-  return [...STATIC_PATHS, ...exhibitions, ...artists].map((path) => ({ url: path === '/' ? `${origin}/` : `${origin}${path}` }))
+  return [...STATIC_PATHS, ...exhibitions, ...artists, ...services].map((path) => ({ url: path === '/' ? `${origin}/` : `${origin}${path}` }))
 }

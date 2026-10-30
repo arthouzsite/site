@@ -60,7 +60,7 @@ import { ApiError } from '@/lib/api'
 import { SITE_TAGLINE } from '@/lib/footer-data'
 import { currentYear } from '@/lib/site-clock'
 import {
-  about, artistDetail, artistList, exhibition, exhibitionDetail, fair, home, location, news,
+  about, artistDetail, artistList, exhibition, exhibitionDetail, fair, home, location, news, publicServiceList,
 } from './support/publicFixtures'
 
 const settings = {
@@ -75,6 +75,7 @@ const byPath: Record<string, unknown> = {
   '/public/about': about,
   '/public/fairs': [fair],
   '/public/news': [news],
+  '/public/services': publicServiceList,
   '/public/locations': [location],
   '/public/exhibitions': { items: [exhibition], cities: ['Chennai'] },
   '/public/exhibitions/salt-line': exhibitionDetail,
@@ -274,8 +275,12 @@ describe('shell', () => {
   it('serves robots.txt and the sitemap', async () => {
     vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://arthouz.test')
     expect(robots().sitemap).toBe('https://arthouz.test/sitemap.xml')
-    apiGet.mockImplementation(async (path) => (path.startsWith('/public/artists') ? artistList : { items: [exhibition], cities: [] }))
+    apiGet.mockImplementation(async (path) => {
+      if (path.startsWith('/public/services')) return publicServiceList
+      return path.startsWith('/public/artists') ? artistList : { items: [exhibition], cities: [] }
+    })
     const entries = await sitemap()
     expect(entries.map((e) => e.url)).toContain('https://arthouz.test/exhibitions/salt-line')
+    expect(entries.map((e) => e.url)).toContain('https://arthouz.test/services/art-sales')
   })
 })

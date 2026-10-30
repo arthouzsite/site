@@ -1,3 +1,6 @@
+/** Services is a link that also opens a dropdown of the published services. */
+export const SERVICES_HREF = '/services'
+
 export type NavItem = { readonly label: string; readonly href: string }
 
 /** Primary navigation, in the prototype's order. */
@@ -6,6 +9,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Artists', href: '/artists' },
   { label: 'Fairs', href: '/fairs' },
   { label: 'News', href: '/news' },
+  { label: 'Services', href: SERVICES_HREF },
   { label: 'About', href: '/about' },
   { label: 'Visit', href: '/visit' },
 ]
@@ -15,6 +19,7 @@ export const FOOTER_NAV: readonly NavItem[] = [
   { label: 'Artists', href: '/artists' },
   { label: 'Fairs', href: '/fairs' },
   { label: 'News', href: '/news' },
+  { label: 'Services', href: SERVICES_HREF },
   { label: 'About', href: '/about' },
   { label: 'Contact', href: '/visit' },
 ]

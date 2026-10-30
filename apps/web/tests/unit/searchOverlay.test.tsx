@@ -8,6 +8,7 @@ const DEBOUNCE_MS = 200
 const GROUPS = [
   { label: 'Artists', items: [{ label: 'Vijay Pichumani', href: '/artists/vijay-pichumani' }] },
   { label: 'News', items: [{ label: 'A show', href: '/news' }] },
+  { label: 'Services', items: [{ label: 'Art sales', href: '/services/art-sales' }] },
 ]
 
 function json(body: unknown): Response {
@@ -80,6 +81,8 @@ describe('SearchOverlay', () => {
     expect(screen.getByText('Artists')).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Vijay Pichumani' }).getAttribute('href')).toBe('/artists/vijay-pichumani')
     expect(screen.getByRole('link', { name: 'A show' }).getAttribute('href')).toBe('/news')
+    expect(screen.getByRole('region', { name: 'Services' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Art sales' }).getAttribute('href')).toBe('/services/art-sales')
   })
 
   it('shows the prototype empty state when nothing matches', async () => {

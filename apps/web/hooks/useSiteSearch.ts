@@ -8,7 +8,7 @@ export const SEARCH_DEBOUNCE_MS = 200
 export type SearchGroup = PublicSearch['groups'][number]
 export type SearchResult = { readonly query: string; readonly groups: readonly SearchGroup[]; readonly failed: boolean }
 
-const GROUP_LABELS: ReadonlySet<string> = new Set(['Artists', 'Exhibitions', 'News'])
+const GROUP_LABELS: ReadonlySet<string> = new Set(['Artists', 'Exhibitions', 'News', 'Services'])
 
 /** Same-origin paths only: a result must never become a `javascript:` or off-site link. */
 function isInternalHref(href: unknown): href is string {

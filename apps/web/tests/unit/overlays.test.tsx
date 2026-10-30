@@ -19,7 +19,7 @@ function renderHeader() {
   const user = userEvent.setup()
   render(
     <div id={APP_ROOT_ID}>
-      <HeaderClient />
+      <HeaderClient services={[]} />
     </div>,
   )
   return { user, root: document.getElementById(APP_ROOT_ID) }

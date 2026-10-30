@@ -4,6 +4,7 @@ import configForPhase, { assertProductionSiteUrl, buildRemotePatterns } from '@/
 const nextConfig = configForPhase('phase-development-server')
 import { FALLBACK_SITE, detailMetadata, loadSiteMetadata } from '@/lib/site-metadata'
 import { buildSitemap } from '@/lib/sitemap-entries'
+import { service } from './support/publicFixtures'
 
 const API = 'http://api.test'
 const SITE = 'https://arthouz.test'
@@ -62,26 +63,27 @@ describe('site metadata, sitemap and redirects', () => {
     expect(metadata.openGraph?.images).toBeUndefined()
   })
 
-  it('lists static routes plus published exhibition and artist slugs', async () => {
+  it('lists static routes plus published exhibition, artist and service slugs', async () => {
     fetchMock.mockImplementation(async (input) => {
       const url = String(input)
       if (url.startsWith(`${API}/public/exhibitions`)) return ok({ items: [{ slug: 'tidewater' }], cities: [] })
       if (url.startsWith(`${API}/public/artists`)) return ok({ flat: [{ slug: 'vijay-pichumani' }] })
+      if (url.startsWith(`${API}/public/services`)) return ok([service])
       throw new Error(`unexpected ${url}`)
     })
 
     const urls = (await buildSitemap()).map((entry) => entry.url)
 
     expect(urls).toEqual([
-      `${SITE}/`, `${SITE}/exhibitions`, `${SITE}/artists`, `${SITE}/fairs`, `${SITE}/news`, `${SITE}/about`, `${SITE}/visit`,
-      `${SITE}/exhibitions/tidewater`, `${SITE}/artists/vijay-pichumani`,
+      `${SITE}/`, `${SITE}/exhibitions`, `${SITE}/artists`, `${SITE}/fairs`, `${SITE}/news`, `${SITE}/services`, `${SITE}/about`, `${SITE}/visit`,
+      `${SITE}/exhibitions/tidewater`, `${SITE}/artists/vijay-pichumani`, `${SITE}/services/art-sales`,
     ])
   })
 
   it('still lists the static routes when the API is down', async () => {
     fetchMock.mockRejectedValue(new TypeError('fetch failed'))
 
-    expect(await buildSitemap()).toHaveLength(7)
+    expect(await buildSitemap()).toHaveLength(8)
   })
 
   it('permanently redirects the legacy section URLs', async () => {
