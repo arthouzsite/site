@@ -17,7 +17,7 @@ export function toAdminExhibition(row: ExhibitionRow) {
     ...row,
     status,
     statusLabel: STATUS_BADGE[status].label,
-    datesLabel: row.datesLabel ?? formatDateRange(row.startDate, row.endDate),
+    datesLabelResolved: row.datesLabel ?? formatDateRange(row.startDate, row.endDate),
     artistLine: row.artists.map((a) => a.artist.name).join(', '),
     heroImage: toImage(heroImage),
   }
