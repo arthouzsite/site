@@ -41,7 +41,7 @@ export function Topbar({ user, breadcrumb, onLogout }: Props) {
           <kbd className="ml-auto border border-line px-1.5 py-px font-ui text-11 tracking-[0.08em] text-faint max-[1024px]:hidden">⌘K</kbd>
         </button>
         <button type="button" onClick={onLogout} aria-label={`${user.name}, sign out`} title="Sign out" className="grid h-11 w-11 place-items-center rounded-full border-0 bg-transparent">
-          <span className="grid h-8 w-8 place-items-center rounded-full bg-amber text-12 font-semibold text-ink">{initials(user.name)}</span>
+          <span className="grid h-8 w-8 place-items-center rounded-full bg-amber text-12 font-semibold text-ink">{initials(user.name, user.email[0]?.toUpperCase() ?? "?")}</span>
         </button>
       </div>
     </header>

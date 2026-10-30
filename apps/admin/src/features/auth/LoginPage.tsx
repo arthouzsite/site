@@ -43,7 +43,8 @@ export default function LoginPage() {
   const onSubmit = handleSubmit(async (values) => {
     setRateLimited(false)
     try {
-      const user = await api.post<SessionUser>('/auth/login', values)
+      const result = await api.post<{ user: SessionUser } | SessionUser>('/auth/login', values)
+      const user: SessionUser = 'user' in result ? result.user : result
       client.setQueryData(SESSION_KEY, user)
       navigate(safeNext(params.get('next')), { replace: true })
     } catch (err) {
