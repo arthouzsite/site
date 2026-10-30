@@ -71,7 +71,7 @@ describe('exhibitions', () => {
 
   it('creates with derived slug and status UPCOMING', async () => {
     const res = await authed.post('/exhibitions').send(baseInput()).expect(201)
-    expect(res.body.data).toMatchObject({ slug: 'tidewater', status: 'UPCOMING', statusLabel: 'Upcoming', datesLabel: 'December 1, 2026 – January 15, 2027' })
+    expect(res.body.data).toMatchObject({ slug: 'tidewater', status: 'UPCOMING', statusLabel: 'Upcoming', datesLabel: null, datesLabelResolved: 'December 1, 2026 – January 15, 2027' })
     expect(await prisma.exhibition.count()).toBe(1)
   })
 

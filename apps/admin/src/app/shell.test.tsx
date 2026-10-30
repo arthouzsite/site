@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider, createMemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import { routes } from './router'
+import { ToastProvider } from '../lib/toast'
 import { delay } from 'msw'
 import { API_URL, HttpResponse, envelope, errorEnvelope, http, server } from '../test/msw'
 
@@ -19,7 +20,7 @@ function mount(path: string, user: typeof editor | null) {
   const router = createMemoryRouter(routes, { initialEntries: [path] })
   render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-      <RouterProvider router={router} />
+      <ToastProvider><RouterProvider router={router} /></ToastProvider>
     </QueryClientProvider>,
   )
   return router

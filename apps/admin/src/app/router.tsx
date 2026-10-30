@@ -17,9 +17,9 @@ export const routes: RouteObject[] = [
         element: <AppShell />,
         children: [
           { index: true, ...page(() => import('../features/dashboard/DashboardPage.placeholder')) },
-          { path: 'exhibitions', ...page(() => import('../features/exhibitions/ExhibitionsListPage.placeholder')) },
-          { path: 'exhibitions/new', ...page(() => import('../features/exhibitions/ExhibitionEditPage.placeholder')) },
-          { path: 'exhibitions/:id', ...page(() => import('../features/exhibitions/ExhibitionEditPage.placeholder')) },
+          { path: 'exhibitions', ...page(() => import('../features/exhibitions/ExhibitionsListPage')) },
+          { path: 'exhibitions/new', ...page(() => import('../features/exhibitions/ExhibitionEditorPage')) },
+          { path: 'exhibitions/:id', ...page(() => import('../features/exhibitions/ExhibitionEditorPage')) },
           { path: 'artists', ...page(() => import('../features/artists/ArtistsListPage')) },
           { path: 'artists/new', ...page(() => import('../features/artists/ArtistEditorPage')) },
           { path: 'artists/:id', ...page(() => import('../features/artists/ArtistEditorPage')) },

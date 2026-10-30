@@ -8,7 +8,7 @@ import { ToastProvider } from '../lib/toast'
 import { API_URL, HttpResponse, envelope, http, server } from '../test/msw'
 
 const PAGES: Array<[string, string]> = [
-  ['/', 'Dashboard'], ['/exhibitions', 'Exhibitions'], ['/exhibitions/new', 'Exhibition'], ['/exhibitions/abc', 'Exhibition'],
+  ['/', 'Dashboard'], ['/exhibitions', 'Exhibitions'], ['/exhibitions/new', 'New exhibition'], ['/exhibitions/abc', 'Exhibition'],
   ['/artists', 'Artists'], ['/artists/new', 'New artist'], ['/artists/a1', 'Alpha Artist'],
   ['/fairs', 'Fairs'], ['/fairs/new', 'New fair'],
   ['/news', 'News'], ['/news/new', 'New news item'], ['/locations', 'Locations'], ['/about', 'About page'],
