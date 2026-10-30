@@ -16,7 +16,6 @@ async function clipTo(page: Page, selector: 'header' | 'footer', fullPage: Buffe
 test.describe('site shell', () => {
   for (const width of WIDTHS) {
     test(`header matches the prototype at ${width}`, async ({ browser }) => {
-      // The header is identical on every page; the port has only the home placeholder so far.
       const prototypePage = await browser.newPage()
       const portPage = await browser.newPage()
       const prototype = await renderPrototype(prototypePage, { route: { page: 'home' }, width })
@@ -27,7 +26,8 @@ test.describe('site shell', () => {
     test(`footer matches the prototype at ${width}`, async ({ browser }) => {
       const prototypePage = await browser.newPage()
       const portPage = await browser.newPage()
-      const prototype = await renderPrototype(prototypePage, { route: { page: 'visit' }, width })
+      // Same page on both sides: the footer's (fractional) offset follows the content above it, which shifts its text by a subpixel.
+      const prototype = await renderPrototype(prototypePage, { route: { page: 'home' }, width })
       const port = await renderPort(portPage, { path: '/', width })
       await expectVisualMatch(await clipTo(prototypePage, 'footer', prototype), await clipTo(portPage, 'footer', port), { name: `footer-${width}` })
     })

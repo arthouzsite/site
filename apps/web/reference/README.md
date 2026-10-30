@@ -54,3 +54,16 @@ through the optimiser. Ports 3100 and 4100 must be free.
 The port is not awaited with `networkidle` (Next keeps link-prefetch requests open); it waits for
 `load`, `document.fonts.ready` and every `<img>` to complete. Set `VISUAL_WRITE_ALL=1` to write
 `prototype.png` / `port.png` / `diff.png` for passing cases too, for side-by-side review.
+
+## Port notes
+
+Deliberate departures from a literal reading of the markup, each confirmed by the visual diffs:
+
+- **Home upcoming band image** — the prototype's `<image-slot>` host is `width/height: 100%;
+  aspect-ratio: 3/2`, so the image column is at least 3:2 tall (not just `min-height: 320px`). The
+  port keeps `min-h-[320px]` on the column and renders an in-flow `ImageSlot ratio="3/2"` with
+  `h-full w-full`, stretched by the text column.
+- **"Now on view · {city}"** — the eyebrow is a flex container with a 10 px gap and the city is a
+  separate flex item, so the port wraps the city in its own `<span>` to reproduce the gap after `·`.
+- **Footer visual baseline** — `shell.spec.ts` compares the footer against the prototype's home page:
+  the footer's fractional offset follows the content above it, so both sides must be the same page.
