@@ -31,13 +31,21 @@ describe('schemas', () => {
     expect(artistInputSchema.safeParse({ name: 'K.M. Adimoolam', sortName: 'Adimoolam', medium: 'Painting', base: 'Chennai', lede: 'l', bio: 'b', portraitImageId: id, isFeatured: false }).success).toBe(true)
     expect(artworkInputSchema.safeParse({ artistId: id, title: 't', year: '2020', medium: 'oil', size: '1x1', imageId: id }).success).toBe(true)
     expect(fairInputSchema.safeParse({ title: 't', venue: 'v', city: 'c', dateLabel: 'March 2026', booth: 'A1', text: 't', imageId: id }).success).toBe(true)
-    expect(locationInputSchema.safeParse({ city: 'c', address: 'a', phone: '+91 1', tel: '+911', days: 'Mon', hours: '10', mapUrl: 'https://maps.example.com', imageId: id }).success).toBe(true)
+    expect(locationInputSchema.safeParse({ city: 'c', address: 'a', phone: '+91 1', tel: '+914412345678', days: 'Mon', hours: '10', mapUrl: 'https://maps.example.com', imageId: id }).success).toBe(true)
     expect(mediaPatchSchema.safeParse({ alt: 'x' }).success).toBe(true)
     expect(mediaPatchSchema.safeParse({ alt: '' }).success).toBe(false)
     expect(userInputSchema.safeParse({ email: 'a@b.co', name: 'A', role: 'EDITOR', password: 'longenough1' }).success).toBe(true)
     expect(loginSchema.safeParse({ email: 'bad', password: 'x' }).success).toBe(false)
     expect(publishSchema.safeParse({ isPublished: true }).success).toBe(true)
     expect(reorderSchema.safeParse({ ids: [id] }).success).toBe(true)
+  })
+  test('locationInputSchema tel must be +digits (8-15) or empty', () => {
+    const base = { city: 'c' }
+    expect(locationInputSchema.safeParse({ ...base, tel: '+914412345678' }).success).toBe(true)
+    expect(locationInputSchema.safeParse({ ...base, tel: '' }).success).toBe(true)
+    expect(locationInputSchema.safeParse({ ...base, tel: '044 1234' }).success).toBe(false)
+    expect(locationInputSchema.safeParse({ ...base, tel: '+1234567' }).success).toBe(false)
+    expect(locationInputSchema.safeParse({ ...base, tel: '+1234567890123456' }).success).toBe(false)
   })
   test('settingSchemas.heroLayout accepts FULL_BLEED|SPLIT only', () => {
     expect(settingSchemas.heroLayout.safeParse('FULL_BLEED').success).toBe(true)
