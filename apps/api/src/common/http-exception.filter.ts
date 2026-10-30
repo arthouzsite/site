@@ -21,7 +21,8 @@ const CODE_BY_STATUS: Readonly<Record<number, string>> = {
   [HttpStatus.TOO_MANY_REQUESTS]: 'RATE_LIMITED',
 }
 
-type Mapped = { status: number; body: ReturnType<typeof fail> }
+type ErrorBody = ReturnType<typeof fail> | (Omit<ReturnType<typeof fail>, 'error'> & { error: Record<string, unknown> })
+type Mapped = { status: number; body: ErrorBody }
 
 export function zodFields(error: ZodError): Record<string, string> {
   const fields: Record<string, string> = {}
@@ -46,6 +47,7 @@ function httpExceptionExtras(response: string | object): { code?: string; detail
   const { code, details } = response as { code?: unknown; details?: unknown }
   return { code: typeof code === 'string' ? code : undefined, details }
 }
+
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {

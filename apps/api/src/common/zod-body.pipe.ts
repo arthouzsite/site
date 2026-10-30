@@ -1,4 +1,4 @@
-import { Body, PipeTransform } from '@nestjs/common'
+import { Body, PipeTransform, Query } from '@nestjs/common'
 import type { ZodType } from 'zod'
 
 export class ZodPipe<T> implements PipeTransform<unknown, T> {
@@ -10,3 +10,5 @@ export class ZodPipe<T> implements PipeTransform<unknown, T> {
 }
 
 export const ZodBody = <T>(schema: ZodType<T>): ParameterDecorator => Body(new ZodPipe(schema))
+
+export const ZodQuery = <T>(schema: ZodType<T>): ParameterDecorator => Query(new ZodPipe(schema))
