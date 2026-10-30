@@ -7,7 +7,6 @@ const config: Config = {
   setupFiles: ['<rootDir>/test/setup-env.ts'],
   testRegex: 'src/.*\\.spec\\.ts$',
   transform: { '^.+\\.ts$': ['ts-jest', { tsconfig: 'tsconfig.json' }] },
-  passWithNoTests: true,
 }
 
 export default config

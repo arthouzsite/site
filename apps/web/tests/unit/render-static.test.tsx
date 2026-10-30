@@ -131,7 +131,10 @@ describe('fairs, visit and home', () => {
   it('renders both hero layouts and the upcoming band', () => {
     expect(html(<HeroSplit exhibition={exhibition} />)).toContain('Salt Line')
     expect(html(<HeroFullBleed exhibition={exhibition} />)).toContain('Salt Line')
-    expect(html(<HeroFullBleed exhibition={{ ...exhibition, image: null }} />)).toContain('Salt Line')
+    const noImage = html(<HeroFullBleed exhibition={{ ...exhibition, image: null }} />)
+    expect(noImage).toContain('Salt Line')
+    expect(noImage).not.toContain('<img')
+    expect(noImage).toContain('aria-label="Exhibition image"')
     expect(html(<UpcomingBand exhibition={upcomingExhibition} />)).toContain('Tide Table')
   })
 
@@ -159,7 +162,16 @@ describe('site chrome', () => {
   })
 
   it('renders a status badge for every status', () => {
-    for (const status of ['CURRENT', 'UPCOMING', 'PAST'] as const) expect(html(<StatusBadge status={status} />)).toContain('<span')
+    const expected = {
+      CURRENT: { label: 'Now on view', tone: 'bg-amber' },
+      UPCOMING: { label: 'Upcoming', tone: 'bg-ink' },
+      PAST: { label: 'Past', tone: 'bg-transparent' },
+    } as const
+    for (const status of ['CURRENT', 'UPCOMING', 'PAST'] as const) {
+      const out = html(<StatusBadge status={status} />)
+      expect(out).toContain(`>${expected[status].label}</span>`)
+      expect(out).toContain(expected[status].tone)
+    }
   })
 
   it('renders internal and external primary buttons', () => {
@@ -181,6 +193,5 @@ describe('cache tags', () => {
   it('builds per-slug tags', () => {
     expect(TAGS.exhibition('a')).toBe('exhibition:a')
     expect(TAGS.artist('b')).toBe('artist:b')
-    expect(image.width).toBeGreaterThan(0)
   })
 })

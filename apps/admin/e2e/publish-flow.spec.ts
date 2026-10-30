@@ -4,7 +4,9 @@ import { HERO_ALT, HERO_FILE_NAME, WEB_URL, makeHeroJpeg, signIn } from './fixtu
 const TITLE = 'Salt Line'
 const SLUG = 'salt-line'
 const ARTIST = 'Parvathi Nayar'
-const PUBLIC_VISIBILITY_TIMEOUT_MS = 5_000
+const PUBLIC_VISIBILITY_BUDGET_MS = 5_000
+// Generous so a cold first render of the public list cannot flake the poll; the budget above is asserted on elapsed time.
+const COLD_RENDER_TIMEOUT_MS = 30_000
 const POLL_ATTEMPT_TIMEOUT_MS = 1_000
 
 test('editor publishes an exhibition and the public site lists it with its hero image within 5 s', async ({ page }) => {
@@ -49,6 +51,7 @@ test('editor publishes an exhibition and the public site lists it with its hero 
   await publishedSwitch.click()
   await expect(publishedSwitch).toBeChecked()
   await expect(page.getByRole('status').filter({ hasText: `Published · ${TITLE}` })).toBeVisible()
+  const publishedAt = Date.now()
 
   // The API fires revalidation on publish; poll the public list until the page reflects it.
   await page.goto(`${WEB_URL}/exhibitions`)
@@ -56,7 +59,8 @@ test('editor publishes an exhibition and the public site lists it with its hero 
   await expect(async () => {
     await page.reload()
     await expect(hero).toHaveAttribute('src', new RegExp(escapeRegExp(heroUrl!)), { timeout: POLL_ATTEMPT_TIMEOUT_MS })
-  }).toPass({ timeout: PUBLIC_VISIBILITY_TIMEOUT_MS })
+  }).toPass({ timeout: COLD_RENDER_TIMEOUT_MS })
+  expect(Date.now() - publishedAt).toBeLessThanOrEqual(PUBLIC_VISIBILITY_BUDGET_MS)
 
   await page.goto(`${WEB_URL}/exhibitions/${SLUG}`)
   await expect(page.getByRole('heading', { name: TITLE })).toBeVisible()

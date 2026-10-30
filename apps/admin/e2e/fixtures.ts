@@ -18,7 +18,26 @@ export const ADMIN_URL = `http://localhost:${E2E_ADMIN_PORT}`
 
 // Prisma's CLI does not fall back to the OS user like libpq does, so the default names it explicitly.
 const DEFAULT_DATABASE_URL = `postgresql://${encodeURIComponent(userInfo().username)}@localhost:5433/arthouz_test_e2e`
-export const E2E_DATABASE_URL = process.env.E2E_DATABASE_URL ?? DEFAULT_DATABASE_URL
+const E2E_DATABASE_SUFFIX = '_e2e'
+
+/** The API webServer drops the whole public schema, so refuse any database not explicitly named for e2e. */
+function resolveE2eDatabaseUrl(rawUrl: string): string {
+  let databaseName: string
+  try {
+    databaseName = decodeURIComponent(new URL(rawUrl).pathname.replace(/^\//, ''))
+  } catch {
+    throw new Error('E2E_DATABASE_URL is not a valid database URL.')
+  }
+  if (!databaseName.endsWith(E2E_DATABASE_SUFFIX)) {
+    throw new Error(
+      `Refusing to run e2e: the database "${databaseName}" does not end in "${E2E_DATABASE_SUFFIX}". ` +
+        'The e2e run drops the public schema; point E2E_DATABASE_URL at a throwaway database such as arthouz_test_e2e.',
+    )
+  }
+  return rawUrl
+}
+
+export const E2E_DATABASE_URL = resolveE2eDatabaseUrl(process.env.E2E_DATABASE_URL ?? DEFAULT_DATABASE_URL)
 
 // Harness constants for a throwaway database; never real credentials.
 export const E2E_TODAY = '2026-10-30'

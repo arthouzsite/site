@@ -13,6 +13,7 @@
     "typecheck": "pnpm build:shared && pnpm -r typecheck",
     "build:shared": "pnpm --filter @arthouz/shared build",
     "test:coverage": "pnpm --filter @arthouz/shared --filter @arthouz/web --filter @arthouz/admin --workspace-concurrency=1 test:coverage && pnpm --filter @arthouz/api test:cov",
+    "//test:e2e": "web test:e2e runs the Playwright visual-regression and a11y suites; admin test:e2e runs the cross-app publish flow",
     "test:e2e": "pnpm --filter @arthouz/web test:e2e && pnpm --filter @arthouz/admin test:e2e",
     "verify": "pnpm typecheck && pnpm lint && pnpm test:coverage && pnpm test:e2e"
   }

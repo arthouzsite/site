@@ -9,7 +9,7 @@
     "preview": "vite preview --port 5180",
     "typecheck": "tsc --noEmit && tsc --noEmit -p e2e",
     "test:e2e": "playwright test",
-    "lint": "eslint src",
+    "lint": "eslint src e2e playwright.config.ts",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },

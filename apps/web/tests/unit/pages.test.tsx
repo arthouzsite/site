@@ -1,6 +1,6 @@
 import type { ImgHTMLAttributes, ReactElement, ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const apiGet = vi.fn<(path: string) => Promise<unknown>>()
 const loadFooterData = vi.fn()
@@ -87,6 +87,10 @@ beforeEach(() => {
   loadFooterData.mockReset()
 })
 
+afterEach(() => {
+  vi.unstubAllEnvs()
+})
+
 describe('list and static pages', () => {
   it('renders home with a hero, upcoming band and every section', async () => {
     const out = html(await HomePage())
@@ -98,9 +102,14 @@ describe('list and static pages', () => {
 
   it('renders home with the full-bleed hero and no hero or upcoming exhibition', async () => {
     apiGet.mockImplementation(async () => ({ ...home, heroLayout: 'FULL_BLEED' }))
-    expect(html(await HomePage())).toContain('Salt Line')
+    const fullBleed = html(await HomePage())
+    expect(fullBleed).toContain('Salt Line')
+    expect(fullBleed).toContain('h-[clamp(420px,76vh,860px)]')
     apiGet.mockImplementation(async () => ({ ...home, hero: null, upcoming: null }))
-    expect(html(await HomePage())).toContain('Artist in focus')
+    const bare = html(await HomePage())
+    expect(bare).toContain('Artist in focus')
+    expect(bare).not.toContain('Tide Table')
+    expect(bare).not.toContain('home-hero-title')
   })
 
   it('renders fairs, news, visit and about with metadata', async () => {
@@ -214,6 +223,5 @@ describe('shell', () => {
     apiGet.mockImplementation(async (path) => (path.startsWith('/public/artists') ? artistList : { items: [exhibition], cities: [] }))
     const entries = await sitemap()
     expect(entries.map((e) => e.url)).toContain('https://arthouz.test/exhibitions/salt-line')
-    vi.unstubAllEnvs()
   })
 })

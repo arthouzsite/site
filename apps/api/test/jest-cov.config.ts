@@ -10,6 +10,7 @@ const COVERAGE_THRESHOLD_PERCENT = 80
 const config: Config = {
   rootDir: '..',
   projects: ['<rootDir>/jest.config.ts', '<rootDir>/test/jest-e2e.config.ts'],
+  passWithNoTests: true,
   collectCoverage: true,
   collectCoverageFrom: ['src/**/*.ts', '!src/generated/**', '!src/main.ts', '!src/**/*.spec.ts'],
   coverageDirectory: 'coverage',

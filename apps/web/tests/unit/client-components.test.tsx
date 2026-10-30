@@ -20,6 +20,8 @@ afterEach(() => {
   cleanup()
   replace.mockReset()
   vi.restoreAllMocks()
+  vi.unstubAllGlobals()
+  document.body.innerHTML = ''
 })
 
 describe('exhibition filter chips', () => {
