@@ -4,7 +4,6 @@ import { RouterProvider, createMemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import { ToastProvider } from '../lib/toast'
 import { routes } from './router'
-import { ToastProvider } from '../lib/toast'
 import { API_URL, HttpResponse, envelope, http, server } from '../test/msw'
 
 const PAGES: Array<[string, string]> = [
