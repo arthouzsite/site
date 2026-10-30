@@ -22,6 +22,10 @@ scripts beside it) after five textual patches. Each patch must match exactly onc
 6. **(f) Publications link** — the "View more ↗" anchor on the About Publications tab is wrapped in
    `<sc-if value="{{ hasPubUrl }}">` and `hasPubUrl: false` is added to `renderVals()` (the seed has no
    URL). The port renders the link only when `externalUrl` is set, like the news link.
+7. **(g) Image-slot frame size** — the harness serves a patched copy of `image-slot.js` in which `_geom()`'s
+   `const fw = this.clientWidth, fh = this.clientHeight;` reads `getBoundingClientRect()` width/height instead.
+   `clientWidth/clientHeight` round to integers, so a 251.25 px frame was cropped as 251 px (image 0.3 px too
+   tall); only fractional 375 px frames were affected. `support.js` is copied unchanged.
 
 `renderPrototype` seeds `localStorage['arthouz-route']` (`{ page, param, city, status, aq }`) before load and can
 rewrite the `data-props` defaults (`heroLayout`, `artistIndex`) in a further copy.

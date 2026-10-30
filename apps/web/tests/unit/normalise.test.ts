@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { hidePublicationsLink, reorderArtists, reorderNews } from '@/tests/visual/normalise'
+import { fixImageSlotFrameSize, hidePublicationsLink, reorderArtists, reorderNews } from '@/tests/visual/normalise'
 
 const SOURCE = `const AH_NEWS = [
   { id: 'n1', title: 'First' },
@@ -36,5 +36,18 @@ describe('normalise patches', () => {
 
   it('throws when the View more anchor is not found exactly once', () => {
     expect(() => hidePublicationsLink(`tabPublications: s.tab === 'publications',`)).toThrow(/View more anchor/)
+  })
+
+  it('makes image-slot read fractional frame sizes from getBoundingClientRect', () => {
+    const script = 'const fw = this.clientWidth, fh = this.clientHeight;\nif (!fw) return null;'
+
+    const result = fixImageSlotFrameSize(script)
+
+    expect(result).toContain('const { width: fw, height: fh } = this.getBoundingClientRect();')
+    expect(result).not.toContain('clientHeight')
+  })
+
+  it('throws when the image-slot frame read is not found exactly once', () => {
+    expect(() => fixImageSlotFrameSize('nothing here')).toThrow(/image-slot frame size/)
   })
 })

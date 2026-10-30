@@ -13,6 +13,9 @@ const READ_ARTICLE_PATTERN = /<a href="#" onClick="\{\{ n\.read \}\}"[^>]*>Read 
 const VIEW_MORE_PATTERN = /<a href="#" style="[^"]*"[^>]*>View more ↗<\/a>/g
 const TAB_PUBLICATIONS_VALUE = 'tabPublications: s.tab === \'publications\','
 const SIGNED_BASE_INDEX = '(h >> 3) % AH_BASES.length'
+const IMAGE_SLOT_FILE = 'image-slot.js'
+const UNCHANGED_ASSETS = REFERENCE_ASSETS.filter((asset) => asset !== IMAGE_SLOT_FILE)
+const FRAME_SIZE_READ = 'const fw = this.clientWidth, fh = this.clientHeight;'
 const NEWS_LIST_MAPPING = 'newsList: AH_NEWS.map(n => ({ ...n, '
 
 async function getData<T>(apiUrl: string, pathname: string): Promise<T> {
@@ -100,6 +103,12 @@ export function hidePublicationsLink(source: string): string {
   return replaceOnce(wrapped, TAB_PUBLICATIONS_VALUE, (match) => `${match} hasPubUrl: false,`, 'renderVals hasPubUrl')
 }
 
+/** `image-slot.js` reads the frame through `clientWidth/clientHeight`, which round to integers; the layout box is fractional (251.25 px), so crops drift by up to half a pixel. */
+export function fixImageSlotFrameSize(script: string): string {
+  return replaceOnce(script, FRAME_SIZE_READ,
+    () => 'const { width: fw, height: fh } = this.getBoundingClientRect();', 'image-slot frame size')
+}
+
 /** The prototype's signed shift goes negative for large hashes, so `AH_BASES[...]` is undefined; the seed uses `>>>`. */
 export function fixArtistBaseIndex(source: string): string {
   return replaceOnce(source, SIGNED_BASE_INDEX, () => '(h >>> 3) % AH_BASES.length', 'artist base index')
@@ -114,7 +123,11 @@ export async function normaliseReference(apiUrl: string): Promise<string> {
   const source = await readFile(REFERENCE_FILE, 'utf8')
   const patched = fixArtistBaseIndex(hidePublicationsLink(hideReadArticle(patchHomeNewsSlice(reorderNews(reorderArtists(source, artists.flat.map((a) => a.name)), news.map((n) => n.title))))))
   await mkdir(RESULTS_DIR, { recursive: true })
-  await Promise.all(REFERENCE_ASSETS.map((asset) => copyFile(path.join(REFERENCE_DIR, asset), path.join(RESULTS_DIR, asset))))
+  const imageSlot = fixImageSlotFrameSize(await readFile(path.join(REFERENCE_DIR, IMAGE_SLOT_FILE), 'utf8'))
+  await Promise.all([
+    ...UNCHANGED_ASSETS.map((asset) => copyFile(path.join(REFERENCE_DIR, asset), path.join(RESULTS_DIR, asset))),
+    writeFile(path.join(RESULTS_DIR, IMAGE_SLOT_FILE), imageSlot, 'utf8'),
+  ])
   await writeFile(NORMALISED_FILE, patched, 'utf8')
   return NORMALISED_FILE
 }
