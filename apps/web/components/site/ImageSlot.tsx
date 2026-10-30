@@ -20,12 +20,21 @@ export function ImageSlot({ image, ratio, fill = false, sizes, priority = false,
   return (
     <div
       className={`${sizing} overflow-hidden bg-imgph ${className}`}
-      style={!fill && ratio ? { aspectRatio: ratio } : undefined}
+      style={{ ...(!fill && ratio ? { aspectRatio: ratio } : {}), containerType: 'size' }}
       role={image ? undefined : 'img'}
       aria-label={image ? undefined : placeholder}
     >
       {image && (
-        <Image src={image.url} alt={image.alt} fill sizes={sizes} priority={priority} className="object-cover" />
+        <Image
+          src={image.url}
+          alt={image.alt}
+          width={image.width}
+          height={image.height}
+          sizes={sizes}
+          priority={priority}
+          className="absolute top-1/2 left-1/2 max-w-none -translate-x-1/2 -translate-y-1/2"
+          style={{ width: `max(100cqw, calc(100cqh * ${image.width / image.height}))`, height: 'auto' }}
+        />
       )}
     </div>
   )
