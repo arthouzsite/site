@@ -21,7 +21,7 @@ export interface SeedFair {
   image: string; sortOrder: number
 }
 export interface SeedService {
-  slug: string; title: string; summary: string; body: string; imageId: null; ctaLabel: string; ctaHref: string
+  slug: string; title: string; summary: string; body: string; image: string; ctaLabel: string; ctaHref: string
   contactName: string; contactPhone: string; contactEmail: string; sortOrder: number
 }
 export interface SeedLocation {

@@ -157,11 +157,23 @@ async function seedFairRows(prisma: PrismaClient, mediaIds: IdMap): Promise<void
   }
 }
 
-export async function seedServiceRows(prisma: PrismaClient): Promise<void> {
+export async function seedServiceRows(prisma: PrismaClient, mediaIds: IdMap): Promise<void> {
   for (const s of seedServices) {
-    const { slug, ...data } = s
-    await prisma.service.upsert({ where: { slug }, create: { slug, ...data, isPublished: true }, update: { ...data, isPublished: true } })
+    const { slug, image, ...rest } = s
+    const data = { ...rest, imageId: lookup(mediaIds, image, 'media'), isPublished: true }
+    await prisma.service.upsert({ where: { slug }, create: { slug, ...data }, update: data })
   }
+}
+
+/** Seed media already in the database, by name: keys are `seed/<name>` as seeded or `arthouz/seed/<name>.<ext>` after media:rehome. */
+async function existingSeedMediaIds(prisma: PrismaClient): Promise<IdMap> {
+  const rows = await prisma.media.findMany({ where: { OR: [{ key: { startsWith: SEED_KEY_PREFIX } }, { key: { startsWith: `arthouz/${SEED_KEY_PREFIX}` } }] }, select: { id: true, key: true } })
+  const ids = new Map<string, string>()
+  for (const row of rows) {
+    const name = row.key.replace(/^arthouz\//, '').slice(SEED_KEY_PREFIX.length).replace(/\.[^./]+$/, '')
+    ids.set(name, row.id)
+  }
+  return ids
 }
 
 async function seedNewsRows(prisma: PrismaClient, mediaIds: IdMap, exhibitionIds: IdMap): Promise<void> {
@@ -191,7 +203,7 @@ export async function seedDatabase(prisma: PrismaClient, opts: SeedOptions): Pro
   await seedArtworkRows(prisma, artistIds, mediaIds)
   const exhibitionIds = await seedExhibitionRows(prisma, artistIds, mediaIds)
   await seedFairRows(prisma, mediaIds)
-  await seedServiceRows(prisma)
+  await seedServiceRows(prisma, mediaIds)
   await seedNewsRows(prisma, mediaIds, exhibitionIds)
   await seedLocationRows(prisma, mediaIds)
   await seedSettings(
@@ -215,7 +227,7 @@ export async function runSeed(prisma: PrismaClient, opts: SeedOptions, force: bo
   if (!force && (await hasContent(prisma))) {
     await seedAdmin(prisma, opts)
     // Services were added after the first launch: a database seeded before then gets them without a forced reload.
-    if ((await prisma.service.count()) === 0) await seedServiceRows(prisma)
+    if ((await prisma.service.count()) === 0) await seedServiceRows(prisma, await existingSeedMediaIds(prisma))
     return 'skipped'
   }
   await seedDatabase(prisma, opts)

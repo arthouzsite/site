@@ -28,13 +28,15 @@ describe('seed', () => {
     expect(await prisma.fair.count()).toBe(4)
     expect(await prisma.location.count()).toBe(2)
     const services = await prisma.service.findMany({ orderBy: { sortOrder: 'asc' } })
-    expect(services.map((x) => [x.slug, x.title, x.sortOrder, x.isPublished, x.imageId, x.ctaLabel, x.ctaHref, x.contactName, x.contactPhone, x.contactEmail])).toEqual([
-      ['art-sales', 'Art sales', 0, true, null, 'Enquire →', '', '', '', ''],
-      ['gallery-on-rent', 'Gallery on rent', 1, true, null, 'Enquire →', '', '', '', ''],
-      ['art-for-rent', 'Art for rent', 2, true, null, 'Enquire →', '', '', '', ''],
-      ['corporate-painting-execution', 'Corporate painting execution', 3, true, null, 'Enquire →', '', '', '', ''],
-      ['turn-key-art-projects', 'Turn-key art projects', 4, true, null, 'Enquire →', '', '', '', ''],
+    expect(services.map((x) => [x.slug, x.title, x.sortOrder, x.isPublished, x.ctaLabel, x.ctaHref, x.contactName, x.contactPhone, x.contactEmail])).toEqual([
+      ['art-sales', 'Art sales', 0, true, 'Enquire →', '', '', '', ''],
+      ['gallery-on-rent', 'Gallery on rent', 1, true, 'Enquire →', '', '', '', ''],
+      ['art-for-rent', 'Art for rent', 2, true, 'Enquire →', '', '', '', ''],
+      ['corporate-painting-execution', 'Corporate painting execution', 3, true, 'Enquire →', '', '', '', ''],
+      ['turn-key-art-projects', 'Turn-key art projects', 4, true, 'Enquire →', '', '', '', ''],
     ])
+    const serviceImages = await prisma.media.findMany({ where: { id: { in: services.map((x) => x.imageId ?? '') } }, select: { key: true } })
+    expect(serviceImages.map((m) => m.key).sort()).toEqual(['seed/aquarium', 'seed/green', 'seed/lilies', 'seed/mines', 'seed/troika'])
     expect(services[0]?.summary).toBe('Acquire works by the artists we represent, or sell through the gallery.')
     expect(services[0]?.body).toBe(services[0]?.summary)
     expect(await prisma.artwork.count()).toBe(55 * 6)
@@ -81,9 +83,11 @@ describe('seed', () => {
     await prisma.service.deleteMany()
 
     expect(await runSeed(prisma, SEED_OPTS, false)).toBe('skipped')
-    expect((await prisma.service.findMany({ orderBy: { sortOrder: 'asc' } })).map((s) => s.slug)).toEqual([
+    const added = await prisma.service.findMany({ orderBy: { sortOrder: 'asc' } })
+    expect(added.map((s) => s.slug)).toEqual([
       'art-sales', 'gallery-on-rent', 'art-for-rent', 'corporate-painting-execution', 'turn-key-art-projects',
     ])
+    expect(added.every((s) => s.imageId !== null)).toBe(true)
     expect((await prisma.exhibition.findUniqueOrThrow({ where: { slug: 'tidewater' } })).title).toBe('Edited by the gallery')
   })
 
