@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { EXHIBITION_STATUSES, EXHIBITION_TYPES, HERO_LAYOUTS, ARTIST_INDEX_LAYOUTS } from '../constants'
 
 export const publicImageSchema = z.object({
-  url: z.string(), thumbUrl: z.string(), width: z.number(), height: z.number(), alt: z.string(),
+  url: z.string(), thumbUrl: z.string(), width: z.number().positive(), height: z.number().positive(), alt: z.string(),
 })
 const image = publicImageSchema.nullable()
 

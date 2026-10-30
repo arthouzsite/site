@@ -11,7 +11,7 @@ export function CityChips({ cities, current }: Props) {
   return (
     <div role="group" aria-label="Filter by location" className="flex flex-wrap gap-x-5 gap-y-1">
       {chips.map(({ value, label }) => {
-        const active = current.city === value
+        const active = current.city?.toLowerCase() === value?.toLowerCase()
         return (
           <button
             key={label}

@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 import {
   SETTING_DEFAULTS, SETTING_KEYS, artistInputSchema, artworkInputSchema, exhibitionInputSchema,
   exhibitionWorkInputSchema, fairInputSchema, locationInputSchema, loginSchema, mediaPatchSchema,
-  newsInputSchema, publicExhibitionSchema, publicHomeSchema, publicSearchSchema, publishSchema,
+  newsInputSchema, publicExhibitionSchema, publicHomeSchema, publicImageSchema, publicSearchSchema, publishSchema,
   reorderSchema, settingSchemas, userInputSchema,
 } from '../src/index'
 
@@ -83,5 +83,14 @@ describe('schemas', () => {
     expect(publicSearchSchema.safeParse({ groups: [{ label: 'News', items: [{ label: 'x', href: '/news' }] }] }).success).toBe(true)
     expect(publicSearchSchema.safeParse({ groups: [{ label: 'Fairs', items: [] }] }).success).toBe(false)
     expect(publicHomeSchema.safeParse({}).success).toBe(false)
+  })
+})
+
+describe('publicImageSchema', () => {
+  const image = { url: 'https://x/y.jpg', thumbUrl: 'https://x/t.webp', width: 1200, height: 1000, alt: 'a' }
+  test('rejects non-positive dimensions', () => {
+    expect(publicImageSchema.safeParse(image).success).toBe(true)
+    expect(publicImageSchema.safeParse({ ...image, width: 0 }).success).toBe(false)
+    expect(publicImageSchema.safeParse({ ...image, height: -5 }).success).toBe(false)
   })
 })
