@@ -20,7 +20,8 @@ export default function FairEditor() {
   const query = useFair(isNew ? undefined : id)
   useBreadcrumb(isNew ? 'New fair' : query.data?.title ?? (query.isError ? 'Unavailable' : 'Loading…'))
   if (isNew) return <FairForm fair={null} />
-  if (query.data) return <FairForm fair={query.data} />
+  // Keyed so navigating straight from one fair to another remounts the form with the new record.
+  if (query.data) return <FairForm key={query.data.id} fair={query.data} />
   if (query.isError) return <p role="alert" className="m-0 text-13 text-danger">Could not load this fair.</p>
   return <p className="m-0 text-13 text-muted">Loading fair</p>
 }

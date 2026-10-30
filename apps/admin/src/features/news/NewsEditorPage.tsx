@@ -22,7 +22,8 @@ export default function NewsEditorPage() {
   const query = useNewsItem(isNew ? undefined : id)
   useBreadcrumb(isNew ? 'New news item' : query.data?.title ?? (query.isError ? 'Unavailable' : 'Loading…'))
   if (isNew) return <NewsForm item={null} />
-  if (query.data) return <NewsForm item={query.data} />
+  // Keyed so navigating straight from one item to another remounts the form with the new record.
+  if (query.data) return <NewsForm key={query.data.id} item={query.data} />
   if (query.isError) return <p role="alert" className="m-0 text-13 text-danger">Could not load this news item.</p>
   return <p className="m-0 text-13 text-muted">Loading news item</p>
 }

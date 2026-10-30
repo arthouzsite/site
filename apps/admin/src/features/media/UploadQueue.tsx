@@ -76,7 +76,8 @@ export function UploadQueue({ onUploaded, onRunComplete, accept = MEDIA_ACCEPT, 
     let failed = 0
     try {
       for (;;) {
-        const next = itemsRef.current.find((it) => it.status !== 'uploading' && !attempted.has(it.id))
+        // Files added or blanked mid-run wait for the next click: the API rejects an empty alt.
+        const next = itemsRef.current.find((it) => it.status !== 'uploading' && !attempted.has(it.id) && it.alt.trim() !== '')
         if (!next) break
         attempted.add(next.id)
         const media = await send(next)

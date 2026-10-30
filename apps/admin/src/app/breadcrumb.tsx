@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useContext, useLayoutEffect, useState, type ReactNode } from 'react'
 
 const LabelContext = createContext<string | null>(null)
 const SetLabelContext = createContext<(label: string | null) => void>(() => {})
@@ -20,7 +20,8 @@ export function useBreadcrumbLabel(): string | null {
 /** Sets the current record's crumb while the calling editor is mounted; `null` falls back to the default. */
 export function useBreadcrumb(label: string | null): void {
   const setLabel = useContext(SetLabelContext)
-  useEffect(() => {
+  // Layout effect: the previous record's title must not flash for a frame when switching editors.
+  useLayoutEffect(() => {
     setLabel(label)
     return () => setLabel(null)
   }, [label, setLabel])

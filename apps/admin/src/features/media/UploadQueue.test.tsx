@@ -197,6 +197,20 @@ describe('UploadQueue', () => {
       expect(started.map((s) => s.name)).toEqual(['a.jpg', 'b.jpg'])
     })
 
+    it('leaves a file whose alt was cleared mid-run in the queue instead of sending an empty alt', async () => {
+      const { started, release } = gatedUpload()
+      renderWithProviders(<UploadQueue />)
+      const user = await choose([file('a.jpg'), file('b.jpg')])
+      for (const name of ['a.jpg', 'b.jpg']) await user.type(screen.getByLabelText(`Alt text for ${name}`), 'Alt')
+      await user.click(screen.getByRole('button', { name: /^upload 2 files/i }))
+      await waitFor(() => expect(started).toHaveLength(1))
+      await user.clear(screen.getByLabelText('Alt text for b.jpg'))
+      release()
+      await waitFor(() => expect(screen.queryByText('a.jpg')).not.toBeInTheDocument())
+      expect(started.map((s) => s.name)).toEqual(['a.jpg'])
+      expect(screen.getByText('b.jpg')).toBeInTheDocument()
+    })
+
     it('sends alt text edited before the file’s turn', async () => {
       const { started, release } = gatedUpload()
       renderWithProviders(<UploadQueue />)

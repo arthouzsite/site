@@ -5,6 +5,8 @@ import { useDebouncedValue } from '../features/media/useDebouncedValue'
 import { SEARCH_MIN_CHARS, useRecordSearch, type SearchGroup, type SearchHit } from './useRecordSearch'
 
 const SEARCH_DEBOUNCE_MS = 200
+/** Matches the API's list `q` cap; longer terms would be rejected with 400. */
+const MAX_QUERY_LENGTH = 120
 
 type Props = { open: boolean; onClose: () => void }
 
@@ -54,6 +56,11 @@ function Palette({ onClose }: { onClose: () => void }) {
   }
 
   const activeHit = hits[active]
+  const activeOptionId = activeHit ? optionId(activeHit) : undefined
+  // Keep the highlighted option visible when it moves off-screen in a long result list.
+  useEffect(() => {
+    if (activeOptionId) document.getElementById(activeOptionId)?.scrollIntoView?.({ block: 'nearest' })
+  }, [activeOptionId])
   return (
     <div className="flex flex-col gap-3">
       <div className="relative">
@@ -61,11 +68,12 @@ function Palette({ onClose }: { onClose: () => void }) {
         <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
         <input
           id={`${listId}-input`}
+          maxLength={MAX_QUERY_LENGTH}
           role="combobox"
           aria-expanded={hitCount > 0}
           aria-controls={listId}
           aria-autocomplete="list"
-          aria-activedescendant={activeHit ? optionId(activeHit) : undefined}
+          aria-activedescendant={activeOptionId}
           autoComplete="off"
           spellCheck={false}
           data-autofocus

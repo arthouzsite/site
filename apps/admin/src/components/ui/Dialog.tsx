@@ -65,7 +65,7 @@ export function Dialog({ open, title, onClose, children, footer, role = 'dialog'
         role={role}
         aria-modal="true"
         aria-labelledby={titleId}
-        className={cx('flex max-h-[calc(100vh-32px)] flex-col gap-4 bg-surface-2 p-6', width)}
+        className={cx('flex flex-col gap-4 bg-surface-2 p-6', placement === 'top' ? 'max-h-[calc(100vh-12vh-16px)] max-sm:max-h-[calc(100vh-32px)]' : 'max-h-[calc(100vh-32px)]', width)}
       >
         <h2 id={titleId} className={cx('m-0 font-display text-26 font-normal leading-[1.1]', hideTitle && 'sr-only')}>{title}</h2>
         <div className="min-h-0 flex-1 overflow-auto text-14 text-body">{children}</div>
