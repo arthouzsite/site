@@ -47,7 +47,7 @@ export default defineConfig({
     },
     {
       // Production build: deterministic (no HMR/dev overlay). Static pages fetch the API at build
-      // time, so wait for it first. NEXT_IMAGE_UNOPTIMIZED is ignored in production by design.
+      // time, so wait for it first. NEXT_IMAGE_UNOPTIMIZED applies under `next start` only with ALLOW_TEST_OVERRIDES=1.
       command: `until curl -sf http://localhost:${API_PORT}/health >/dev/null; do sleep 1; done && pnpm exec next build && pnpm exec next start --port ${WEB_PORT}`,
       url: `http://localhost:${WEB_PORT}`,
       reuseExistingServer: false,
@@ -60,8 +60,8 @@ export default defineConfig({
         NEXT_PUBLIC_SITE_URL: `http://localhost:${WEB_PORT}`,
         REVALIDATE_SECRET: VISUAL_REVALIDATE_SECRET,
         TODAY_OVERRIDE: VISUAL_TODAY,
-        // next start forces NODE_ENV=production; opt in to the frozen date for the footer year.
-        ALLOW_TODAY_OVERRIDE: '1',
+        // next start forces NODE_ENV=production; opt in to the frozen date (footer year) and unoptimised images.
+        ALLOW_TEST_OVERRIDES: '1',
       },
     },
   ],
