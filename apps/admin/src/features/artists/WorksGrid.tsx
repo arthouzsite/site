@@ -69,7 +69,6 @@ export function WorksGrid({ artistId, disabled }: Props) {
           >
             <Icon name="plus" />
             <strong className="font-medium text-ink">Add work</strong>
-            <span className="text-12">Image, title, year, medium, size</span>
           </button>
         </li>
       </ol>

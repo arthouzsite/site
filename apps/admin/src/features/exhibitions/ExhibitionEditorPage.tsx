@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
+import { useBreadcrumb } from '../../app/breadcrumb'
 import { PageHead } from '../../components/PageHead'
 import { ApiError } from '../../lib/api'
 import { ExhibitionForm } from './ExhibitionForm'
@@ -9,6 +10,7 @@ export default function ExhibitionEditorPage() {
   const { id } = useParams()
   const query = useExhibition(id)
   const [saves, setSaves] = useState(0)
+  useBreadcrumb(!id ? 'New exhibition' : query.data?.title ?? (query.isError ? 'Unavailable' : 'Loading…'))
 
   if (!id) return <ExhibitionForm key="new" />
   if (query.data) {

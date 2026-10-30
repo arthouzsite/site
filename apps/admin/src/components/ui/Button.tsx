@@ -1,7 +1,7 @@
 import type { ComponentProps } from 'react'
 import { cx } from './cx'
 
-export type ButtonVariant = 'primary' | 'default' | 'ghost' | 'danger'
+export type ButtonVariant = 'primary' | 'default' | 'ghost' | 'danger' | 'onDark' | 'onDarkGhost'
 type Props = ComponentProps<'button'> & {
   variant?: ButtonVariant
   size?: 'md' | 'sm'
@@ -14,6 +14,9 @@ const VARIANT: Record<ButtonVariant, string> = {
   primary: 'border-ink bg-ink text-paper hover:bg-amber hover:border-amber hover:text-ink',
   ghost: 'border-transparent bg-transparent text-muted hover:bg-hover-ink hover:text-ink',
   danger: 'border-danger bg-transparent text-danger hover:bg-danger hover:text-white',
+  // For ink surfaces (bulk bar, image-slot scrim): paper outline, inverting on hover.
+  onDark: 'border-paper bg-transparent text-paper hover:bg-paper hover:text-ink',
+  onDarkGhost: 'border-transparent bg-transparent text-on-dark-muted hover:bg-hover-dark hover:text-paper',
 }
 
 export function Button({ variant = 'default', size = 'md', iconOnly, className, type = 'button', ...rest }: Props) {

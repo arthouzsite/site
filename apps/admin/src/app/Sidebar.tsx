@@ -5,7 +5,14 @@ import { NAV_ITEMS } from './navItems'
 
 type Props = { user: SessionUser; counts?: Record<string, number> }
 
-const PUBLIC_SITE_URL = import.meta.env.VITE_PUBLIC_SITE_URL ?? '/'
+type SiteEnv = { VITE_PUBLIC_SITE_URL?: string; VITE_WEB_URL?: string }
+
+/** Target of the sidebar link; `/` (this admin's own origin) is the last resort. */
+export function publicSiteUrl(env: SiteEnv): string {
+  return env.VITE_PUBLIC_SITE_URL || env.VITE_WEB_URL || '/'
+}
+
+const PUBLIC_SITE_URL = publicSiteUrl(import.meta.env)
 const ROLE_LABEL: Record<SessionUser['role'], string> = { ADMIN: 'Admin', EDITOR: 'Editor' }
 
 export function Sidebar({ user, counts = {} }: Props) {

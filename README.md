@@ -23,7 +23,7 @@ Public gallery website and content management system (CMS) for Art Houz. Editors
 ## Local setup
 
 ```sh
-createdb arthouz            # plus arthouz_test and arthouz_test_web for the test suites
+createdb arthouz            # plus arthouz_test, arthouz_test_web and arthouz_test_e2e for the test suites
 cp apps/api/.env.example   apps/api/.env
 cp apps/web/.env.example   apps/web/.env
 cp apps/admin/.env.example apps/admin/.env
@@ -47,6 +47,8 @@ The seed loads the prototype content and creates the admin user from `SEED_ADMIN
 `pnpm dev` starts the site against the API at `API_URL`; content pages are fetched from the API, so start the API first if the site shows an error.
 
 ## Tests
+
+The harness databases default to `localhost:5433`, while `.env.example` shows `5432`; set `DATABASE_URL_TEST`, `VISUAL_DATABASE_URL` and `E2E_DATABASE_URL` to match your server.
 
 | Command | What it runs | Needs |
 | --- | --- | --- |

@@ -4,6 +4,8 @@ import { cx } from './cx'
 
 type Props = {
   name: string
+  /** Namespaces the DOM id so a dialog can sit on top of a form with the same field names. Defaults to `field`. */
+  idPrefix?: string
   label: string
   required?: boolean
   help?: string
@@ -12,12 +14,14 @@ type Props = {
   children: ReactElement<Record<string, unknown>> | ReactNode
 }
 
-export function fieldId(name: string): string {
-  return `field-${name}`
+export const DEFAULT_ID_PREFIX = 'field'
+
+export function fieldId(name: string, idPrefix: string = DEFAULT_ID_PREFIX): string {
+  return `${idPrefix}-${name}`
 }
 
-export function Field({ name, label, required, help, error, className, children }: Props) {
-  const id = fieldId(name)
+export function Field({ name, idPrefix, label, required, help, error, className, children }: Props) {
+  const id = fieldId(name, idPrefix)
   const describedBy = [help ? `${id}-help` : null, error ? `${id}-err` : null].filter(Boolean).join(' ') || undefined
   const control = isValidElement<Record<string, unknown>>(children)
     ? cloneElement(children, {

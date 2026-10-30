@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider, createMemoryRouter } from 'react-router'
@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest'
 import { routes } from './router'
 import { ToastProvider } from '../lib/toast'
 import { delay } from 'msw'
+import { ID, makeExhibition, useEditorHandlers } from '../features/exhibitions/testUtils'
 import { API_URL, HttpResponse, envelope, errorEnvelope, http, server } from '../test/msw'
 
 const editor = { id: '1', email: 'p@x.com', name: 'Priya Raman', role: 'EDITOR' }
@@ -18,12 +19,14 @@ function mount(path: string, user: typeof editor | null) {
     http.post(`${API_URL}/auth/logout`, () => HttpResponse.json(envelope(null))),
   )
   const router = createMemoryRouter(routes, { initialEntries: [path] })
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
-    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    <QueryClientProvider client={client}>
       <ToastProvider><RouterProvider router={router} /></ToastProvider>
     </QueryClientProvider>,
   )
-  return router
+  Object.assign(router, { client })
+  return router as typeof router & { client: QueryClient }
 }
 
 describe('shell and guards', () => {
@@ -50,6 +53,15 @@ describe('shell and guards', () => {
     expect(screen.getByText(/Signed in as Priya Raman/)).toBeInTheDocument()
   })
 
+  it('names the edited record in the breadcrumb instead of its id', async () => {
+    useEditorHandlers(makeExhibition())
+    server.use(http.get(`${API_URL}/artists`, () => HttpResponse.json(envelope([]))))
+    mount(`/exhibitions/${ID.ex}`, editor)
+    const nav = await screen.findByRole('navigation', { name: 'Breadcrumb' })
+    await waitFor(() => expect(nav).toHaveTextContent('CMS/Exhibitions/Tidewater'))
+    expect(within(nav).getByRole('link', { name: 'Exhibitions' })).toHaveAttribute('href', '/exhibitions')
+  })
+
   it('hides Users from editors and sends them home from /users', async () => {
     const router = mount('/users', editor)
     expect(await screen.findByRole('heading', { level: 1, name: /^Good (morning|afternoon|evening)/ })).toBeInTheDocument()
@@ -67,6 +79,25 @@ describe('shell and guards', () => {
     await userEvent.click(await screen.findByRole('button', { name: /sign out/ }))
     expect(await screen.findByRole('heading', { name: 'Sign in' }, { timeout: 4000 })).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/login')
+  })
+
+  it('drops every cached query on sign out so the next user starts clean', async () => {
+    const router = mount('/', editor)
+    router.client.setQueryData(['exhibitions', 'list'], { items: [{ title: 'Private draft' }] })
+    await userEvent.click(await screen.findByRole('button', { name: /sign out/ }))
+    await screen.findByRole('heading', { name: 'Sign in' }, { timeout: 4000 })
+    expect(router.client.getQueryData(['exhibitions', 'list'])).toBeUndefined()
+  })
+
+  it('drops every cached query when the session expires', async () => {
+    const router = mount('/media', editor)
+    await screen.findByRole('heading', { name: 'Media' })
+    router.client.setQueryData(['exhibitions', 'list'], { items: [{ title: 'Private draft' }] })
+    server.use(http.get(`${API_URL}/exhibitions`, () => HttpResponse.json(errorEnvelope('UNAUTHENTICATED', 'No'), { status: 401 })))
+    const { api } = await import('../lib/api')
+    await api.get('/exhibitions').catch(() => undefined)
+    await screen.findByRole('heading', { name: 'Sign in' }, { timeout: 4000 })
+    expect(router.client.getQueryData(['exhibitions', 'list'])).toBeUndefined()
   })
 
   it('redirects to login when a call reports an expired session', async () => {

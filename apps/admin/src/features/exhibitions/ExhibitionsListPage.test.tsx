@@ -70,6 +70,18 @@ describe('ExhibitionsListPage', () => {
     await waitFor(() => expect(screen.queryByRole('region', { name: 'Bulk actions' })).not.toBeInTheDocument())
   })
 
+  it('clears the bulk selection when a filter or the page changes', async () => {
+    setup()
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('checkbox', { name: 'Select Tidewater' }))
+    expect(screen.getByRole('region', { name: 'Bulk actions' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Upcoming' }))
+    await waitFor(() => expect(screen.queryByRole('region', { name: 'Bulk actions' })).not.toBeInTheDocument())
+    await user.click(await screen.findByRole('checkbox', { name: 'Select Tidewater' }))
+    await user.click(await screen.findByRole('button', { name: 'Page 2' }))
+    await waitFor(() => expect(screen.queryByRole('region', { name: 'Bulk actions' })).not.toBeInTheDocument())
+  })
+
   it('unpublishes in bulk, clears the selection and toggles one row', async () => {
     setup()
     const bodies: unknown[] = []

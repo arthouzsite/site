@@ -22,8 +22,8 @@ export function WorkCard({ work, index, count, busy, onEdit, onRemove, onMove }:
         placeholder="No image"
         overlay={
           <>
-            <Button size="sm" className="bg-surface-2" aria-label={`Edit ${work.title}`} onClick={onEdit}>Edit</Button>
-            <Button size="sm" className="bg-surface-2" aria-label={`Remove ${work.title}`} onClick={onRemove}>Remove</Button>
+            <Button size="sm" variant="onDark" aria-label={`Edit ${work.title}`} onClick={onEdit}>Edit</Button>
+            <Button size="sm" variant="onDark" aria-label={`Remove ${work.title}`} onClick={onRemove}>Remove</Button>
           </>
         }
       />

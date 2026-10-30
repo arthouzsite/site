@@ -58,6 +58,13 @@ describe('UsersPage', () => {
     expect(screen.getByRole('button', { name: 'Delete Arun Kumar' })).toBeInTheDocument()
   })
 
+  it('does not promise a forced password change on first sign-in', async () => {
+    setup()
+    await screen.findByText('Arun Kumar')
+    expect(screen.queryByText(/asked to change it/i)).not.toBeInTheDocument()
+    expect(screen.getByText('Share it directly with them. An admin can reset it later.')).toBeInTheDocument()
+  })
+
   it('validates, generates a password, invites and shows the password once', async () => {
     const calls = setup()
     const user = userEvent.setup()

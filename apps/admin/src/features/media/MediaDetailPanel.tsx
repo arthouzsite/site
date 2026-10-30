@@ -59,17 +59,17 @@ export function MediaDetailPanel({ id, onClose, onSelect }: Props) {
     }
   }
 
-  const uploadNewVersion = async (e: ChangeEvent<HTMLInputElement>) => {
+  const uploadAsNewFile = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file || !media) return
     if (!media.alt.trim()) {
-      toast.error(`Add alt text to this ${noun} first, it carries over to the new version`)
+      toast.error(`Add alt text to this ${noun} first, it carries over to the new file`)
       return
     }
     try {
       const created = await upload.mutateAsync({ file, alt: media.alt })
-      toast.success('New version uploaded')
+      toast.success('Uploaded as a new file')
       onSelect(created.id)
     } catch (err) {
       toast.error(err instanceof ApiError ? err.message : 'Upload failed. Try again.')
@@ -108,8 +108,8 @@ export function MediaDetailPanel({ id, onClose, onSelect }: Props) {
         {media.usedBy.length > 0 ? <UsageList usedBy={media.usedBy} /> : <p className="m-0 text-13 text-muted">Not used anywhere yet</p>}
       </section>
       <div className="flex flex-wrap justify-between gap-2">
-        <Button disabled={upload.isPending} onClick={() => fileRef.current?.click()}>Upload new version</Button>
-        <input ref={fileRef} type="file" accept={isVideo ? VIDEO_MIMES : IMAGE_MIMES} className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => void uploadNewVersion(e)} />
+        <Button disabled={upload.isPending} onClick={() => fileRef.current?.click()}>Upload as new file</Button>
+        <input ref={fileRef} type="file" accept={isVideo ? VIDEO_MIMES : IMAGE_MIMES} className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => void uploadAsNewFile(e)} />
         <Button variant="danger" onClick={() => setConfirming(true)}>Delete</Button>
       </div>
       <ConfirmModal

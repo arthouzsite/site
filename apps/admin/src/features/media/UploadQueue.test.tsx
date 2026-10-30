@@ -64,6 +64,17 @@ describe('UploadQueue', () => {
     expect(within(item).getByText('hero.jpg')).toBeInTheDocument()
   })
 
+  it('does not name video formats in a 415 when only images are accepted', async () => {
+    vi.spyOn(api, 'upload').mockRejectedValue(new ApiError(415, { code: 'UNSUPPORTED_MEDIA_TYPE', message: 'raw' }))
+    renderWithProviders(<UploadQueue accept="image/jpeg,image/png,image/webp,image/avif" />)
+    const user = await choose([file()])
+    await user.type(screen.getByLabelText('Alt text for hero.jpg'), 'Alt')
+    await user.click(screen.getByRole('button', { name: /^upload 1 file/i }))
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('Only JPEG, PNG, WebP or AVIF files are accepted.')
+    expect(alert).not.toHaveTextContent(/MP4|WebM|MOV/)
+  })
+
   it('maps a 413 without a JSON envelope', async () => {
     vi.spyOn(api, 'upload').mockRejectedValue(new ApiError(413, { code: 'HTTP_ERROR', message: 'Request failed (413)' }))
     renderWithProviders(<UploadQueue />)
@@ -153,5 +164,67 @@ describe('UploadQueue', () => {
     await user.click(screen.getByRole('button', { name: /^upload 1 file/i }))
     await waitFor(() => expect(onUploaded).toHaveBeenCalledWith(media))
     expect(screen.queryByText('a.jpg')).not.toBeInTheDocument()
+  })
+
+  describe('while a run is in progress', () => {
+    function gatedUpload() {
+      const started: Array<{ name: string; alt: string }> = []
+      let release: () => void = () => {}
+      let first = true
+      vi.spyOn(api, 'upload').mockImplementation(async (_p, form) => {
+        const f = form as FormData
+        const name = (f.get('file') as File).name
+        started.push({ name, alt: String(f.get('alt')) })
+        if (first) {
+          first = false
+          await new Promise<void>((resolve) => { release = resolve })
+        }
+        return makeMedia({ id: name })
+      })
+      return { started, release: () => release() }
+    }
+
+    it('skips a file removed after the run started', async () => {
+      const { started, release } = gatedUpload()
+      renderWithProviders(<UploadQueue />)
+      const user = await choose([file('a.jpg'), file('b.jpg'), file('c.jpg')])
+      for (const name of ['a.jpg', 'b.jpg', 'c.jpg']) await user.type(screen.getByLabelText(`Alt text for ${name}`), 'Alt')
+      await user.click(screen.getByRole('button', { name: /^upload 3 files/i }))
+      await waitFor(() => expect(started).toHaveLength(1))
+      await user.click(screen.getByRole('button', { name: 'Remove c.jpg' }))
+      release()
+      await waitFor(() => expect(screen.queryByText('b.jpg')).not.toBeInTheDocument())
+      expect(started.map((s) => s.name)).toEqual(['a.jpg', 'b.jpg'])
+    })
+
+    it('sends alt text edited before the file’s turn', async () => {
+      const { started, release } = gatedUpload()
+      renderWithProviders(<UploadQueue />)
+      const user = await choose([file('a.jpg'), file('b.jpg')])
+      for (const name of ['a.jpg', 'b.jpg']) await user.type(screen.getByLabelText(`Alt text for ${name}`), 'Alt')
+      await user.click(screen.getByRole('button', { name: /^upload 2 files/i }))
+      await waitFor(() => expect(started).toHaveLength(1))
+      await user.type(screen.getByLabelText('Alt text for b.jpg'), ' edited')
+      release()
+      await waitFor(() => expect(started).toHaveLength(2))
+      expect(started[1]).toEqual({ name: 'b.jpg', alt: 'Alt edited' })
+    })
+
+    it('reports the whole run once, with what was uploaded and how many failed', async () => {
+      vi.spyOn(api, 'upload').mockImplementation(async (_p, form) => {
+        const name = ((form as FormData).get('file') as File).name
+        if (name === 'b.jpg') throw new ApiError(400, { code: 'INVALID_IMAGE', message: 'raw' })
+        return makeMedia({ id: name })
+      })
+      const onRunComplete = vi.fn()
+      renderWithProviders(<UploadQueue onRunComplete={onRunComplete} />)
+      const user = await choose([file('a.jpg'), file('b.jpg'), file('c.jpg')])
+      for (const name of ['a.jpg', 'b.jpg', 'c.jpg']) await user.type(screen.getByLabelText(`Alt text for ${name}`), 'Alt')
+      await user.click(screen.getByRole('button', { name: /^upload 3 files/i }))
+      await waitFor(() => expect(onRunComplete).toHaveBeenCalledTimes(1))
+      const { uploaded, failed } = onRunComplete.mock.calls[0]![0] as { uploaded: Array<{ id: string }>; failed: number }
+      expect(uploaded.map((m) => m.id)).toEqual(['a.jpg', 'c.jpg'])
+      expect(failed).toBe(1)
+    })
   })
 })

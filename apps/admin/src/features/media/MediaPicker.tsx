@@ -3,7 +3,7 @@ import { Button, Dialog, Icon, Pager, Tabs } from '../../components/ui'
 import { panelId, tabId } from '../../components/ui/Tabs'
 import { MediaGrid } from './MediaGrid'
 import { IMAGE_HINT, IMAGE_MIMES, toMediaRef, type Media, type MediaRef } from './types'
-import { UploadQueue } from './UploadQueue'
+import { UploadQueue, type UploadRunSummary } from './UploadQueue'
 import { useDebouncedValue } from './useDebouncedValue'
 import { PICKER_PAGE_SIZE, useMediaList } from './useMedia'
 
@@ -39,7 +39,11 @@ export function MediaPicker({ open, onClose, onSelect }: Props) {
     }
     setUploadError(null)
     setSelected(media)
-    setTab('library')
+  }
+
+  // Leave the queue only when the whole run is done and nothing failed, so errors stay visible next to their file.
+  const onRunComplete = ({ uploaded, failed }: UploadRunSummary) => {
+    if (failed === 0 && uploaded.at(-1)?.kind === 'IMAGE') setTab('library')
   }
 
   const message = uploadError ?? (notImage ? NOT_AN_IMAGE : null)
@@ -83,7 +87,7 @@ export function MediaPicker({ open, onClose, onSelect }: Props) {
               {list.data && <Pager page={page} limit={PICKER_PAGE_SIZE} total={list.data.total} onPage={setPage} />}
             </>
           ) : (
-            <UploadQueue accept={IMAGE_MIMES} hint={IMAGE_HINT} onUploaded={onUploaded} />
+            <UploadQueue accept={IMAGE_MIMES} hint={IMAGE_HINT} onUploaded={onUploaded} onRunComplete={onRunComplete} />
           )}
         </div>
       </Tabs>

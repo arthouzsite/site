@@ -29,8 +29,8 @@ export function ImageField({ value, onChange, ratio, label, help }: Props) {
         overlay={
           value ? (
             <>
-              <Button size="sm" onClick={() => setOpen(true)} className="bg-surface-2">Replace</Button>
-              <Button size="sm" onClick={() => onChange(null)} className="bg-surface-2">Remove</Button>
+              <Button size="sm" variant="onDark" onClick={() => setOpen(true)}>Replace</Button>
+              <Button size="sm" variant="onDark" onClick={() => onChange(null)}>Remove</Button>
             </>
           ) : undefined
         }

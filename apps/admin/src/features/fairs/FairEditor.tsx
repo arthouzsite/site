@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { fairInputSchema } from '@arthouz/shared'
 import { useNavigate, useParams } from 'react-router'
+import { useBreadcrumb } from '../../app/breadcrumb'
 import { PageHead } from '../../components/PageHead'
 import { Button, ConfirmModal, ErrorSummary, Field, Input, LinkButton, PrefixInput, Switch, Textarea, collectErrors } from '../../components/ui'
 import { ApiError } from '../../lib/api'
@@ -17,6 +18,7 @@ export default function FairEditor() {
   const { id } = useParams()
   const isNew = !id || id === 'new'
   const query = useFair(isNew ? undefined : id)
+  useBreadcrumb(isNew ? 'New fair' : query.data?.title ?? (query.isError ? 'Unavailable' : 'Loading…'))
   if (isNew) return <FairForm fair={null} />
   if (query.data) return <FairForm fair={query.data} />
   if (query.isError) return <p role="alert" className="m-0 text-13 text-danger">Could not load this fair.</p>

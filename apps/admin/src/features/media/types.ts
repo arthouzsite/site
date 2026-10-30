@@ -40,6 +40,23 @@ export function toMediaRef(m: Media): MediaRef {
   return { id: m.id, url: m.url, thumbUrl: m.thumbUrl, width: m.width, height: m.height, alt: m.alt }
 }
 
+const MIME_LABEL: Record<string, string> = {
+  'image/jpeg': 'JPEG',
+  'image/png': 'PNG',
+  'image/webp': 'WebP',
+  'image/avif': 'AVIF',
+  'video/mp4': 'MP4',
+  'video/webm': 'WebM',
+  'video/quicktime': 'MOV',
+}
+
+/** "JPEG, PNG or WebP" for the mime types in an `accept` string, so messages never name formats the caller refuses. */
+export function acceptedFormats(accept: string): string {
+  const labels = accept.split(',').map((t) => MIME_LABEL[t.trim()]).filter((l): l is string => Boolean(l))
+  if (labels.length < 2) return labels[0] ?? 'supported'
+  return `${labels.slice(0, -1).join(', ')} or ${labels.at(-1)}`
+}
+
 export function fileName(m: Pick<Media, 'key'>): string {
   return m.key.split('/').pop() ?? m.key
 }
@@ -53,9 +70,9 @@ function tooLargeMessage(file?: Pick<File, 'type'>): string {
 }
 
 /** Maps by status as well as code: a proxy can answer 413/415 without a JSON envelope. */
-export function uploadErrorMessage({ status, code, fields, message }: UploadErrorInfo, file?: Pick<File, 'type'>): string {
+export function uploadErrorMessage({ status, code, fields, message }: UploadErrorInfo, file?: Pick<File, 'type'>, accept: string = MEDIA_ACCEPT): string {
   if (status === 413 || code === 'PAYLOAD_TOO_LARGE') return tooLargeMessage(file)
-  if (status === 415 || code === 'UNSUPPORTED_MEDIA_TYPE') return 'Only JPEG, PNG, WebP, AVIF, MP4, WebM or MOV files are accepted.'
+  if (status === 415 || code === 'UNSUPPORTED_MEDIA_TYPE') return `Only ${acceptedFormats(accept)} files are accepted.`
   if (code === 'INVALID_IMAGE') return 'This file is not a valid image.'
   if (code === 'INVALID_VIDEO') return 'This file is not a valid video.'
   if (status === 429 || code === 'TOO_MANY_UPLOADS') return 'Too many uploads at once. Wait a moment and try again.'

@@ -18,6 +18,8 @@ export const workFormSchema = z.object({
 })
 
 const FORM_ID = 'work-form'
+/** The dialog opens over the artist form, which owns the default `field-*` ids. */
+const ID_PREFIX = 'artwork'
 
 type Props = { artistId: string; artwork: Artwork | null; onClose: () => void }
 
@@ -63,20 +65,20 @@ export function WorkDialog({ artistId, artwork, onClose }: Props) {
       }
     >
       <form id={FORM_ID} noValidate onSubmit={(e) => { e.stopPropagation(); void onSubmit(e) }} className="flex flex-col gap-4">
-        <ErrorSummary errors={summary.errors} focusKey={summary.focusKey} />
+        <ErrorSummary errors={summary.errors} focusKey={summary.focusKey} idPrefix={ID_PREFIX} />
         <ImageField label="Image" ratio="1/1" value={image} onChange={setImage} />
-        <Field name="title" label="Title" required error={errors.title?.message}>
+        <Field idPrefix={ID_PREFIX} name="title" label="Title" required error={errors.title?.message}>
           <Input data-autofocus {...register('title')} />
         </Field>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field name="year" label="Year" error={errors.year?.message}>
+          <Field idPrefix={ID_PREFIX} name="year" label="Year" error={errors.year?.message}>
             <Input inputMode="numeric" maxLength={4} {...register('year')} />
           </Field>
-          <Field name="size" label="Size" error={errors.size?.message}>
+          <Field idPrefix={ID_PREFIX} name="size" label="Size" error={errors.size?.message}>
             <Input {...register('size')} />
           </Field>
         </div>
-        <Field name="medium" label="Medium" error={errors.medium?.message}>
+        <Field idPrefix={ID_PREFIX} name="medium" label="Medium" error={errors.medium?.message}>
           <Input {...register('medium')} />
         </Field>
       </form>

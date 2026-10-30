@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { Navigate, Outlet, useLocation } from 'react-router'
-import { SESSION_KEY, useSession } from '../features/auth/useSession'
+import { endSession, useSession } from '../features/auth/useSession'
 import { SESSION_EXPIRED_EVENT } from '../lib/api'
 
 export function RequireAuth() {
@@ -10,7 +10,7 @@ export function RequireAuth() {
   const location = useLocation()
 
   useEffect(() => {
-    const onExpired = () => client.setQueryData(SESSION_KEY, null)
+    const onExpired = () => endSession(client)
     window.addEventListener(SESSION_EXPIRED_EVENT, onExpired)
     return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired)
   }, [client])

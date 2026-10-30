@@ -11,8 +11,16 @@ function detail(used = usedBy) {
   server.use(http.get(`${API_URL}/media/m1`, () => HttpResponse.json(envelope({ ...makeMedia(), usedBy: used }))))
 }
 
-describe('MediaDetailPanel upload new version', () => {
+describe('MediaDetailPanel upload as new file', () => {
   const hiddenInput = (container: HTMLElement) => container.querySelector('input[type="file"]')!
+
+  it('names the action for what it does: a new file, not a new version', async () => {
+    detail()
+    renderWithProviders(<MediaDetailPanel id="m1" onClose={() => {}} onSelect={() => {}} />)
+    await screen.findByDisplayValue('Tidewater hero')
+    expect(screen.getByRole('button', { name: 'Upload as new file' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /new version/i })).not.toBeInTheDocument()
+  })
 
   it('accepts images only when replacing an image', async () => {
     detail()

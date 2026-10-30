@@ -33,7 +33,9 @@ export default function ExhibitionsListPage() {
   const publishOne = usePublishExhibition()
   const toast = useToast()
 
-  const update = (changes: Record<string, string | null>) =>
+  // Every URL change is a new filter, search or page, so ids selected on the previous view no longer apply.
+  const update = (changes: Record<string, string | null>) => {
+    setSelection({})
     setParams((cur) => {
       const next = new URLSearchParams(cur)
       for (const [key, value] of Object.entries(changes)) {
@@ -42,6 +44,7 @@ export default function ExhibitionsListPage() {
       }
       return next
     }, { replace: true })
+  }
   const filter = (key: string) => (value: string) => update({ [key]: value || null, page: null })
 
   useEffect(() => {

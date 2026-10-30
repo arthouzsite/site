@@ -154,6 +154,29 @@ describe('ImageSlot and Dropzone', () => {
     expect(onFiles).toHaveBeenCalledWith([a])
   })
 
+  it('filters dropped files by accept and says which were refused', () => {
+    const onFiles = vi.fn()
+    const { container } = render(<Dropzone onFiles={onFiles} accept="image/png,image/webp,.jpg" />)
+    const png = new File(['a'], 'a.png', { type: 'image/png' })
+    const jpg = new File(['b'], 'b.JPG', { type: '' })
+    const video = new File(['c'], 'tour.mp4', { type: 'video/mp4' })
+    fireEvent.drop(container.firstElementChild!, { dataTransfer: { files: [png, video, jpg] } })
+    expect(onFiles).toHaveBeenCalledWith([png, jpg])
+    expect(screen.getByRole('alert')).toHaveTextContent('tour.mp4 is not an accepted file type.')
+  })
+
+  it('does not call back when every dropped file is refused, and clears the message on a good drop', () => {
+    const onFiles = vi.fn()
+    const { container } = render(<Dropzone onFiles={onFiles} accept="image/*" />)
+    const zone = container.firstElementChild!
+    fireEvent.drop(zone, { dataTransfer: { files: [new File(['c'], 'a.mp4', { type: 'video/mp4' }), new File(['c'], 'b.mov', { type: 'video/quicktime' })] } })
+    expect(onFiles).not.toHaveBeenCalled()
+    expect(screen.getByRole('alert')).toHaveTextContent('a.mp4, b.mov are not accepted file types.')
+    fireEvent.drop(zone, { dataTransfer: { files: [new File(['c'], 'ok.png', { type: 'image/png' })] } })
+    expect(onFiles).toHaveBeenCalledTimes(1)
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
   it('ignores drops while disabled', () => {
     const onFiles = vi.fn()
     const { container } = render(<Dropzone onFiles={onFiles} disabled />)

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { ApiError } from '../../lib/api'
 import { formatBytes } from '../../lib/format'
 import { Button, Dropzone, Icon, Input } from '../../components/ui'
@@ -8,7 +8,16 @@ import { useUploadMedia } from './useMedia'
 type Status = 'queued' | 'uploading' | 'error'
 type Item = { id: number; file: File; alt: string; progress: number; status: Status; error: string | null }
 
-type Props = { onUploaded?: (media: Media) => void; accept?: string; hint?: string }
+export type UploadRunSummary = { uploaded: Media[]; failed: number }
+
+type Props = {
+  /** Called after each file lands. */
+  onUploaded?: (media: Media) => void
+  /** Called once when a run over the whole queue finishes. */
+  onRunComplete?: (summary: UploadRunSummary) => void
+  accept?: string
+  hint?: string
+}
 
 let nextItemId = 1
 
@@ -16,16 +25,22 @@ function toItem(file: File): Item {
   return { id: nextItemId++, file, alt: '', progress: 0, status: 'queued', error: null }
 }
 
-function describe(err: unknown, file: File): string {
-  if (err instanceof ApiError) return uploadErrorMessage(err, file)
+function describe(err: unknown, file: File, accept: string): string {
+  if (err instanceof ApiError) return uploadErrorMessage(err, file, accept)
   return 'Upload failed. Try again.'
 }
 
-export function UploadQueue({ onUploaded, accept = MEDIA_ACCEPT, hint = MEDIA_HINT }: Props) {
-  const [items, setItems] = useState<Item[]>([])
+export function UploadQueue({ onUploaded, onRunComplete, accept = MEDIA_ACCEPT, hint = MEDIA_HINT }: Props) {
+  const [items, setItemsState] = useState<Item[]>([])
+  // The run reads the queue at each file's turn, so it must see removals and edits made since it started.
+  const itemsRef = useRef<Item[]>([])
   const [isRunning, setIsRunning] = useState(false)
   const upload = useUploadMedia()
 
+  const setItems = (change: (cur: Item[]) => Item[]) => {
+    itemsRef.current = change(itemsRef.current)
+    setItemsState(itemsRef.current)
+  }
   const patch = (id: number, changes: Partial<Item>) =>
     setItems((cur) => cur.map((it) => (it.id === id ? { ...it, ...changes } : it)))
   const remove = (id: number) => setItems((cur) => cur.filter((it) => it.id !== id))
@@ -34,7 +49,8 @@ export function UploadQueue({ onUploaded, accept = MEDIA_ACCEPT, hint = MEDIA_HI
   const busy = isRunning || items.some((it) => it.status === 'uploading')
   const ready = pending.length > 0 && !busy && pending.every((it) => it.alt.trim() !== '')
 
-  const send = async (item: Item) => {
+  /** Resolves to the uploaded media, or null when the file failed. */
+  const send = async (item: Item): Promise<Media | null> => {
     patch(item.id, { status: 'uploading', progress: 0, error: null })
     try {
       const media = await upload.mutateAsync({
@@ -44,8 +60,10 @@ export function UploadQueue({ onUploaded, accept = MEDIA_ACCEPT, hint = MEDIA_HI
       })
       remove(item.id)
       onUploaded?.(media)
+      return media
     } catch (err) {
-      patch(item.id, { status: 'error', error: describe(err, item.file) })
+      patch(item.id, { status: 'error', error: describe(err, item.file, accept) })
+      return null
     }
   }
 
@@ -53,11 +71,22 @@ export function UploadQueue({ onUploaded, accept = MEDIA_ACCEPT, hint = MEDIA_HI
   // `send` handles its own errors, so a failed file stays in the queue and the rest still upload.
   const startAll = async () => {
     setIsRunning(true)
+    const attempted = new Set<number>()
+    const uploaded: Media[] = []
+    let failed = 0
     try {
-      for (const item of pending) await send(item)
+      for (;;) {
+        const next = itemsRef.current.find((it) => it.status !== 'uploading' && !attempted.has(it.id))
+        if (!next) break
+        attempted.add(next.id)
+        const media = await send(next)
+        if (media) uploaded.push(media)
+        else failed += 1
+      }
     } finally {
       setIsRunning(false)
     }
+    onRunComplete?.({ uploaded, failed })
   }
 
   return (

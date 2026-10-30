@@ -24,6 +24,12 @@ function setup(initial = '/about', role: 'ADMIN' | 'EDITOR' = 'ADMIN') {
 }
 
 describe('AboutPage', () => {
+  it('has no subtitle repeating the tab names', async () => {
+    setup()
+    await screen.findByRole('textbox', { name: 'Statement' })
+    expect(screen.queryByText(/Four tabs/)).not.toBeInTheDocument()
+  })
+
   it('about tab switch keeps unsaved changes per tab', async () => {
     setup()
     const user = userEvent.setup()

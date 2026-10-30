@@ -56,7 +56,7 @@ export function InviteForm({ onInvited }: Props) {
             <option value="ADMIN">Admin</option>
           </Select>
         </Field>
-        <Field name="password" label="Temporary password" required help="Share it directly. They are asked to change it on first sign-in." error={errors.password?.message}>
+        <Field name="password" label="Temporary password" required help="Share it directly with them. An admin can reset it later." error={errors.password?.message}>
           <Input autoComplete="off" spellCheck={false} {...register('password')} />
         </Field>
         <Button size="sm" className="self-start" onClick={() => setValue('password', generatePassword(), { shouldDirty: true, shouldValidate: formState.isSubmitted })}>

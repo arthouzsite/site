@@ -11,6 +11,8 @@ import type { ArtistLite } from './types'
 import { useAddWork } from './useExhibitionWorks'
 
 const FORM_ID = 'work-form'
+/** The dialog opens over the exhibition form, which owns the default `field-*` ids. */
+const ID_PREFIX = 'exhibition-work'
 const schema = exhibitionWorkInputSchema.extend({ year: z.string().trim().regex(/^(\d{4})?$/, 'Enter a 4-digit year') })
 const DEFAULTS = { imageId: '', title: '', year: '', artistId: '', medium: '' }
 const PROMPTS = { imageId: 'Choose an image', title: 'Enter a title', artistId: 'Choose an artist' }
@@ -67,18 +69,18 @@ export function WorkDialog({ open, onClose, exhibitionId, artists }: Props) {
           />
           {err('imageId') && <p className="m-0 flex items-center gap-1.5 text-12 text-danger"><Icon name="alert" />{err('imageId')}</p>}
         </div>
-        <Field name="title" label="Title" required error={err('title')}>
+        <Field idPrefix={ID_PREFIX} name="title" label="Title" required error={err('title')}>
           <Input {...register('title')} data-autofocus />
         </Field>
         <div className="grid grid-cols-[1fr_2fr] gap-4">
-          <Field name="year" label="Year" error={errors.year?.message}>
+          <Field idPrefix={ID_PREFIX} name="year" label="Year" error={errors.year?.message}>
             <Input {...register('year')} inputMode="numeric" maxLength={4} placeholder="2026" />
           </Field>
-          <Field name="medium" label="Medium" error={errors.medium?.message}>
+          <Field idPrefix={ID_PREFIX} name="medium" label="Medium" error={errors.medium?.message}>
             <Input {...register('medium')} />
           </Field>
         </div>
-        <Field name="artistId" label="Artist" required error={err('artistId')}>
+        <Field idPrefix={ID_PREFIX} name="artistId" label="Artist" required error={err('artistId')}>
           <Select {...register('artistId')}>
             <option value="">Choose artist</option>
             {artists.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}

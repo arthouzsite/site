@@ -30,6 +30,12 @@ function setup(disabled = false) {
 }
 
 describe('WorksGrid', () => {
+  it('add tile has no description under its label', async () => {
+    setup()
+    const add = await screen.findByRole('button', { name: /Add work/ })
+    expect(add).toHaveTextContent(/^Add work$/)
+  })
+
   it('work dialog validates year as 4 digits', async () => {
     const { calls } = setup()
     const user = userEvent.setup()

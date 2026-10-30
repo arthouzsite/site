@@ -32,7 +32,7 @@ export default function AboutPage() {
   const data = settings.data
   return (
     <>
-      <PageHead title="About page" subtitle="Four tabs, as on the public site" />
+      <PageHead title="About page" />
       {settings.isError && <p role="alert" className="m-0 text-13 text-danger">Could not load the About page. Reload the page.</p>}
       {data && (
         <Tabs tabs={tabs} value={tab} label="About sections" onChange={(id) => setParams({ tab: id }, { replace: true })}>

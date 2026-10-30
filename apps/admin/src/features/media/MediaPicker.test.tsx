@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { API_URL, HttpResponse, envelope, http, server } from '../../test/msw'
 import { ImageField } from './ImageField'
 import { MediaPicker } from './MediaPicker'
-import { api } from '../../lib/api'
+import { api, ApiError } from '../../lib/api'
 import { makeMedia, renderWithProviders } from './testUtils'
 import { toMediaRef } from './types'
 
@@ -95,6 +95,45 @@ describe('MediaPicker upload tab', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Only images can be used here')
     expect(screen.getByRole('button', { name: 'Use this image' })).toBeDisabled()
     expect(onSelect).not.toHaveBeenCalled()
+  })
+
+  it('stays on the upload tab until the last file is done, then selects it in the library', async () => {
+    const releases: Array<() => void> = []
+    vi.spyOn(api, 'upload').mockImplementation(async (_p, form) => {
+      const name = ((form as FormData).get('file') as File).name
+      await new Promise<void>((resolve) => { releases.push(resolve) })
+      return makeMedia({ id: name, alt: 'Alt', key: `media/${name}` })
+    })
+    const { user, onSelect } = await openUpload()
+    await user.upload(screen.getByLabelText(/choose files/i), [new File(['x'], 'one.jpg', { type: 'image/jpeg' }), new File(['x'], 'two.jpg', { type: 'image/jpeg' })])
+    await user.type(screen.getByLabelText('Alt text for one.jpg'), 'Alt')
+    await user.type(screen.getByLabelText('Alt text for two.jpg'), 'Alt')
+    await user.click(screen.getByRole('button', { name: /^upload 2 files/i }))
+    await waitFor(() => expect(releases).toHaveLength(1))
+    releases[0]!()
+    await waitFor(() => expect(releases).toHaveLength(2))
+    expect(screen.getByRole('tab', { name: 'Upload' })).toHaveAttribute('aria-selected', 'true')
+    releases[1]!()
+    await waitFor(() => expect(screen.getByRole('tab', { name: 'Library' })).toHaveAttribute('aria-selected', 'true'))
+    await user.click(screen.getByRole('button', { name: 'Use this image' }))
+    expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 'two.jpg' }))
+  })
+
+  it('stays on the upload tab when a file failed so the error stays visible', async () => {
+    vi.spyOn(api, 'upload').mockImplementation(async (_p, form) => {
+      const name = ((form as FormData).get('file') as File).name
+      if (name === 'bad.jpg') throw new ApiError(400, { code: 'INVALID_IMAGE', message: 'raw' })
+      return makeMedia({ id: name, alt: 'Alt' })
+    })
+    const { user } = await openUpload()
+    await user.upload(screen.getByLabelText(/choose files/i), [new File(['x'], 'good.jpg', { type: 'image/jpeg' }), new File(['x'], 'bad.jpg', { type: 'image/jpeg' })])
+    await user.type(screen.getByLabelText('Alt text for good.jpg'), 'Alt')
+    await user.type(screen.getByLabelText('Alt text for bad.jpg'), 'Alt')
+    await user.click(screen.getByRole('button', { name: /^upload 2 files/i }))
+    expect(await screen.findAllByRole('alert')).not.toHaveLength(0)
+    expect(screen.getByText('This file is not a valid image.')).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Upload' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('button', { name: 'Use this image' })).toBeEnabled()
   })
 
   it('selects an uploaded image and returns to the library', async () => {

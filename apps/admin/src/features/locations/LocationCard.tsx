@@ -1,12 +1,11 @@
 import { useId, useState } from 'react'
 import { locationInputSchema } from '@arthouz/shared'
-import { Button, ConfirmModal, ErrorSummary, Icon, Input, PrefixInput, Textarea, collectErrors } from '../../components/ui'
+import { Button, ConfirmModal, ErrorSummary, Field, Icon, Input, PrefixInput, Textarea, collectErrors } from '../../components/ui'
 import { ApiError } from '../../lib/api'
 import { useToast } from '../../lib/toast'
 import { useZodForm } from '../../lib/useZodForm'
 import { ImageField } from '../media/ImageField'
 import type { MediaRef } from '../media/types'
-import { LocationField as Field } from './LocationField'
 import type { AdminLocation } from './types'
 import { useDeleteLocation, useSaveLocation } from './useLocations'
 
@@ -37,6 +36,8 @@ type Props = {
 export function LocationCard({ location, canMoveUp, canMoveDown, moving, onMove, onSettled, onDiscard }: Props) {
   const toast = useToast()
   const headingId = useId()
+  // Several cards share one page, so each namespaces its field ids.
+  const idPrefix = `field-${headingId}`
   const save = useSaveLocation(location?.id ?? null)
   const remove = useDeleteLocation()
   const [image, setImage] = useState<MediaRef | null>(location?.image ?? null)
@@ -99,21 +100,21 @@ export function LocationCard({ location, canMoveUp, canMoveDown, moving, onMove,
       <form noValidate onSubmit={(e) => void onSubmit(e)} aria-label={`${heading} details`} className="flex flex-col gap-4 p-4">
         <ErrorSummary errors={collectErrors(errors, LABELS, `${headingId}-`)} focusKey={submits + (save.isError ? 1 : 0)} />
         <ImageField label="Image" ratio="4/3" value={image} onChange={pickImage} />
-        <Field name="city" idPrefix={headingId} label="City" required error={err('city')}><Input {...register('city')} /></Field>
-        <Field name="address" idPrefix={headingId} label="Address" error={err('address')}><Textarea rows={2} className="min-h-0" {...register('address')} /></Field>
+        <Field name="city" idPrefix={idPrefix} label="City" required error={err('city')}><Input {...register('city')} /></Field>
+        <Field name="address" idPrefix={idPrefix} label="Address" error={err('address')}><Textarea rows={2} className="min-h-0" {...register('address')} /></Field>
         <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
-          <Field name="phone" idPrefix={headingId} label="Phone" error={err('phone')}><Input {...register('phone')} /></Field>
-          <Field name="tel" idPrefix={headingId} label="Tel" help="E.164, used for the call link" error={err('tel')}><PrefixInput prefix="tel:" type="tel" {...register('tel')} /></Field>
+          <Field name="phone" idPrefix={idPrefix} label="Phone" error={err('phone')}><Input {...register('phone')} /></Field>
+          <Field name="tel" idPrefix={idPrefix} label="Tel" help="E.164, used for the call link" error={err('tel')}><PrefixInput prefix="tel:" type="tel" {...register('tel')} /></Field>
         </div>
         <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
-          <Field name="days" idPrefix={headingId} label="Days" error={err('days')}><Input {...register('days')} /></Field>
-          <Field name="hours" idPrefix={headingId} label="Hours" error={err('hours')}><Input {...register('hours')} /></Field>
+          <Field name="days" idPrefix={idPrefix} label="Days" error={err('days')}><Input {...register('days')} /></Field>
+          <Field name="hours" idPrefix={idPrefix} label="Hours" error={err('hours')}><Input {...register('hours')} /></Field>
         </div>
         <div className="flex flex-col gap-1.5">
           {isHttpUrl(mapUrl) && (
             <a href={mapUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-8 items-center self-end text-12 text-body underline">Test ↗</a>
           )}
-          <Field name="mapUrl" idPrefix={headingId} label="Google Maps URL" error={err('mapUrl')}><Input type="url" {...register('mapUrl')} /></Field>
+          <Field name="mapUrl" idPrefix={idPrefix} label="Google Maps URL" error={err('mapUrl')}><Input type="url" {...register('mapUrl')} /></Field>
         </div>
         <div className="flex flex-wrap justify-between gap-2">
           <Button type="submit" variant="primary" disabled={save.isPending}>Save</Button>

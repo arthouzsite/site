@@ -2,10 +2,10 @@
  * Cross-app publish-flow E2E (admin -> API -> public web).
  *
  * Needs, and starts on its own (reuseExistingServer is false, so these must be free):
- *   - Postgres 17 on localhost:5433 with the database `arthouz_test_e2e` (pg_trgm available).
+ *   - Postgres 16+ on localhost:5433 with the database `arthouz_test_e2e` (pg_trgm available).
  *     Override with E2E_DATABASE_URL. The database is wiped (schema dropped) on every run.
  *   - API on 4102, public web on 3102, admin on 5182 (E2E_API_PORT / E2E_WEB_PORT / E2E_ADMIN_PORT).
- *     The dev servers (4200/3200/5181) and the web visual harness (4100/3100) are left alone.
+ *     The dev servers (API 4100, web 3100, admin 5180) and the web visual harness (4100/3100) are left alone.
  *   - Google Chrome installed (channel 'chrome'); browsers are never downloaded.
  * The API build writes apps/api/dist, so do not run this at the same time as the web visual suite.
  */
