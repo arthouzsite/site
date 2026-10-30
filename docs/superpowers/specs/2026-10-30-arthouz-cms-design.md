@@ -195,3 +195,17 @@ Interaction rules (from ui-ux-pro-max UX guidelines, applied): visible labels, v
 3. Hosting target. The admin and API must be same-site for cookie auth (see section 4); say if that is not possible and the auth design changes to header tokens.
 4. R2: a new Art Houz bucket (chosen above) or the existing FindMyPlots bucket.
 5. Old arthouz.com URLs: do indexed pages need per-record 301s? If yes, supply the old URL list and a `legacyPath` field is added to exhibitions and artists.
+
+## Deviations recorded during build
+
+The visual harness (`apps/web/tests/visual/normalise.ts`) patches a copy of the prototype before comparing it with the build. Each patch records a place where the build intentionally differs from the prototype. Details: `apps/web/reference/README.md`.
+
+- **(a) Artist order.** The prototype lists artists in a hand-ordered array; the build orders them by the API's collation (`GET /public/artists`), so the reference is rewritten to match. Reason: the order is data owned by the API, not a hand-kept list.
+- **(b) News order.** The prototype's news array has a fixed order; the build follows the order returned by `GET /public/news`. Reason: same as (a).
+- **(c) Home press.** The prototype's home page shows `AH_NEWS.slice(1, 4)`; the build shows the three latest items (`slice(0, 3)`). Reason: home shows the three latest items.
+- **(d) Read article link.** The prototype always renders "Read article ↗"; the build renders it only when the news item has an `externalUrl`. Reason: the seed has no external URLs, so the link would go nowhere.
+- **(e) Artist base.** The prototype derives an artist's base city with a signed shift `(h >> 3)`, which goes negative for some names (e.g. Vijay Pichumani) and yields "practice in undefined"; the build uses the unsigned shift `>>>`. Reason: the prototype formula is a bug; the seed already uses the unsigned shift.
+- **(f) Publications link.** The prototype always renders "View more ↗" on the About publications tab; the build renders it only when the publications setting has an `externalUrl`. Reason: same as (d).
+- **(g) Image-slot frame size.** The prototype's `image-slot.js` reads `clientWidth/clientHeight`, which round to integers; the build crops against the fractional box (`getBoundingClientRect`). Reason: a 251.25 px frame was cropped as 251 px, leaving the image 0.3 px too tall at 375 px width.
+
+Other recorded departures (see "Port notes" in the reference README): the home upcoming-band image keeps the prototype's 3:2 slot; contrast of the prototype's rust (#B4651A) on paper (3.63:1) is kept, so the accessibility suite allows exactly that pair; `/api/search` and `/public/search` have no rate limit of their own and must be throttled at the proxy (see `docs/deploy.md`).
