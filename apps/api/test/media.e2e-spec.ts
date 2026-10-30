@@ -7,6 +7,7 @@ import { PrismaClient } from '../src/generated/prisma/client'
 import { MemoryStorage } from '../src/media/storage/memory.storage'
 import { STORAGE } from '../src/media/storage/storage.interface'
 import { createTestApp } from './helpers/app'
+import { loginAs, seedUser } from './helpers/users'
 import { migrateTestDb, resetDb } from './helpers/db'
 
 const MB = 1024 * 1024
@@ -15,10 +16,18 @@ describe('media', () => {
   let app: INestApplication
   let prisma: PrismaClient
   let jpeg: Buffer
+  let cookie: string
+  let userId: string
 
   const server = () => app.getHttpServer()
+  const http = {
+    get: (path: string) => request(server()).get(path).set('Cookie', cookie),
+    post: (path: string) => request(server()).post(path).set('Cookie', cookie),
+    patch: (path: string) => request(server()).patch(path).set('Cookie', cookie),
+    delete: (path: string) => request(server()).delete(path).set('Cookie', cookie),
+  }
   const upload = (buf: Buffer, mime = 'image/jpeg', alt: string | null = 'A calm sea') => {
-    const req = request(server()).post('/media')
+    const req = http.post('/media')
     if (alt !== null) req.field('alt', alt)
     return req.attach('file', buf, { filename: 'x.jpg', contentType: mime })
   }
@@ -33,6 +42,8 @@ describe('media', () => {
   beforeEach(async () => {
     await resetDb()
     app = await createTestApp()
+    userId = (await seedUser(app, { email: 'editor@example.test', role: 'EDITOR' })).id
+    cookie = await loginAs(app, 'editor@example.test')
   })
   afterEach(async () => app.close())
   afterAll(async () => prisma.$disconnect())
@@ -45,11 +56,15 @@ describe('media', () => {
       height: 1200,
       alt: 'A calm sea',
       mime: 'image/jpeg',
-      uploadedById: null,
+      uploadedById: userId,
     })
     expect(res.body.data.key).toMatch(/^arthouz\/\d{4}\/\d{2}\/[0-9a-f-]{36}\.jpg$/)
     expect(res.body.data.url).toBe(`memory://${res.body.data.key}`)
     expect(res.body.data.thumbUrl).toMatch(/-thumb\.webp$/)
+  })
+
+  it('rejects unauthenticated requests with 401', async () => {
+    await request(server()).get('/media').expect(401)
   })
 
   it('rejects image/heic with 415', async () => {
@@ -73,7 +88,7 @@ describe('media', () => {
   })
 
   it('rejects a missing file with 400 fields.file', async () => {
-    const res = await request(server()).post('/media').field('alt', 'x').expect(400)
+    const res = await http.post('/media').field('alt', 'x').expect(400)
     expect(res.body.error.fields.file).toBeDefined()
   })
 
@@ -89,33 +104,32 @@ describe('media', () => {
     const row = await prisma.media.findFirstOrThrow({ where: { alt: 'Mountain' } })
     await prisma.media.update({ where: { id: row.id }, data: { alt: '' } })
 
-    const all = await request(server()).get('/media').expect(200)
+    const all = await http.get('/media').expect(200)
     expect(all.body.meta).toEqual({ total: 2, page: 1, limit: 50 })
 
-    const q = await request(server()).get('/media?q=harbour').expect(200)
+    const q = await http.get('/media?q=harbour').expect(200)
     expect(q.body.data).toHaveLength(1)
     expect(q.body.meta.total).toBe(1)
 
-    const missing = await request(server()).get('/media?missingAlt=true').expect(200)
+    const missing = await http.get('/media?missingAlt=true').expect(200)
     expect(missing.body.data.map((m: { id: string }) => m.id)).toEqual([row.id])
 
-    const paged = await request(server()).get('/media?limit=1&page=2').expect(200)
+    const paged = await http.get('/media?limit=1&page=2').expect(200)
     expect(paged.body.data).toHaveLength(1)
     expect(paged.body.meta).toEqual({ total: 2, page: 2, limit: 1 })
   })
 
   it('gets one with usedBy, patches alt and caption, 404s unknown', async () => {
     const created = (await upload(jpeg).expect(201)).body.data
-    const got = await request(server()).get(`/media/${created.id}`).expect(200)
+    const got = await http.get(`/media/${created.id}`).expect(200)
     expect(got.body.data.usedBy).toEqual([])
-    const patched = await request(server())
-      .patch(`/media/${created.id}`)
+    const patched = await http.patch(`/media/${created.id}`)
       .send({ alt: 'New alt', caption: 'Cap' })
       .expect(200)
     expect(patched.body.data).toMatchObject({ alt: 'New alt', caption: 'Cap' })
-    await request(server()).patch(`/media/${created.id}`).send({ alt: '' }).expect(400)
-    await request(server()).get('/media/00000000-0000-0000-0000-000000000000').expect(404)
-    await request(server()).delete('/media/00000000-0000-0000-0000-000000000000').expect(404)
+    await http.patch(`/media/${created.id}`).send({ alt: '' }).expect(400)
+    await http.get('/media/00000000-0000-0000-0000-000000000000').expect(404)
+    await http.delete('/media/00000000-0000-0000-0000-000000000000').expect(404)
   })
 
   it('deletes unused media and its storage objects', async () => {
@@ -124,7 +138,7 @@ describe('media', () => {
     const thumbKey = created.key.replace(/\.jpg$/, '-thumb.webp')
     expect(storage.has(created.key)).toBe(true)
     expect(storage.has(thumbKey)).toBe(true)
-    await request(server()).delete(`/media/${created.id}`).expect(200)
+    await http.delete(`/media/${created.id}`).expect(200)
     expect(await prisma.media.count()).toBe(0)
     expect(storage.has(created.key)).toBe(false)
     expect(storage.has(thumbKey)).toBe(false)
@@ -149,12 +163,12 @@ describe('media', () => {
         heroImageId: created.id,
       },
     })
-    const res = await request(server()).delete(`/media/${created.id}`).expect(409)
+    const res = await http.delete(`/media/${created.id}`).expect(409)
     expect(res.body.error.code).toBe('MEDIA_IN_USE')
     expect(res.body.error.details.usedBy).toEqual([
       { type: 'exhibition', id: exhibition.id, title: 'Sea Change' },
     ])
-    const got = await request(server()).get(`/media/${created.id}`).expect(200)
+    const got = await http.get(`/media/${created.id}`).expect(200)
     expect(got.body.data.usedBy).toHaveLength(1)
     expect(await prisma.media.count()).toBe(1)
   })

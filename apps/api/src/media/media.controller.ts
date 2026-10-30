@@ -15,6 +15,8 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express'
 import { mediaPatchSchema, type MediaPatch } from '@arthouz/shared'
 import { z } from 'zod'
+import { CurrentUser } from '../auth/current-user.decorator'
+import type { PublicUser } from '../auth/public-user'
 import { withMeta } from '../common/envelope.interceptor'
 import { parsePagination } from '../common/pagination'
 import { ZodBody } from '../common/zod-body.pipe'
@@ -42,10 +44,13 @@ export class MediaController {
 
   @Post()
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_UPLOAD_BYTES }, fileFilter: imageFileFilter }))
-  upload(@UploadedFile() file: Express.Multer.File | undefined, @Body() body: { alt?: unknown }) {
+  upload(
+    @UploadedFile() file: Express.Multer.File | undefined,
+    @Body() body: { alt?: unknown },
+    @CurrentUser() user: PublicUser,
+  ) {
     const input = uploadSchema.parse({ file, alt: body?.alt })
-    // TODO(task-4-merge): set uploadedById from CurrentUser
-    return this.media.upload(input.file, input.alt, null)
+    return this.media.upload(input.file, input.alt, user.id)
   }
 
   @Get()
