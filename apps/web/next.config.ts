@@ -54,8 +54,11 @@ const nextConfig: NextConfig = {
   },
 }
 
+/** `next typegen` loads the config with the production-build phase too, but emits only type files. */
+const isTypegenRun = (argv: readonly string[]) => argv.includes('typegen')
+
 /** Next passes the phase explicitly; NEXT_PHASE is only set in the environment after compilation, so the guard keys on it. */
 export default function configForPhase(phase: string): NextConfig {
-  assertProductionSiteUrl(process.env, phase)
+  if (!isTypegenRun(process.argv)) assertProductionSiteUrl(process.env, phase)
   return nextConfig
 }
