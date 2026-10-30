@@ -50,4 +50,8 @@ describe('normalise patches', () => {
   it('throws when the image-slot frame read is not found exactly once', () => {
     expect(() => fixImageSlotFrameSize('nothing here')).toThrow(/image-slot frame size/)
   })
+
+  it('throws when the hasPubUrl default has no tabPublications anchor to follow', () => {
+    expect(() => hidePublicationsLink('<a href="#" style="x">View more ↗</a>')).toThrow(/renderVals hasPubUrl/)
+  })
 })

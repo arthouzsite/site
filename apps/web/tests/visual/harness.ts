@@ -8,7 +8,7 @@ import { normaliseReference } from './normalise'
 import { decodePng, encodePng } from './png'
 import { API_URL, PORT_URL, RESULTS_DIR, VISUAL_RESULTS_DIR } from './paths'
 
-export type PrototypeRoute = { page: string; param?: string | null; city?: string; status?: string; aq?: string }
+export type PrototypeRoute = { page: string; param?: string | null; city?: string; status?: string; aq?: string; tab?: string; search?: boolean; q?: string }
 export type PrototypeProps = { heroLayout?: 'Full-bleed' | 'Split'; artistIndex?: 'Grouped A–Z' | 'Flowing' }
 type Viewport = { width: number; height?: number }
 type MatchOptions = { name: string; maxDiffRatio?: number; maxHeightDelta?: number }

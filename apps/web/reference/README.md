@@ -6,8 +6,9 @@ Do not edit these three files: the visual harness patches a copy.
 
 ## Visual harness
 
-`tests/visual/normalise.ts` copies the prototype to `test-results/reference.html` (with the two
-scripts beside it) after five textual patches. Each patch must match exactly once or the run fails:
+`tests/visual/normalise.ts` copies the prototype to `test-results/reference.html` after seven textual
+patches (a-g), with `support.js` copied beside it unchanged and `image-slot.js` written as the patched
+copy (g). Each patch must match exactly once or the run fails:
 
 1. **Artist order** — the `AH_ARTISTS` array literal is rewritten to the order of `flat[].name`
    from `GET /public/artists` (the API's collation, not the prototype's hand order).

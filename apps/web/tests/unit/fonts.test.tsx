@@ -44,6 +44,13 @@ describe('NewsArticle title font', () => {
     render(<NewsArticle item={{ ...base, externalUrl: 'https://x.test/a', exhibition: { slug: 'tidewater', title: 'T' } }} />)
     const read = screen.getByRole('link', { name: /Read article/ })
     expect(read.getAttribute('target')).toBe('_blank')
+    expect(read.getAttribute('rel')).toContain('noopener')
     expect(screen.getByRole('link', { name: /View exhibition/ }).getAttribute('href')).toBe('/exhibitions/tidewater')
+  })
+
+  it('omits Read article when externalUrl is null', () => {
+    render(<NewsArticle item={base} />)
+
+    expect(screen.queryByRole('link', { name: /Read article/ })).toBeNull()
   })
 })

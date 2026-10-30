@@ -25,7 +25,7 @@ test.describe('pages', () => {
   for (const tab of TABS) {
     for (const width of TAB_WIDTHS) {
       test(`about ${tab} tab matches at ${width}`, async ({ browser }) => {
-        await compare(browser, `about-${tab}-${width}`, { page: 'about', tab } as PrototypeRoute, `/about?tab=${tab}`, width)
+        await compare(browser, `about-${tab}-${width}`, { page: 'about', tab }, `/about?tab=${tab}`, width)
       })
     }
   }
