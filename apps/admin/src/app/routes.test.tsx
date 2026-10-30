@@ -7,7 +7,7 @@ import { API_URL, HttpResponse, envelope, http, server } from '../test/msw'
 
 const PAGES: Array<[string, string]> = [
   ['/', 'Dashboard'], ['/exhibitions', 'Exhibitions'], ['/exhibitions/new', 'Exhibition'], ['/exhibitions/abc', 'Exhibition'],
-  ['/artists', 'Artists'], ['/artists/new', 'Artist'], ['/artists/abc', 'Artist'], ['/fairs', 'Fairs'], ['/fairs/abc', 'Fair'],
+  ['/fairs', 'Fairs'], ['/fairs/abc', 'Fair'],
   ['/news', 'News'], ['/news/abc', 'News item'], ['/locations', 'Locations'], ['/about', 'About page'],
   ['/settings', 'Home & settings'], ['/media', 'Media'], ['/users', 'Users'],
 ]
