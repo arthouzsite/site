@@ -1,8 +1,8 @@
 import { defineConfig } from '@playwright/test'
-import { API_DIR, SEED_ADMIN, VISUAL_DATABASE_URL, VISUAL_REVALIDATE_SECRET, VISUAL_TODAY } from './tests/visual/env'
+import { API_DIR, SEED_ADMIN, VISUAL_API_PORT, VISUAL_DATABASE_URL, VISUAL_WEB_PORT, VISUAL_REVALIDATE_SECRET, VISUAL_TODAY } from './tests/visual/env'
 
-const API_PORT = 4100
-const WEB_PORT = 3100
+const API_PORT = VISUAL_API_PORT
+const WEB_PORT = VISUAL_WEB_PORT
 const SERVER_START_TIMEOUT_MS = 240_000
 const TEST_TIMEOUT_MS = 120_000
 const VISUAL_JWT_SECRET = 'visual-test-jwt-secret-at-least-32-characters'
