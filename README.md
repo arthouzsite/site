@@ -54,11 +54,12 @@ The seed loads the prototype content and creates the admin user from `SEED_ADMIN
 | `pnpm --filter @arthouz/web test:visual` | Pixel comparison of the site against the prototype at 375/768/1024/1440 px | Chrome, database `arthouz_test_web` (`VISUAL_DATABASE_URL`), free ports 3100 and 4100 (`VISUAL_API_PORT`, `VISUAL_WEB_PORT`) |
 | `pnpm --filter @arthouz/web test:a11y` | axe accessibility and 44 px hit-area checks | Same as the visual suite |
 | `pnpm --filter @arthouz/admin test` | Admin component tests (vitest, Testing Library) | - |
+| `pnpm --filter @arthouz/admin test:e2e` | Admin Playwright end-to-end: sign in, create and publish an exhibition with an image, check it on the public site | Chrome, database `arthouz_test_e2e` (`E2E_DATABASE_URL`; its `public` schema is dropped each run), free ports 4102, 3102 and 5182 (`E2E_API_PORT`, `E2E_WEB_PORT`, `E2E_ADMIN_PORT`) |
 | `pnpm lint`, `pnpm typecheck` | `tsc` / `eslint` across the workspace | - |
 
 The visual and accessibility suites migrate and seed their own database, build the API and the site, and start both servers. Details, the prototype patches and the determinism rules are in `apps/web/reference/README.md`. Add `--grep about` to run one group.
 
-There is no admin Playwright end-to-end suite yet: `apps/admin/playwright.config.ts` is a placeholder and `apps/admin/e2e` does not exist.
+`pnpm verify` runs typecheck, lint, every unit suite with its 80 % coverage gate, then the API, web and admin end-to-end suites in sequence (the web visual harness and the admin suite both build `apps/api/dist`, so they cannot run at the same time).
 
 ## Further reading
 
