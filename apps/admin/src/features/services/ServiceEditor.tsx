@@ -66,7 +66,9 @@ function ServiceForm({ service }: { service: AdminService | null }) {
 
   const onSubmit = handleSubmit(async (values) => {
     try {
-      const saved = await save.mutateAsync(values)
+      // Publishing goes through its own endpoint; the PATCH schema would strip isPublished anyway.
+      const payload = service ? Object.fromEntries(Object.entries(values).filter(([key]) => key !== 'isPublished')) : values
+      const saved = await save.mutateAsync(payload)
       toast.success(`Saved · ${saved.title}`)
       if (service) reset(values)
       else navigate(`/services/${saved.id}`, { replace: true })

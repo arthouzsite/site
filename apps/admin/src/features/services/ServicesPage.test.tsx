@@ -116,6 +116,7 @@ describe('ServiceEditor', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
     expect(await screen.findByText('Saved · Art sales 2')).toBeInTheDocument()
     expect(patched).toMatchObject({ title: 'Art sales 2', slug: 'art-sales', ctaLabel: 'Enquire →', ctaHref: '', contactEmail: '' })
+    expect(patched).not.toHaveProperty('isPublished')
   })
 
   it('blocks an empty title and a bad contact email with plain-language errors', async () => {
@@ -123,9 +124,13 @@ describe('ServiceEditor', () => {
     renderRoutes(routes, '/services/s1')
     await userEvent.clear(await screen.findByLabelText(/Title/))
     await userEvent.type(screen.getByLabelText('Email'), 'nope')
+    await userEvent.type(screen.getByLabelText('Phone'), '12')
+    await userEvent.type(screen.getByLabelText(/CTA link/), 'ftp://x')
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
     expect((await screen.findAllByText('Title is required')).length).toBeGreaterThan(0)
-    expect(screen.getAllByText(/email/i).length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Invalid email address').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Use international format, e.g. +914412345678').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Use an http(s) link, mailto:name@example.com or tel:+914412345678').length).toBeGreaterThan(0)
   })
 
   it('shows field errors from the API VALIDATION envelope', async () => {
