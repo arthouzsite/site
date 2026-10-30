@@ -1,4 +1,4 @@
-import { ArgumentsHost, BadRequestException, ForbiddenException, Logger, NotFoundException } from '@nestjs/common'
+import { ArgumentsHost, BadRequestException, ConflictException, ForbiddenException, Logger, NotFoundException } from '@nestjs/common'
 import { z } from 'zod'
 import { Prisma } from '../generated/prisma/client'
 import { HttpExceptionFilter } from './http-exception.filter'
@@ -109,5 +109,23 @@ describe('HttpExceptionFilter', () => {
     } finally {
       logSpy.mockRestore()
     }
+  })
+})
+
+describe('HttpExceptionFilter custom code and details', () => {
+  it('passes through code and details from an HttpException response object', () => {
+    const json = jest.fn()
+    const status = jest.fn().mockReturnValue({ json })
+    const host = { switchToHttp: () => ({ getResponse: () => ({ status }) }) } as never
+    new HttpExceptionFilter().catch(
+      new ConflictException({ code: 'MEDIA_IN_USE', message: 'in use', details: { usedBy: [] } }),
+      host,
+    )
+    expect(status).toHaveBeenCalledWith(409)
+    expect(json).toHaveBeenCalledWith({
+      ok: false,
+      data: null,
+      error: { code: 'MEDIA_IN_USE', message: 'in use', details: { usedBy: [] } },
+    })
   })
 })

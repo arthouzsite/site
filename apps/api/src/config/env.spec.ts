@@ -8,12 +8,12 @@ const VALID_BASE = {
   SEED_ADMIN_PASSWORD: 'password',
 }
 
-const R2_VARS = {
-  R2_ACCOUNT_ID: 'a',
-  R2_ACCESS_KEY_ID: 'b',
-  R2_SECRET_ACCESS_KEY: 'c',
-  R2_BUCKET: 'd',
-  R2_PUBLIC_URL: 'https://cdn.example.test',
+const STORAGE_VARS = {
+  S3_ENDPOINT: 'https://a.r2.cloudflarestorage.com',
+  AWS_ACCESS_KEY_ID: 'b',
+  AWS_SECRET_ACCESS_KEY: 'c',
+  AWS_S3_BUCKET_NAME: 'd',
+  AWS_S3_PUBLIC_URL: 'https://cdn.example.test',
 }
 
 const build = (extra: Record<string, string>): NodeJS.ProcessEnv => ({ ...VALID_BASE, ...extra })
@@ -31,8 +31,8 @@ describe('parseEnv', () => {
   })
 
   it('defaults STORAGE_DRIVER to r2 outside test and then requires the R2 vars', () => {
-    expect(() => parseEnv(build({ NODE_ENV: 'production' }))).toThrow(/R2_BUCKET is required/)
-    expect(parseEnv(build({ NODE_ENV: 'production', ...R2_VARS })).STORAGE_DRIVER).toBe('r2')
+    expect(() => parseEnv(build({ NODE_ENV: 'production' }))).toThrow(/AWS_S3_BUCKET_NAME is required/)
+    expect(parseEnv(build({ NODE_ENV: 'production', ...STORAGE_VARS })).STORAGE_DRIVER).toBe('r2')
   })
 
   it('does not require R2 vars when STORAGE_DRIVER is memory', () => {

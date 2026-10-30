@@ -1,4 +1,4 @@
-export type ApiError = { code: string; message: string; fields?: Record<string, string> }
+export type ApiError = { code: string; message: string; fields?: Record<string, string>; details?: unknown }
 export type ApiMeta = { total: number; page: number; limit: number }
 export type ApiEnvelope<T> = {
   ok: boolean
