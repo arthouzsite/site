@@ -6,6 +6,8 @@ import { Prisma } from '../generated/prisma/client'
 
 const PRISMA_UNIQUE_VIOLATION = 'P2002'
 const PRISMA_RECORD_NOT_FOUND = 'P2025'
+const PRISMA_FOREIGN_KEY_VIOLATION = 'P2003'
+const REFERENCED_MESSAGE = 'Record is referenced by other content'
 const INTERNAL_MESSAGE = 'Something went wrong'
 
 const CODE_BY_STATUS: Readonly<Record<number, string>> = {
@@ -59,6 +61,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
     if (exception instanceof Prisma.PrismaClientKnownRequestError) {
       if (exception.code === PRISMA_UNIQUE_VIOLATION) {
         return { status: HttpStatus.CONFLICT, body: fail('CONFLICT', 'A record with these values already exists') }
+      }
+      if (exception.code === PRISMA_FOREIGN_KEY_VIOLATION) {
+        return { status: HttpStatus.CONFLICT, body: fail('CONFLICT', REFERENCED_MESSAGE) }
       }
       if (exception.code === PRISMA_RECORD_NOT_FOUND) {
         return { status: HttpStatus.NOT_FOUND, body: fail('NOT_FOUND', 'Record not found') }
