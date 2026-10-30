@@ -5,6 +5,7 @@ import { NORMALISED_FILE, REFERENCE_ASSETS, REFERENCE_DIR, REFERENCE_FILE, RESUL
 type Envelope<T> = { ok: boolean; data: T | null; error: { code: string; message: string } | null }
 type ArtistList = { flat: ReadonlyArray<{ name: string }> }
 type NewsItem = { title: string }
+type ServiceItem = { title: string }
 
 const ARTISTS_PATTERN = /const AH_ARTISTS = \[[^\]]*\];/g
 const NEWS_PATTERN = /const AH_NEWS = \[\n([\s\S]*?)\n\];/g
@@ -17,6 +18,17 @@ const IMAGE_SLOT_FILE = 'image-slot.js'
 const UNCHANGED_ASSETS = REFERENCE_ASSETS.filter((asset) => asset !== IMAGE_SLOT_FILE)
 const FRAME_SIZE_READ = 'const fw = this.clientWidth, fh = this.clientHeight;'
 const NEWS_LIST_MAPPING = 'newsList: AH_NEWS.map(n => ({ ...n, '
+const NAV_DEFS_NEWS = "['News', 'news', ['news']], "
+const FOOTER_NAV_NEWS = "['News', 'news'], "
+const NAV_MAP_RETURN = "line: on ? '#B4651A' : 'transparent' };"
+/** The full-screen menu's link: 44 px serif, 16 px padding, hairline below; the sub-list is inserted after it. */
+const MENU_LINK_PATTERN = /<a href="#" onClick="\{\{ n\.go \}\}" style="font-family:'EB Garamond',serif;font-size:44px;[^"]*">\{\{ n\.label \}\}<\/a>/g
+/** Mirrors `MobileMenu`: `ul.pl-6` of `a.block.border-b.border-line-dark-16.py-3.font-display.text-[28px].leading-none.text-ondark`. */
+const MENU_SUBS_MARKUP =
+  `<sc-if value="{{ n.subs }}" hint-placeholder-val="{{ false }}"><div style="padding-left:24px">` +
+  `<sc-for list="{{ n.subs }}" as="sv" hint-placeholder-count="0">` +
+  `<a href="#" onClick="{{ sv.go }}" style="display:block;font-family:'EB Garamond',serif;font-size:28px;line-height:1;padding:12px 0;border-bottom:1px solid rgba(237,234,228,0.16);color:#C9C4BB">{{ sv.label }}</a>` +
+  `</sc-for></div></sc-if>`
 
 async function getData<T>(apiUrl: string, pathname: string): Promise<T> {
   const response = await fetch(`${apiUrl}${pathname}`)
@@ -114,14 +126,36 @@ export function fixArtistBaseIndex(source: string): string {
   return replaceOnce(source, SIGNED_BASE_INDEX, () => '(h >>> 3) % AH_BASES.length', 'artist base index')
 }
 
+/** (h) The port adds Services between News and About in the header/menu nav and the footer nav. */
+export function addServicesNav(source: string): string {
+  const header = replaceOnce(source, NAV_DEFS_NEWS, (m) => `${m}['Services', 'services', ['services']], `, 'navDefs Services')
+  return replaceOnce(header, FOOTER_NAV_NEWS, (m) => `${m}['Services', 'services'], `, 'footerNav Services')
+}
+
+/**
+ * (i) The port's mobile menu lists the published services under "Services": the nav items gain `subs`
+ * (the service titles, in API order, for the Services item only) and the menu renders them as a 24 px-indented list.
+ */
+export function addServicesMenuSubs(source: string, titles: readonly string[]): string {
+  const withValue = replaceOnce(source, NAV_MAP_RETURN, (m) =>
+    `${m.slice(0, -3)}, subs: label === 'Services' ? ${JSON.stringify(titles)}.map(t => ({ label: t, go: this.h(() => this.go(page)) })) : null };`, 'nav subs value')
+  return replaceOnce(withValue, MENU_LINK_PATTERN, (anchor) => `${anchor}${MENU_SUBS_MARKUP}`, 'menu service sub-list')
+}
+
 /** Writes the patched prototype (and its runtime scripts) under test-results and returns its path. */
 export async function normaliseReference(apiUrl: string): Promise<string> {
-  const [artists, news] = await Promise.all([
+  const [artists, news, services] = await Promise.all([
     getData<ArtistList>(apiUrl, '/public/artists'),
     getData<NewsItem[]>(apiUrl, '/public/news'),
+    getData<ServiceItem[]>(apiUrl, '/public/services'),
   ])
   const source = await readFile(REFERENCE_FILE, 'utf8')
-  const patched = fixArtistBaseIndex(hidePublicationsLink(hideReadArticle(patchHomeNewsSlice(reorderNews(reorderArtists(source, artists.flat.map((a) => a.name)), news.map((n) => n.title))))))
+  const patched = addServicesNav(
+    addServicesMenuSubs(
+      fixArtistBaseIndex(hidePublicationsLink(hideReadArticle(patchHomeNewsSlice(reorderNews(reorderArtists(source, artists.flat.map((a) => a.name)), news.map((n) => n.title)))))),
+      services.map((service) => service.title),
+    ),
+  )
   await mkdir(RESULTS_DIR, { recursive: true })
   const imageSlot = fixImageSlotFrameSize(await readFile(path.join(REFERENCE_DIR, IMAGE_SLOT_FILE), 'utf8'))
   await Promise.all([

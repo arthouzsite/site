@@ -6,8 +6,8 @@ Do not edit these three files: the visual harness patches a copy.
 
 ## Visual harness
 
-`tests/visual/normalise.ts` copies the prototype to `test-results/reference.html` after seven textual
-patches (a-g), with `support.js` copied beside it unchanged and `image-slot.js` written as the patched
+`tests/visual/normalise.ts` copies the prototype to `test-results/reference.html` after nine textual
+patches (a-i), with `support.js` copied beside it unchanged and `image-slot.js` written as the patched
 copy (g). Each patch must match exactly once or the run fails:
 
 1. **Artist order** — the `AH_ARTISTS` array literal is rewritten to the order of `flat[].name`
@@ -27,6 +27,15 @@ copy (g). Each patch must match exactly once or the run fails:
    `const fw = this.clientWidth, fh = this.clientHeight;` reads `getBoundingClientRect()` width/height instead.
    `clientWidth/clientHeight` round to integers, so a 251.25 px frame was cropped as 251 px (image 0.3 px too
    tall); only fractional 375 px frames were affected. `support.js` is copied unchanged.
+8. **(h) Services nav** — `['Services','services',['services']]` inserted after News in `navDefs` and
+   `['Services','services']` after News in `footerNav`, mirroring the port's NAV_ITEMS/FOOTER_NAV; the desktop
+   dropdown is `hidden` while closed so it adds no pixels (the touch chevron beside the link is transparent on
+   a fine pointer until focused or open, and out of flow).
+9. **(i) Menu sub-items** — the port's mobile menu lists the published services under "Services". The nav items
+   gain `subs` (titles from `GET /public/services`, in API order, on the Services item only) and the menu's
+   `sc-for` renders `<sc-if value="{{ n.subs }}">` after each link: a 24 px-indented block of anchors styled as
+   `MobileMenu` does (EB Garamond 28 px, line-height 1, 12 px vertical padding, 1 px `rgba(237,234,228,0.16)`
+   hairline below, `#C9C4BB` text). Applied inside (h), so (h) is the outermost wrapper.
 
 `renderPrototype` seeds `localStorage['arthouz-route']` (`{ page, param, city, status, aq, tab, search, q }`) before load
 (the prototype applies the whole stored object on mount, so `search: true, q` opens its search overlay) and can
