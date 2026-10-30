@@ -1,12 +1,23 @@
-import { ConflictException, Inject, Injectable, Logger, NotFoundException, PayloadTooLargeException } from '@nestjs/common'
+import {
+  BadRequestException,
+  ConflictException,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+  PayloadTooLargeException,
+} from '@nestjs/common'
 import { randomUUID } from 'node:crypto'
 import type { MediaPatch } from '@arthouz/shared'
 import { PrismaService } from '../common/prisma.service'
 import type { Media, MediaKind, Prisma } from '../generated/prisma/client'
 import { ImageService } from './image.service'
-import { ALLOWED_VIDEO_MIMES, KEY_PREFIX, MAX_IMAGE_UPLOAD_BYTES, VIDEO_EXT_BY_MIME } from './media.constants'
+import { KEY_PREFIX, MAX_CONCURRENT_UPLOADS, MAX_IMAGE_UPLOAD_BYTES, VIDEO_EXT_BY_MIME, type VideoMime } from './media.constants'
 import { findMediaUsage, type MediaUsage } from './media.usage'
 import { STORAGE, type Storage } from './storage/storage.interface'
+import { hasVideoSignature, isVideoMime } from './video-signature'
 
 export type MediaListQuery = { q?: string; missingAlt?: boolean; kind?: MediaKind; page: number; limit: number; skip: number }
 export type UploadedFile = { buffer: Buffer; mimetype: string }
@@ -25,6 +36,7 @@ function thumbKeyOf(key: string): string {
 @Injectable()
 export class MediaService {
   private readonly logger = new Logger(MediaService.name)
+  private activeUploads = 0
 
   constructor(
     private readonly prisma: PrismaService,
@@ -33,12 +45,30 @@ export class MediaService {
   ) {}
 
   async upload(file: UploadedFile, alt: string, userId: string | null): Promise<Media> {
-    if (ALLOWED_VIDEO_MIMES.includes(file.mimetype)) return this.uploadVideo(file, alt, userId)
-    return this.uploadImage(file, alt, userId)
+    this.acquireUploadSlot()
+    try {
+      if (isVideoMime(file.mimetype)) return await this.uploadVideo(file, file.mimetype, alt, userId)
+      return await this.uploadImage(file, alt, userId)
+    } finally {
+      this.activeUploads -= 1
+    }
   }
 
-  private async uploadVideo(file: UploadedFile, alt: string, userId: string | null): Promise<Media> {
-    const ext = VIDEO_EXT_BY_MIME[file.mimetype] ?? 'mp4'
+  private acquireUploadSlot(): void {
+    if (this.activeUploads >= MAX_CONCURRENT_UPLOADS) {
+      throw new HttpException(
+        { code: 'TOO_MANY_UPLOADS', message: 'Too many uploads in progress, try again shortly' },
+        HttpStatus.TOO_MANY_REQUESTS,
+      )
+    }
+    this.activeUploads += 1
+  }
+
+  private async uploadVideo(file: UploadedFile, mime: VideoMime, alt: string, userId: string | null): Promise<Media> {
+    if (!hasVideoSignature(file.buffer, mime)) {
+      throw new BadRequestException({ code: 'INVALID_VIDEO', message: 'File is not a valid video' })
+    }
+    const ext = VIDEO_EXT_BY_MIME[mime]
     const { key } = buildKeys(ext, new Date())
     const stored = await this.storage.put(key, file.buffer, file.mimetype)
     try {

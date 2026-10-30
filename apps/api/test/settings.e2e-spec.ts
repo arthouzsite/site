@@ -118,6 +118,20 @@ describe('settings', () => {
     await as(adminCookie).put('/settings/site').send({ value: { ...(SETTING_DEFAULTS.site as object), ogImageId: media.id } }).expect(200)
   })
 
+  it('a video media id in site.ogImageId or homeFocus.imageId -> 400 INVALID_MEDIA_KIND', async () => {
+    const video = await prisma.media.create({
+      data: { key: 'v.mp4', url: 'https://m.test/v.mp4', thumbUrl: 'https://m.test/v.mp4', width: 0, height: 0, mime: 'video/mp4', kind: 'VIDEO', bytes: 1, alt: 'v' },
+    })
+    const cases: [string, object][] = [
+      ['site', { ...(SETTING_DEFAULTS.site as object), ogImageId: video.id }],
+      ['homeFocus', { ...(SETTING_DEFAULTS.homeFocus as object), imageId: video.id }],
+    ]
+    for (const [key, value] of cases) {
+      const res = await as(adminCookie).put(`/settings/${key}`).send({ value }).expect(400)
+      expect(res.body.error.code).toBe('INVALID_MEDIA_KIND')
+    }
+  })
+
   it('homeHeroExhibitionId unknown -> 400 UNKNOWN_EXHIBITION; existing ok; null stored and read back', async () => {
     const bad = await as(adminCookie).put('/settings/homeHeroExhibitionId').send({ value: MISSING_ID }).expect(400)
     expect(bad.body.error.code).toBe('UNKNOWN_EXHIBITION')

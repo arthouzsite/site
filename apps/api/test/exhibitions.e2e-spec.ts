@@ -38,6 +38,10 @@ describe('exhibitions', () => {
       data: { key, url: `https://m.test/${key}`, thumbUrl: `https://m.test/t-${key}`, width: 10, height: 10, mime: 'image/jpeg', bytes: 1, alt: key },
     })
   }
+  const makeVideo = (key: string) =>
+    prisma.media.create({
+      data: { key, url: `https://m.test/${key}`, thumbUrl: `https://m.test/${key}`, width: 0, height: 0, mime: 'video/mp4', kind: 'VIDEO', bytes: 1, alt: key },
+    })
   async function makeArtist(name: string) {
     return prisma.artist.create({ data: { slug: name.toLowerCase(), name, sortName: name } })
   }
@@ -215,6 +219,14 @@ describe('exhibitions', () => {
     const hero = await authed.post('/exhibitions').send(baseInput({ heroImageId: ghost })).expect(400)
     expect(hero.body.error.code).toBe('UNKNOWN_MEDIA')
     expect(await prisma.exhibition.count()).toBe(1)
+  })
+
+  it('rejects a video as the hero image -> 400 INVALID_MEDIA_KIND', async () => {
+    const video = await makeVideo('hero.mp4')
+    const res = await authed.post('/exhibitions').send(baseInput({ heroImageId: video.id })).expect(400)
+    expect(res.body.error.code).toBe('INVALID_MEDIA_KIND')
+    expect(res.body.error.message).toBe('hero image must be an image')
+    expect(await prisma.exhibition.count()).toBe(0)
   })
 
   it('setArtists dedupes and rejects unknown ids', async () => {

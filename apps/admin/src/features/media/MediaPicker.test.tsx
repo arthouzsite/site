@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { API_URL, HttpResponse, envelope, http, server } from '../../test/msw'
 import { ImageField } from './ImageField'
 import { MediaPicker } from './MediaPicker'
+import { api } from '../../lib/api'
 import { makeMedia, renderWithProviders } from './testUtils'
 import { toMediaRef } from './types'
 
@@ -65,6 +66,45 @@ describe('MediaPicker', () => {
     expect(screen.getByRole('dialog').contains(document.activeElement)).toBe(true)
     await user.keyboard('{Escape}')
     expect(onClose).toHaveBeenCalled()
+  })
+})
+
+describe('MediaPicker upload tab', () => {
+  async function openUpload() {
+    listHandler()
+    const onSelect = vi.fn()
+    renderWithProviders(<MediaPicker open onClose={() => {}} onSelect={onSelect} />)
+    // applyAccept off: a user can still pick any file through an "All files" OS dialog or drag and drop.
+    const user = userEvent.setup({ applyAccept: false })
+    await user.click(await screen.findByRole('tab', { name: 'Upload' }))
+    return { user, onSelect }
+  }
+
+  it('offers images only', async () => {
+    await openUpload()
+    expect(screen.getByLabelText(/choose files/i)).toHaveAttribute('accept', 'image/jpeg,image/png,image/webp,image/avif')
+    expect(screen.getByText('JPEG, PNG, WebP or AVIF up to 25 MB')).toBeInTheDocument()
+  })
+
+  it('refuses to select an uploaded video and explains why', async () => {
+    vi.spyOn(api, 'upload').mockResolvedValue(makeMedia({ id: 'v1', kind: 'VIDEO', mime: 'video/mp4', key: 'media/v1.mp4', alt: 'Tour' }))
+    const { user, onSelect } = await openUpload()
+    await user.upload(screen.getByLabelText(/choose files/i), new File(['x'], 'tour.mp4', { type: 'video/mp4' }))
+    await user.type(screen.getByLabelText('Alt text for tour.mp4'), 'Tour')
+    await user.click(screen.getByRole('button', { name: /^upload 1 file/i }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Only images can be used here')
+    expect(screen.getByRole('button', { name: 'Use this image' })).toBeDisabled()
+    expect(onSelect).not.toHaveBeenCalled()
+  })
+
+  it('selects an uploaded image and returns to the library', async () => {
+    vi.spyOn(api, 'upload').mockResolvedValue(makeMedia({ id: 'new', alt: 'Fresh' }))
+    const { user, onSelect } = await openUpload()
+    await user.upload(screen.getByLabelText(/choose files/i), new File(['x'], 'fresh.jpg', { type: 'image/jpeg' }))
+    await user.type(screen.getByLabelText('Alt text for fresh.jpg'), 'Fresh')
+    await user.click(screen.getByRole('button', { name: /^upload 1 file/i }))
+    await user.click(await screen.findByRole('button', { name: 'Use this image' }))
+    expect(onSelect).toHaveBeenCalledWith(toMediaRef(makeMedia({ id: 'new', alt: 'Fresh' })))
   })
 })
 

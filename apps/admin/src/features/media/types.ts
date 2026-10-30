@@ -7,6 +7,8 @@ export const VIDEO_MIMES = 'video/mp4,video/webm,video/quicktime'
 export const MEDIA_ACCEPT = `${IMAGE_MIMES},${VIDEO_MIMES}`
 const MAX_IMAGE_LABEL = '25 MB'
 const MAX_VIDEO_LABEL = '200 MB'
+export const IMAGE_HINT = `JPEG, PNG, WebP or AVIF up to ${MAX_IMAGE_LABEL}`
+export const MEDIA_HINT = `${IMAGE_HINT}, or MP4, WebM or MOV up to ${MAX_VIDEO_LABEL}`
 
 export function parseKindFilter(value: string | null): MediaKindFilter {
   return value === 'image' || value === 'video' ? value : ''
@@ -55,6 +57,8 @@ export function uploadErrorMessage({ status, code, fields, message }: UploadErro
   if (status === 413 || code === 'PAYLOAD_TOO_LARGE') return tooLargeMessage(file)
   if (status === 415 || code === 'UNSUPPORTED_MEDIA_TYPE') return 'Only JPEG, PNG, WebP, AVIF, MP4, WebM or MOV files are accepted.'
   if (code === 'INVALID_IMAGE') return 'This file is not a valid image.'
+  if (code === 'INVALID_VIDEO') return 'This file is not a valid video.'
+  if (status === 429 || code === 'TOO_MANY_UPLOADS') return 'Too many uploads at once. Wait a moment and try again.'
   if (code === 'VALIDATION') {
     if (fields?.alt) return 'Alt text is required.'
     const first = fields ? Object.values(fields)[0] : undefined

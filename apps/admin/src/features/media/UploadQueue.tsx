@@ -2,16 +2,13 @@ import { useState } from 'react'
 import { ApiError } from '../../lib/api'
 import { formatBytes } from '../../lib/format'
 import { Button, Dropzone, Icon, Input } from '../../components/ui'
-import { MEDIA_ACCEPT, uploadErrorMessage, type Media } from './types'
+import { MEDIA_ACCEPT, MEDIA_HINT, uploadErrorMessage, type Media } from './types'
 import { useUploadMedia } from './useMedia'
-
-const ACCEPT = MEDIA_ACCEPT
-const HINT = 'JPEG, PNG, WebP or AVIF up to 25 MB, or MP4, WebM or MOV up to 200 MB'
 
 type Status = 'queued' | 'uploading' | 'error'
 type Item = { id: number; file: File; alt: string; progress: number; status: Status; error: string | null }
 
-type Props = { onUploaded?: (media: Media) => void }
+type Props = { onUploaded?: (media: Media) => void; accept?: string; hint?: string }
 
 let nextItemId = 1
 
@@ -24,8 +21,9 @@ function describe(err: unknown, file: File): string {
   return 'Upload failed. Try again.'
 }
 
-export function UploadQueue({ onUploaded }: Props) {
+export function UploadQueue({ onUploaded, accept = MEDIA_ACCEPT, hint = MEDIA_HINT }: Props) {
   const [items, setItems] = useState<Item[]>([])
+  const [isRunning, setIsRunning] = useState(false)
   const upload = useUploadMedia()
 
   const patch = (id: number, changes: Partial<Item>) =>
@@ -33,7 +31,7 @@ export function UploadQueue({ onUploaded }: Props) {
   const remove = (id: number) => setItems((cur) => cur.filter((it) => it.id !== id))
 
   const pending = items.filter((it) => it.status !== 'uploading')
-  const busy = items.some((it) => it.status === 'uploading')
+  const busy = isRunning || items.some((it) => it.status === 'uploading')
   const ready = pending.length > 0 && !busy && pending.every((it) => it.alt.trim() !== '')
 
   const send = async (item: Item) => {
@@ -51,13 +49,20 @@ export function UploadQueue({ onUploaded }: Props) {
     }
   }
 
-  const startAll = () => {
-    pending.forEach((it) => void send(it))
+  // One at a time: each file is buffered in memory on the API, so a parallel batch of videos can exhaust it.
+  // `send` handles its own errors, so a failed file stays in the queue and the rest still upload.
+  const startAll = async () => {
+    setIsRunning(true)
+    try {
+      for (const item of pending) await send(item)
+    } finally {
+      setIsRunning(false)
+    }
   }
 
   return (
     <div className="flex flex-col gap-3">
-      <Dropzone onFiles={(files) => setItems((cur) => [...cur, ...files.map(toItem)])} accept={ACCEPT} hint={HINT} />
+      <Dropzone onFiles={(files) => setItems((cur) => [...cur, ...files.map(toItem)])} accept={accept} hint={hint} />
       {items.length > 0 && (
         <>
           <ul aria-label="Files to upload" className="m-0 list-none border-t border-line p-0">
@@ -66,7 +71,7 @@ export function UploadQueue({ onUploaded }: Props) {
             ))}
           </ul>
           <div className="flex justify-end">
-            <Button variant="primary" disabled={!ready} onClick={startAll}>
+            <Button variant="primary" disabled={!ready} onClick={() => void startAll()}>
               Upload {pending.length} {pending.length === 1 ? 'file' : 'files'}
             </Button>
           </div>

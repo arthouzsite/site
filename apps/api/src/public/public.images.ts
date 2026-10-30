@@ -15,7 +15,7 @@ export async function resolveImages(
 ): Promise<ReadonlyMap<string, PublicImage>> {
   const wanted = [...new Set(ids.filter((id): id is string => Boolean(id)))]
   if (wanted.length === 0) return new Map()
-  const rows = await prisma.media.findMany({ where: { id: { in: wanted } } })
+  const rows = await prisma.media.findMany({ where: { id: { in: wanted }, kind: 'IMAGE' } })
   return new Map(rows.flatMap((m) => {
     const image = toPublicImage(m)
     return image ? [[m.id, image] as const] : []

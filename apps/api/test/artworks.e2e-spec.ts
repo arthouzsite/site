@@ -25,6 +25,10 @@ describe('artworks', () => {
       data: { key, url: `https://m.test/${key}`, thumbUrl: `https://m.test/t-${key}`, width: 10, height: 10, mime: 'image/jpeg', bytes: 1, alt: key },
     })
   }
+  const makeVideo = (key: string) =>
+    prisma.media.create({
+      data: { key, url: `https://m.test/${key}`, thumbUrl: `https://m.test/${key}`, width: 0, height: 0, mime: 'video/mp4', kind: 'VIDEO', bytes: 1, alt: key },
+    })
   const makeArtist = (name: string) => prisma.artist.create({ data: { slug: name.toLowerCase(), name, sortName: name } })
   async function addWork(artistId: string, title: string, over: Record<string, unknown> = {}) {
     const res = await authed.post(`/artists/${artistId}/artworks`).send({ title, ...over }).expect(201)
@@ -55,6 +59,17 @@ describe('artworks', () => {
   })
 
   const ghost = '11111111-1111-4111-8111-111111111111'
+
+  it('rejects a video as the artwork image -> 400 INVALID_MEDIA_KIND on create and update', async () => {
+    const a = await makeArtist('Ana')
+    const video = await makeVideo('clip.mp4')
+    const bad = await authed.post(`/artists/${a.id}/artworks`).send({ title: 'x', imageId: video.id }).expect(400)
+    expect(bad.body.error.code).toBe('INVALID_MEDIA_KIND')
+    expect(bad.body.error.message).toBe('image must be an image')
+    const work = await addWork(a.id, 'ok')
+    const upd = await authed.patch(`/artworks/${work.id}`).send({ title: 'ok', imageId: video.id }).expect(400)
+    expect(upd.body.error.code).toBe('INVALID_MEDIA_KIND')
+  })
 
   it('create appends sortOrder, embeds image, revalidates owning artist', async () => {
     const a = await makeArtist('Ana')

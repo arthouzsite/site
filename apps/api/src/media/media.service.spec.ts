@@ -1,7 +1,8 @@
-import { PayloadTooLargeException } from '@nestjs/common'
+import { BadRequestException, HttpException, PayloadTooLargeException } from '@nestjs/common'
 import sharp from 'sharp'
 import type { PrismaService } from '../common/prisma.service'
 import { ImageService } from './image.service'
+import { MAX_CONCURRENT_UPLOADS } from './media.constants'
 import { MediaService } from './media.service'
 import { MemoryStorage } from './storage/memory.storage'
 
@@ -30,6 +31,9 @@ describe('MediaService upload cleanup', () => {
 })
 
 const MB = 1024 * 1024
+const ftypBox = (body = 'isom') => Buffer.concat([Buffer.from([0, 0, 0, 24]), Buffer.from(`ftyp${body}`), Buffer.alloc(16)])
+const webmHeader = () => Buffer.concat([Buffer.from([0x1a, 0x45, 0xdf, 0xa3]), Buffer.alloc(32)])
+const videoBufferFor = (mime: string) => (mime === 'video/webm' ? webmHeader() : ftypBox())
 
 function buildService() {
   const storage = new MemoryStorage()
@@ -52,7 +56,7 @@ describe('MediaService video upload', () => {
     ['video/quicktime', 'mov'],
   ])('stores one object for %s with kind VIDEO, thumbUrl = url and zero dimensions', async (mimetype, ext) => {
     const { service, storage, putSpy, create, processSpy } = buildService()
-    const buffer = Buffer.from('not-really-a-video')
+    const buffer = videoBufferFor(mimetype)
 
     await service.upload({ buffer, mimetype }, 'A short film', 'u1')
 
@@ -80,19 +84,113 @@ describe('MediaService video upload', () => {
 
   it('accepts a video larger than the 25 MB image limit', async () => {
     const { service, create } = buildService()
-    await service.upload({ buffer: Buffer.alloc(30 * MB), mimetype: 'video/mp4' }, 'Big', null)
+    await service.upload({ buffer: Buffer.concat([ftypBox(), Buffer.alloc(30 * MB)]), mimetype: 'video/mp4' }, 'Big', null)
     expect(create).toHaveBeenCalledTimes(1)
   })
 
   it('deletes the single object when the row insert fails', async () => {
     const { service, storage, putSpy, create } = buildService()
     create.mockRejectedValueOnce(new Error('db down'))
-    await expect(service.upload({ buffer: Buffer.from('v'), mimetype: 'video/webm' }, 'x', null)).rejects.toThrow('db down')
+    await expect(service.upload({ buffer: webmHeader(), mimetype: 'video/webm' }, 'x', null)).rejects.toThrow('db down')
     expect(storage.has(putSpy.mock.calls[0]![0])).toBe(false)
   })
 })
 
+describe('MediaService video signature check', () => {
+  it.each([
+    ['video/mp4', ftypBox('isom')],
+    ['video/quicktime', ftypBox('qt  ')],
+    ['video/webm', webmHeader()],
+  ])('accepts a valid %s signature', async (mimetype, buffer) => {
+    const { service, create } = buildService()
+    await service.upload({ buffer, mimetype }, 'ok', null)
+    expect(create).toHaveBeenCalledTimes(1)
+  })
+
+  it.each([
+    ['video/mp4', Buffer.from('not-really-a-video')],
+    ['video/quicktime', Buffer.concat([Buffer.alloc(4), Buffer.from('moov'), Buffer.alloc(16)])],
+    ['video/mp4', webmHeader()],
+    ['video/webm', ftypBox()],
+    ['video/webm', Buffer.alloc(0)],
+    ['video/mp4', Buffer.from([0, 0, 0, 24, 0x66, 0x74, 0x79])],
+  ])('rejects %s with 400 INVALID_VIDEO before storing', async (mimetype, buffer) => {
+    const { service, putSpy, create } = buildService()
+    const error = await service.upload({ buffer, mimetype }, 'bad', null).catch((e: unknown) => e)
+    expect(error).toBeInstanceOf(BadRequestException)
+    expect((error as BadRequestException).getResponse()).toMatchObject({ code: 'INVALID_VIDEO' })
+    expect(putSpy).not.toHaveBeenCalled()
+    expect(create).not.toHaveBeenCalled()
+  })
+})
+
+describe('MediaService upload concurrency cap', () => {
+  function gatedService() {
+    const ctx = buildService()
+    const releases: Array<() => void> = []
+    const realPut = MemoryStorage.prototype.put.bind(ctx.storage)
+    ctx.putSpy.mockImplementation(
+      (key, body, type) => new Promise((resolve) => releases.push(() => resolve(realPut(key, body, type)))),
+    )
+    return { ...ctx, releases }
+  }
+  const video = () => ({ buffer: ftypBox(), mimetype: 'video/mp4' })
+  const tick = () => new Promise((resolve) => setImmediate(resolve))
+
+  it('returns 429 TOO_MANY_UPLOADS beyond the cap instead of queueing', async () => {
+    const { service, releases, putSpy } = gatedService()
+    const running = Array.from({ length: MAX_CONCURRENT_UPLOADS }, () => service.upload(video(), 'a', null))
+    await tick()
+    expect(releases).toHaveLength(MAX_CONCURRENT_UPLOADS)
+
+    const error = await service.upload(video(), 'extra', null).catch((e: unknown) => e)
+    expect(error).toBeInstanceOf(HttpException)
+    expect((error as HttpException).getStatus()).toBe(429)
+    expect((error as HttpException).getResponse()).toMatchObject({ code: 'TOO_MANY_UPLOADS' })
+    expect(putSpy).toHaveBeenCalledTimes(MAX_CONCURRENT_UPLOADS)
+
+    releases.forEach((release) => release())
+    await Promise.all(running)
+  })
+
+  it('frees a slot when an upload finishes', async () => {
+    const { service, releases } = gatedService()
+    const running = Array.from({ length: MAX_CONCURRENT_UPLOADS }, () => service.upload(video(), 'a', null))
+    await tick()
+    releases[0]!()
+    await running[0]
+    const next = service.upload(video(), 'b', null)
+    await tick()
+    expect(releases).toHaveLength(MAX_CONCURRENT_UPLOADS + 1)
+    releases.forEach((release) => release())
+    await Promise.all([...running, next])
+  })
+
+  it('frees the slot when an upload fails', async () => {
+    const { service, create } = buildService()
+    create.mockRejectedValue(new Error('db down'))
+    for (let i = 0; i < MAX_CONCURRENT_UPLOADS + 2; i += 1) {
+      await expect(service.upload(video(), 'x', null)).rejects.toThrow('db down')
+    }
+  })
+
+  it('frees the slot when validation rejects the file', async () => {
+    const { service } = buildService()
+    for (let i = 0; i < MAX_CONCURRENT_UPLOADS + 2; i += 1) {
+      await expect(service.upload({ buffer: Buffer.from('x'), mimetype: 'video/mp4' }, 'x', null)).rejects.toBeInstanceOf(BadRequestException)
+    }
+  })
+})
+
 describe('MediaService image size limit', () => {
+  it('accepts an image of exactly 25 MB', async () => {
+    const { service, processSpy, create } = buildService()
+    processSpy.mockResolvedValue({ width: 10, height: 10, thumb: Buffer.from('t'), ext: 'jpg', mime: 'image/jpeg' })
+    await service.upload({ buffer: Buffer.alloc(25 * MB), mimetype: 'image/jpeg' }, 'alt', null)
+    expect(processSpy).toHaveBeenCalledTimes(1)
+    expect(create).toHaveBeenCalledTimes(1)
+  })
+
   it('rejects an image over 25 MB with 413 PAYLOAD_TOO_LARGE before decoding or storing', async () => {
     const { service, putSpy, processSpy } = buildService()
     const error = await service

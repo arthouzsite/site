@@ -32,6 +32,7 @@ describe('media', () => {
     return req.attach('file', buf, { filename, contentType: mime })
   }
   // ftyp box header of an MP4; the API stores videos as-is without decoding them.
+  const webm = () => Buffer.concat([Buffer.from([0x1a, 0x45, 0xdf, 0xa3]), randomBytes(2048)])
   const mp4 = () => Buffer.concat([Buffer.from([0, 0, 0, 24]), Buffer.from('ftypisom'), randomBytes(2048)])
 
   beforeAll(async () => {
@@ -78,6 +79,13 @@ describe('media', () => {
   it('rejects 26 MB with 413', async () => {
     const res = await upload(randomBytes(26 * MB)).expect(413)
     expect(res.body.error.code).toBe('PAYLOAD_TOO_LARGE')
+  })
+
+  it('rejects an image one byte over 25 MB with 413 and stores nothing', async () => {
+    // The size check runs before decoding, so a zero-filled body is enough to exercise the real HTTP path.
+    const res = await upload(Buffer.alloc(25 * MB + 1)).expect(413)
+    expect(res.body.error.code).toBe('PAYLOAD_TOO_LARGE')
+    expect(await prisma.media.count()).toBe(0)
   })
 
   it('rejects missing alt with 400 fields.alt', async () => {
@@ -187,10 +195,18 @@ describe('media', () => {
     })
 
     it('accepts webm and quicktime', async () => {
-      const webm = await upload(mp4(), 'video/webm', 'w', 'a.webm').expect(201)
+      const webmRes = await upload(webm(), 'video/webm', 'w', 'a.webm').expect(201)
       const mov = await upload(mp4(), 'video/quicktime', 'm', 'a.mov').expect(201)
-      expect(webm.body.data.key).toMatch(/\.webm$/)
+      expect(webmRes.body.data.key).toMatch(/\.webm$/)
       expect(mov.body.data.key).toMatch(/\.mov$/)
+    })
+
+    it('rejects bytes without a video signature with 400 INVALID_VIDEO and stores nothing', async () => {
+      const fake = await upload(Buffer.from('definitely not a video'), 'video/mp4', 'fake', 'f.mp4').expect(400)
+      expect(fake.body.error.code).toBe('INVALID_VIDEO')
+      const swapped = await upload(mp4(), 'video/webm', 'swapped', 'f.webm').expect(400)
+      expect(swapped.body.error.code).toBe('INVALID_VIDEO')
+      expect(await prisma.media.count()).toBe(0)
     })
 
     it('rejects video/x-msvideo with 415', async () => {

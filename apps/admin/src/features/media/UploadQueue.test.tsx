@@ -50,6 +50,8 @@ describe('UploadQueue', () => {
     ['PAYLOAD_TOO_LARGE', 413, 'This image is larger than 25 MB'],
     ['UNSUPPORTED_MEDIA_TYPE', 415, 'Only JPEG, PNG, WebP, AVIF, MP4, WebM or MOV files'],
     ['VALIDATION', 400, 'Alt text is required'],
+    ['INVALID_VIDEO', 400, 'This file is not a valid video.'],
+    ['TOO_MANY_UPLOADS', 429, 'Too many uploads at once'],
   ])('maps %s to plain English inline', async (code, status, text) => {
     vi.spyOn(api, 'upload').mockRejectedValue(new ApiError(status, { code, message: 'raw', fields: { alt: 'x' } }))
     renderWithProviders(<UploadQueue />)
@@ -87,6 +89,38 @@ describe('UploadQueue', () => {
       'image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm,video/quicktime',
     )
     expect(screen.getByText('JPEG, PNG, WebP or AVIF up to 25 MB, or MP4, WebM or MOV up to 200 MB')).toBeInTheDocument()
+  })
+
+  it('lets the caller narrow accept and hint', () => {
+    renderWithProviders(<UploadQueue accept="image/jpeg" hint="JPEG only" />)
+    expect(screen.getByLabelText(/choose files/i)).toHaveAttribute('accept', 'image/jpeg')
+    expect(screen.getByText('JPEG only')).toBeInTheDocument()
+  })
+
+  it('uploads queued files one at a time, in order, and keeps going after a failure', async () => {
+    const started: string[] = []
+    let inFlight = 0
+    let maxInFlight = 0
+    vi.spyOn(api, 'upload').mockImplementation(async (_p, form) => {
+      const name = ((form as FormData).get('file') as File).name
+      started.push(name)
+      inFlight += 1
+      maxInFlight = Math.max(maxInFlight, inFlight)
+      await new Promise((resolve) => setTimeout(resolve, 5))
+      inFlight -= 1
+      if (name === 'b.jpg') throw new ApiError(400, { code: 'INVALID_IMAGE', message: 'raw' })
+      return makeMedia({ id: name })
+    })
+    const onUploaded = vi.fn()
+    renderWithProviders(<UploadQueue onUploaded={onUploaded} />)
+    const user = await choose([file('a.jpg'), file('b.jpg'), file('c.jpg')])
+    for (const name of ['a.jpg', 'b.jpg', 'c.jpg']) await user.type(screen.getByLabelText(`Alt text for ${name}`), 'Alt')
+    await user.click(screen.getByRole('button', { name: /^upload 3 files/i }))
+    await waitFor(() => expect(onUploaded).toHaveBeenCalledTimes(2))
+    expect(started).toEqual(['a.jpg', 'b.jpg', 'c.jpg'])
+    expect(maxInFlight).toBe(1)
+    expect(await screen.findByRole('alert')).toHaveTextContent('not a valid image')
+    expect(screen.getByText('b.jpg')).toBeInTheDocument()
   })
 
   it('uploads a video file', async () => {

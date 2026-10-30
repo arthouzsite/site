@@ -11,6 +11,24 @@ function detail(used = usedBy) {
   server.use(http.get(`${API_URL}/media/m1`, () => HttpResponse.json(envelope({ ...makeMedia(), usedBy: used }))))
 }
 
+describe('MediaDetailPanel upload new version', () => {
+  const hiddenInput = (container: HTMLElement) => container.querySelector('input[type="file"]')!
+
+  it('accepts images only when replacing an image', async () => {
+    detail()
+    const { container } = renderWithProviders(<MediaDetailPanel id="m1" onClose={() => {}} onSelect={() => {}} />)
+    await screen.findByDisplayValue('Tidewater hero')
+    expect(hiddenInput(container)).toHaveAttribute('accept', 'image/jpeg,image/png,image/webp,image/avif')
+  })
+
+  it('accepts videos only when replacing a video', async () => {
+    server.use(http.get(`${API_URL}/media/v1`, () => HttpResponse.json(envelope({ ...makeMedia({ id: 'v1', kind: 'VIDEO', mime: 'video/mp4', alt: 'Tour' }), usedBy: [] }))))
+    const { container } = renderWithProviders(<MediaDetailPanel id="v1" onClose={() => {}} onSelect={() => {}} />)
+    await screen.findByDisplayValue('Tour')
+    expect(hiddenInput(container)).toHaveAttribute('accept', 'video/mp4,video/webm,video/quicktime')
+  })
+})
+
 describe('MediaDetailPanel', () => {
   it('delete in-use media shows usage list, not an error toast', async () => {
     detail()
