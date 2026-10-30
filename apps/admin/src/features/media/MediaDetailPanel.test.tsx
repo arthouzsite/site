@@ -34,6 +34,20 @@ describe('MediaDetailPanel', () => {
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
   })
 
+  it('previews a video with controls and shows a dash for dimensions', async () => {
+    const clip = makeMedia({ id: 'v1', kind: 'VIDEO', mime: 'video/mp4', key: 'media/v1.mp4', url: 'https://cdn.example/v1.mp4', thumbUrl: 'https://cdn.example/v1.mp4', width: 0, height: 0, alt: 'Studio tour' })
+    server.use(http.get(`${API_URL}/media/v1`, () => HttpResponse.json(envelope({ ...clip, usedBy: [] }))))
+    const { container } = renderWithProviders(<MediaDetailPanel id="v1" onClose={() => {}} onSelect={() => {}} />)
+    await screen.findByDisplayValue('Studio tour')
+    const player = container.querySelector('video')
+    expect(player).not.toBeNull()
+    expect(player).toHaveAttribute('controls')
+    expect(player).toHaveAttribute('src', 'https://cdn.example/v1.mp4')
+    expect(container.querySelector('img')).toBeNull()
+    expect(screen.getByText('Dimensions').nextElementSibling).toHaveTextContent('—')
+    expect(screen.getByText('MP4')).toBeInTheDocument()
+  })
+
   it('requires alt text and saves alt and caption', async () => {
     detail([])
     let body: unknown

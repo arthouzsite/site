@@ -26,11 +26,13 @@ describe('media', () => {
     patch: (path: string) => request(server()).patch(path).set('Cookie', cookie),
     delete: (path: string) => request(server()).delete(path).set('Cookie', cookie),
   }
-  const upload = (buf: Buffer, mime = 'image/jpeg', alt: string | null = 'A calm sea') => {
+  const upload = (buf: Buffer, mime = 'image/jpeg', alt: string | null = 'A calm sea', filename = 'x.jpg') => {
     const req = http.post('/media')
     if (alt !== null) req.field('alt', alt)
-    return req.attach('file', buf, { filename: 'x.jpg', contentType: mime })
+    return req.attach('file', buf, { filename, contentType: mime })
   }
+  // ftyp box header of an MP4; the API stores videos as-is without decoding them.
+  const mp4 = () => Buffer.concat([Buffer.from([0, 0, 0, 24]), Buffer.from('ftypisom'), randomBytes(2048)])
 
   beforeAll(async () => {
     migrateTestDb()
@@ -171,5 +173,62 @@ describe('media', () => {
     const got = await http.get(`/media/${created.id}`).expect(200)
     expect(got.body.data.usedBy).toHaveLength(1)
     expect(await prisma.media.count()).toBe(1)
+  })
+
+  describe('video uploads', () => {
+    it('uploads an mp4 as kind VIDEO with zero dimensions and thumbUrl = url', async () => {
+      const storage = app.get<MemoryStorage>(STORAGE)
+      const res = await upload(mp4(), 'video/mp4', 'Studio tour', 'tour.mp4').expect(201)
+      expect(res.body.data).toMatchObject({ kind: 'VIDEO', mime: 'video/mp4', width: 0, height: 0, alt: 'Studio tour', uploadedById: userId })
+      expect(res.body.data.key).toMatch(/^arthouz\/\d{4}\/\d{2}\/[0-9a-f-]{36}\.mp4$/)
+      expect(res.body.data.thumbUrl).toBe(res.body.data.url)
+      expect(storage.has(res.body.data.key)).toBe(true)
+      expect(storage.has(res.body.data.key.replace(/\.mp4$/, '-thumb.webp'))).toBe(false)
+    })
+
+    it('accepts webm and quicktime', async () => {
+      const webm = await upload(mp4(), 'video/webm', 'w', 'a.webm').expect(201)
+      const mov = await upload(mp4(), 'video/quicktime', 'm', 'a.mov').expect(201)
+      expect(webm.body.data.key).toMatch(/\.webm$/)
+      expect(mov.body.data.key).toMatch(/\.mov$/)
+    })
+
+    it('rejects video/x-msvideo with 415', async () => {
+      const res = await upload(mp4(), 'video/x-msvideo', 'avi', 'a.avi').expect(415)
+      expect(res.body.error.code).toBe('UNSUPPORTED_MEDIA_TYPE')
+      expect(await prisma.media.count()).toBe(0)
+    })
+
+    it('marks images as kind IMAGE', async () => {
+      const res = await upload(jpeg).expect(201)
+      expect(res.body.data.kind).toBe('IMAGE')
+    })
+
+    it('filters the list by kind and rejects unknown kinds with 400 VALIDATION', async () => {
+      await upload(jpeg, 'image/jpeg', 'Still').expect(201)
+      const video = (await upload(mp4(), 'video/mp4', 'Film', 'f.mp4').expect(201)).body.data
+
+      const videos = await http.get('/media?kind=video').expect(200)
+      expect(videos.body.data.map((m: { id: string }) => m.id)).toEqual([video.id])
+      expect(videos.body.meta.total).toBe(1)
+
+      const images = await http.get('/media?kind=image').expect(200)
+      expect(images.body.data).toHaveLength(1)
+      expect(images.body.data[0].kind).toBe('IMAGE')
+
+      expect((await http.get('/media').expect(200)).body.meta.total).toBe(2)
+
+      const bad = await http.get('/media?kind=bogus').expect(400)
+      expect(bad.body.error.code).toBe('VALIDATION')
+      expect(bad.body.error.fields.kind).toBeDefined()
+    })
+
+    it('deletes a video and its single storage object', async () => {
+      const storage = app.get<MemoryStorage>(STORAGE)
+      const created = (await upload(mp4(), 'video/mp4', 'Film', 'f.mp4').expect(201)).body.data
+      await http.delete(`/media/${created.id}`).expect(200)
+      expect(await prisma.media.count()).toBe(0)
+      expect(storage.has(created.key)).toBe(false)
+    })
   })
 })

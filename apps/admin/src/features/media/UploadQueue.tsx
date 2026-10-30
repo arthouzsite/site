@@ -2,11 +2,11 @@ import { useState } from 'react'
 import { ApiError } from '../../lib/api'
 import { formatBytes } from '../../lib/format'
 import { Button, Dropzone, Icon, Input } from '../../components/ui'
-import { uploadErrorMessage, type Media } from './types'
+import { MEDIA_ACCEPT, uploadErrorMessage, type Media } from './types'
 import { useUploadMedia } from './useMedia'
 
-const ACCEPT = 'image/jpeg,image/png,image/webp,image/avif'
-const HINT = 'JPEG, PNG, WebP or AVIF, up to 25 MB'
+const ACCEPT = MEDIA_ACCEPT
+const HINT = 'JPEG, PNG, WebP or AVIF up to 25 MB, or MP4, WebM or MOV up to 200 MB'
 
 type Status = 'queued' | 'uploading' | 'error'
 type Item = { id: number; file: File; alt: string; progress: number; status: Status; error: string | null }
@@ -19,8 +19,8 @@ function toItem(file: File): Item {
   return { id: nextItemId++, file, alt: '', progress: 0, status: 'queued', error: null }
 }
 
-function describe(err: unknown): string {
-  if (err instanceof ApiError) return uploadErrorMessage(err)
+function describe(err: unknown, file: File): string {
+  if (err instanceof ApiError) return uploadErrorMessage(err, file)
   return 'Upload failed. Try again.'
 }
 
@@ -47,7 +47,7 @@ export function UploadQueue({ onUploaded }: Props) {
       remove(item.id)
       onUploaded?.(media)
     } catch (err) {
-      patch(item.id, { status: 'error', error: describe(err) })
+      patch(item.id, { status: 'error', error: describe(err, item.file) })
     }
   }
 

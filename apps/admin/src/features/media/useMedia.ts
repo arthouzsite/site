@@ -1,25 +1,26 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../../lib/api'
-import type { Media, MediaDetail } from './types'
+import type { Media, MediaDetail, MediaKindFilter } from './types'
 
 export const MEDIA_PAGE_SIZE = 18
 export const PICKER_PAGE_SIZE = 12
 
-export type MediaQuery = { q: string; page: number; missingAlt: boolean; limit: number }
+export type MediaQuery = { q: string; page: number; missingAlt: boolean; limit: number; kind?: MediaKindFilter }
 type MediaList = { items: Media[]; total: number }
 
-async function fetchList({ q, page, missingAlt, limit }: MediaQuery): Promise<MediaList> {
+async function fetchList({ q, page, missingAlt, limit, kind }: MediaQuery): Promise<MediaList> {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) })
   if (q) params.set('q', q)
   if (missingAlt) params.set('missingAlt', 'true')
+  if (kind) params.set('kind', kind)
   const { data, meta } = await api.getWithMeta<Media[]>(`/media?${params}`)
   return { items: data, total: meta?.total ?? data.length }
 }
 
 export function useMediaList(query: MediaQuery) {
-  const { q, page, missingAlt, limit } = query
+  const { q, page, missingAlt, limit, kind = '' } = query
   return useQuery({
-    queryKey: ['media', { q, page, missingAlt, limit }],
+    queryKey: ['media', { q, page, missingAlt, limit, kind }],
     queryFn: () => fetchList(query),
     placeholderData: keepPreviousData,
   })

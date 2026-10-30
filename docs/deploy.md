@@ -70,7 +70,7 @@ Secrets are marked **secret**; keep them out of the repository and out of the ad
 
 ## Object storage (R2)
 
-- Uploads are proxied through the API: the admin POSTs a multipart file to the API (25 MB limit; JPEG, PNG, WebP or AVIF), which writes the original and a thumbnail to the bucket with `PutObject`. There are no presigned uploads, so the bucket needs no CORS rule for the admin origin.
+- Uploads are proxied through the API: the admin POSTs a multipart file to the API (images: JPEG, PNG, WebP or AVIF up to 25 MB; videos: MP4, WebM or MOV up to 200 MB). Images are stored as the original plus a 480 px WebP thumbnail with `PutObject`; videos are stored as a single object with no poster frame (the admin renders the video itself, and width/height are stored as 0). There are no presigned uploads, so the bucket needs no CORS rule for the admin origin.
 - The bucket must be publicly readable at `AWS_S3_PUBLIC_URL` (R2 public bucket or custom domain): the site and admin load images directly from that URL. Objects are written with `Cache-Control: public, max-age=31536000, immutable`.
 - Set `IMAGE_HOST` on the web app to the hostname of `AWS_S3_PUBLIC_URL`.
 - The access key only needs read/write/delete on this bucket.
@@ -82,4 +82,5 @@ Secrets are marked **secret**; keep them out of the repository and out of the ad
 - `ADMIN_ORIGIN` must match the browser's `Origin` header for the admin exactly (`https://admin.example.com`, no trailing slash). Write requests (POST, PUT, PATCH, DELETE) carrying any other `Origin` get `403 BAD_ORIGIN`. CORS allows `ADMIN_ORIGIN` and `WEB_URL` with credentials.
 - Revalidation: after content changes the API POSTs `{WEB_URL}/api/revalidate` with header `x-revalidate-secret: $REVALIDATE_SECRET` and body `{ "tags": [...] }`. `WEB_URL` must be reachable from the API host, and `REVALIDATE_SECRET` must be identical in the API and web environments. Failures are logged as warnings and do not fail the admin request, so a wrong secret shows up as stale site content, not as an error.
 - Rate limits: only `POST /auth/login` is throttled (5 per minute). `/public/search` (API) and `/api/search` (web proxy route) have no rate limit; throttle both at the proxy before launch. `/api/search` rejects queries over 120 characters.
+- Upload size: the reverse proxy must allow request bodies of at least 200 MB on `POST /media` (for nginx, `client_max_body_size 200m;`), with request and read timeouts long enough for slow uploads. The API itself enforces 200 MB for videos and 25 MB for images; a proxy limit below 200 MB surfaces in the admin as a 413 on videos.
 - Proxy headers: the API does not set Express `trust proxy`, so the login throttle sees the proxy's address unless the proxy and API share a network layer that preserves client IPs. Check this before relying on the per-IP login limit.

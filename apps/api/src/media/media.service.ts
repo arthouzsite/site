@@ -1,15 +1,15 @@
-import { ConflictException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common'
+import { ConflictException, Inject, Injectable, Logger, NotFoundException, PayloadTooLargeException } from '@nestjs/common'
 import { randomUUID } from 'node:crypto'
 import type { MediaPatch } from '@arthouz/shared'
 import { PrismaService } from '../common/prisma.service'
-import type { Media, Prisma } from '../generated/prisma/client'
+import type { Media, MediaKind, Prisma } from '../generated/prisma/client'
 import { ImageService } from './image.service'
-import { KEY_PREFIX } from './media.constants'
+import { ALLOWED_VIDEO_MIMES, KEY_PREFIX, MAX_IMAGE_UPLOAD_BYTES, VIDEO_EXT_BY_MIME } from './media.constants'
 import { findMediaUsage, type MediaUsage } from './media.usage'
 import { STORAGE, type Storage } from './storage/storage.interface'
 
-export type MediaListQuery = { q?: string; missingAlt?: boolean; page: number; limit: number; skip: number }
-export type UploadedFile = { buffer: Buffer }
+export type MediaListQuery = { q?: string; missingAlt?: boolean; kind?: MediaKind; page: number; limit: number; skip: number }
+export type UploadedFile = { buffer: Buffer; mimetype: string }
 
 function buildKeys(ext: string, now: Date): { key: string; thumbKey: string } {
   const yyyy = String(now.getUTCFullYear())
@@ -33,6 +33,43 @@ export class MediaService {
   ) {}
 
   async upload(file: UploadedFile, alt: string, userId: string | null): Promise<Media> {
+    if (ALLOWED_VIDEO_MIMES.includes(file.mimetype)) return this.uploadVideo(file, alt, userId)
+    return this.uploadImage(file, alt, userId)
+  }
+
+  private async uploadVideo(file: UploadedFile, alt: string, userId: string | null): Promise<Media> {
+    const ext = VIDEO_EXT_BY_MIME[file.mimetype] ?? 'mp4'
+    const { key } = buildKeys(ext, new Date())
+    const stored = await this.storage.put(key, file.buffer, file.mimetype)
+    try {
+      return await this.prisma.media.create({
+        data: {
+          key,
+          url: stored.url,
+          // No poster frames: the admin grid renders the video itself.
+          thumbUrl: stored.url,
+          width: 0,
+          height: 0,
+          mime: file.mimetype,
+          kind: 'VIDEO',
+          bytes: file.buffer.length,
+          alt,
+          uploadedById: userId,
+        },
+      })
+    } catch (error) {
+      await this.cleanup([key])
+      throw error
+    }
+  }
+
+  private async uploadImage(file: UploadedFile, alt: string, userId: string | null): Promise<Media> {
+    if (file.buffer.length > MAX_IMAGE_UPLOAD_BYTES) {
+      throw new PayloadTooLargeException({
+        code: 'PAYLOAD_TOO_LARGE',
+        message: 'Images must be 25 MB or smaller',
+      })
+    }
     const processed = await this.images.process(file.buffer)
     const { key, thumbKey } = buildKeys(processed.ext, new Date())
     const original = await this.storage.put(key, file.buffer, processed.mime)
@@ -46,6 +83,7 @@ export class MediaService {
           width: processed.width,
           height: processed.height,
           mime: processed.mime,
+          kind: 'IMAGE',
           bytes: file.buffer.length,
           alt,
           uploadedById: userId,
@@ -63,6 +101,7 @@ export class MediaService {
       filters.push({ OR: [{ key: { contains: query.q, mode: 'insensitive' } }, { alt: { contains: query.q, mode: 'insensitive' } }] })
     }
     if (query.missingAlt) filters.push({ alt: '' })
+    if (query.kind) filters.push({ kind: query.kind })
     const where: Prisma.MediaWhereInput = filters.length ? { AND: filters } : {}
     const [items, total] = await Promise.all([
       this.prisma.media.findMany({ where, orderBy: { createdAt: 'desc' }, skip: query.skip, take: query.limit }),
@@ -96,7 +135,7 @@ export class MediaService {
     }
     await this.prisma.media.delete({ where: { id } })
     await this.storage.delete(media.key)
-    await this.storage.delete(thumbKeyOf(media.key))
+    if (media.kind === 'IMAGE') await this.storage.delete(thumbKeyOf(media.key))
   }
 
   private async find(id: string): Promise<Media> {

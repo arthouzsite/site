@@ -38,20 +38,26 @@ model User {
   uploads Media[]
 }
 
+enum MediaKind {
+  IMAGE
+  VIDEO
+}
+
 model Media {
-  id           String   @id @default(uuid())
-  key          String   @unique
+  id           String    @id @default(uuid())
+  key          String    @unique
   url          String
   thumbUrl     String
   width        Int
   height       Int
   mime         String
+  kind         MediaKind @default(IMAGE)
   bytes        Int
   alt          String
   caption      String?
   uploadedById String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   uploadedBy      User?            @relation(fields: [uploadedById], references: [id])
   exhibitionHeros Exhibition[]

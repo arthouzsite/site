@@ -6,6 +6,7 @@ import { MEDIA_PAGE_SIZE, useMediaList } from './useMedia'
 import { MediaDetailPanel } from './MediaDetailPanel'
 import { MediaGrid } from './MediaGrid'
 import { MediaToolbar } from './MediaToolbar'
+import { parseKindFilter } from './types'
 import { UploadQueue } from './UploadQueue'
 import { useDebouncedValue } from './useDebouncedValue'
 
@@ -16,10 +17,11 @@ export default function MediaPage() {
   const q = params.get('q') ?? ''
   const page = Math.max(1, Number(params.get('page')) || 1)
   const missingAlt = params.get('missingAlt') === 'true'
+  const kind = parseKindFilter(params.get('kind'))
   const [search, setSearch] = useState(q)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const debounced = useDebouncedValue(search.trim(), SEARCH_DEBOUNCE_MS)
-  const list = useMediaList({ q, page, missingAlt, limit: MEDIA_PAGE_SIZE })
+  const list = useMediaList({ q, page, missingAlt, kind, limit: MEDIA_PAGE_SIZE })
 
   const update = (changes: Record<string, string | null>) =>
     setParams((cur) => {
@@ -47,13 +49,15 @@ export default function MediaPage() {
         onSearch={setSearch}
         missingAlt={missingAlt}
         onMissingAlt={(on) => update({ missingAlt: on ? 'true' : null, page: null })}
+        kind={kind}
+        onKind={(next) => update({ kind: next || null, page: null })}
       />
       <div className="grid grid-cols-[minmax(0,1fr)_340px] items-start gap-6 max-[1100px]:grid-cols-1">
         <div className="flex min-w-0 flex-col gap-4">
           <UploadQueue onUploaded={(media) => setSelectedId(media.id)} />
           {list.isError && <p role="alert" className="m-0 text-13 text-danger">Could not load the library. Try again.</p>}
           {list.data && list.data.items.length === 0 && (
-            <p className="m-0 py-10 text-center text-13 text-muted">{q || missingAlt ? 'No files match.' : 'No files yet.'}</p>
+            <p className="m-0 py-10 text-center text-13 text-muted">{q || missingAlt || kind ? 'No files match.' : 'No files yet.'}</p>
           )}
           {list.data && list.data.items.length > 0 && (
             <MediaGrid items={list.data.items} selectedId={selectedId} onSelect={(m) => setSelectedId(m.id)} />

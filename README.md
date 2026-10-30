@@ -41,7 +41,7 @@ pnpm dev                    # api, web and admin in parallel
 
 The seed loads the prototype content and creates the admin user from `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` in `apps/api/.env`. Sign in to the admin with those.
 
-`.env.example` sets `STORAGE_DRIVER=memory`: uploads succeed but nothing is persisted and image URLs are `memory://...`. To upload real images locally, set `STORAGE_DRIVER=r2` and the five `S3_ENDPOINT` / `AWS_*` keys (see `docs/deploy.md`).
+`.env.example` sets `STORAGE_DRIVER=memory`: uploads succeed but nothing is persisted and image URLs are `memory://...`. The media library accepts images (JPEG, PNG, WebP, AVIF, up to 25 MB) and videos (MP4, WebM, MOV, up to 200 MB); videos are library-only for now and are never offered in image pickers. To upload real files locally, set `STORAGE_DRIVER=r2` and the five `S3_ENDPOINT` / `AWS_*` keys (see `docs/deploy.md`).
 
 `pnpm dev` starts the site against the API at `API_URL`; content pages are fetched from the API, so start the API first if the site shows an error.
 
@@ -64,4 +64,4 @@ The visual and accessibility suites migrate and seed their own database, build t
 ## Further reading
 
 - `docs/superpowers/specs/2026-10-30-arthouz-cms-design.md` - design spec and recorded deviations
-- `docs/deploy.md` - build outputs, environment, storage, reverse proxy
+- `docs/deploy.md` - build outputs, environment, storage, reverse proxy (including the 200 MB upload body limit)

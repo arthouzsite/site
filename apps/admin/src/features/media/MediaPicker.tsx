@@ -21,7 +21,7 @@ export function MediaPicker({ open, onClose, onSelect }: Props) {
   const [page, setPage] = useState(1)
   const [selected, setSelected] = useState<Media | null>(null)
   const q = useDebouncedValue(search.trim(), SEARCH_DEBOUNCE_MS)
-  const list = useMediaList({ q, page, missingAlt: false, limit: PICKER_PAGE_SIZE })
+  const list = useMediaList({ q, page, missingAlt: false, limit: PICKER_PAGE_SIZE, kind: 'image' })
   const missingAlt = selected !== null && selected.alt.trim() === ''
 
   const confirm = () => {

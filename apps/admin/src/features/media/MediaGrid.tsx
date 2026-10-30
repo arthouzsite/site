@@ -45,14 +45,21 @@ export function MediaGrid({ items, selectedId, onSelect, label = 'Media library'
               selected ? 'border-ink shadow-[inset_0_0_0_1px_var(--color-ink)]' : 'border-line',
             )}
           >
-            <div className="aspect-[4/3] overflow-hidden bg-img-ph">
-              <img src={m.thumbUrl} alt={m.alt} width={m.width} height={m.height} loading="lazy" className="h-full w-full object-cover" />
+            <div className="relative aspect-[4/3] overflow-hidden bg-img-ph">
+              {m.kind === 'VIDEO' ? (
+                <>
+                  <video src={m.url} muted preload="metadata" playsInline aria-label={m.alt} className="h-full w-full object-cover" />
+                  <span className="absolute left-2 top-2 bg-ink px-1.5 py-0.5 text-11 uppercase tracking-eyebrow text-paper">Video</span>
+                </>
+              ) : (
+                <img src={m.thumbUrl} alt={m.alt} width={m.width} height={m.height} loading="lazy" className="h-full w-full object-cover" />
+              )}
             </div>
             <div className="flex flex-col gap-0.5 px-2.5 py-2">
               <span className="truncate text-13 text-ink">{fileName(m)}</span>
               {m.alt ? (
                 <span className="flex gap-2.5 text-12 text-muted">
-                  <span>{m.width}×{m.height}</span>
+                  {m.kind !== 'VIDEO' && <span>{m.width}×{m.height}</span>}
                   <span>{formatBytes(m.bytes)}</span>
                 </span>
               ) : (

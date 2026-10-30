@@ -5,7 +5,7 @@ import { formatBytes, formatDate } from '../../lib/format'
 import { useToast } from '../../lib/toast'
 import { InUseDialog, UsageList } from './InUseDialog'
 import { MediaDetailForm } from './MediaDetailForm'
-import { fileName, type MediaUsage } from './types'
+import { fileName, IMAGE_MIMES, VIDEO_MIMES, type MediaUsage } from './types'
 import { useDeleteMedia, useMediaDetail, useUploadMedia } from './useMedia'
 
 type Props = { id: string; onClose: () => void; onSelect: (id: string) => void }
@@ -31,6 +31,8 @@ export function MediaDetailPanel({ id, onClose, onSelect }: Props) {
   const [blockedBy, setBlockedBy] = useState<MediaUsage[] | null>(null)
 
   const media = detail.data
+  const isVideo = media?.kind === 'VIDEO'
+  const noun = isVideo ? 'video' : 'image'
 
   const copyUrl = async () => {
     if (!media) return
@@ -47,13 +49,13 @@ export function MediaDetailPanel({ id, onClose, onSelect }: Props) {
     try {
       await del.mutateAsync()
       setConfirming(false)
-      toast.success('Image deleted')
+      toast.success(`${isVideo ? 'Video' : 'Image'} deleted`)
       onClose()
     } catch (err) {
       setDeleting(false)
       setConfirming(false)
       if (err instanceof ApiError && err.code === 'MEDIA_IN_USE') setBlockedBy(usageFrom(err))
-      else toast.error(err instanceof ApiError ? err.message : 'Could not delete the image')
+      else toast.error(err instanceof ApiError ? err.message : `Could not delete the ${noun}`)
     }
   }
 
@@ -62,7 +64,7 @@ export function MediaDetailPanel({ id, onClose, onSelect }: Props) {
     e.target.value = ''
     if (!file || !media) return
     if (!media.alt.trim()) {
-      toast.error('Add alt text to this image first, it carries over to the new version')
+      toast.error(`Add alt text to this ${noun} first, it carries over to the new version`)
       return
     }
     try {
@@ -75,14 +77,20 @@ export function MediaDetailPanel({ id, onClose, onSelect }: Props) {
   }
 
   if (detail.isPending) return <Shell onClose={onClose} title="Loading"><p className="m-0 text-13 text-muted">Loading details</p></Shell>
-  if (!media) return <Shell onClose={onClose} title="Details"><p role="alert" className="m-0 text-13 text-danger">Could not load this image.</p></Shell>
+  if (!media) return <Shell onClose={onClose} title="Details"><p role="alert" className="m-0 text-13 text-danger">Could not load this file.</p></Shell>
 
   return (
     <Shell onClose={onClose} title={fileName(media)}>
-      <ImageSlot ratio="4/3" src={media.url} alt={media.alt} />
+      {isVideo ? (
+        // Library preview of an editor-uploaded file; caption tracks are not part of the media model.
+        // eslint-disable-next-line jsx-a11y/media-has-caption
+        <video controls preload="metadata" src={media.url} aria-label={media.alt} className="aspect-[4/3] w-full bg-img-ph object-contain" />
+      ) : (
+        <ImageSlot ratio="4/3" src={media.url} alt={media.alt} />
+      )}
       <MediaDetailForm key={`${media.id}:${media.updatedAt}`} media={media} />
       <dl className="m-0 flex flex-col text-13">
-        <Row label="Dimensions">{media.width} × {media.height} px</Row>
+        <Row label="Dimensions">{isVideo ? '—' : `${media.width} × ${media.height} px`}</Row>
         <Row label="Size">{formatBytes(media.bytes)}</Row>
         <Row label="Format">{media.mime.split('/')[1]?.toUpperCase()}</Row>
         <Row label="Uploaded">{formatDate(media.createdAt)}</Row>
@@ -101,16 +109,16 @@ export function MediaDetailPanel({ id, onClose, onSelect }: Props) {
       </section>
       <div className="flex flex-wrap justify-between gap-2">
         <Button disabled={upload.isPending} onClick={() => fileRef.current?.click()}>Upload new version</Button>
-        <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/avif" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => void uploadNewVersion(e)} />
+        <input ref={fileRef} type="file" accept={isVideo ? VIDEO_MIMES : IMAGE_MIMES} className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => void uploadNewVersion(e)} />
         <Button variant="danger" onClick={() => setConfirming(true)}>Delete</Button>
       </div>
       <ConfirmModal
         open={confirming}
         danger
         busy={del.isPending}
-        title="Delete this image?"
+        title={`Delete this ${noun}?`}
         body={`${fileName(media)} will be removed from the library. This cannot be undone.`}
-        confirmLabel="Delete image"
+        confirmLabel={`Delete ${noun}`}
         onConfirm={() => void confirmDelete()}
         onCancel={() => setConfirming(false)}
       />

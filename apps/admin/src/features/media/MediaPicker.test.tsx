@@ -30,6 +30,20 @@ describe('MediaPicker', () => {
     expect(onSelect).toHaveBeenCalledWith(toMediaRef(items[1]!))
   })
 
+  it('only requests images so videos are never offered', async () => {
+    const kinds: (string | null)[] = []
+    server.use(
+      http.get(`${API_URL}/media`, ({ request }) => {
+        kinds.push(new URL(request.url).searchParams.get('kind'))
+        return HttpResponse.json({ ...envelope(items), meta: { total: items.length, page: 1, limit: 12 } })
+      }),
+    )
+    renderWithProviders(<MediaPicker open onClose={() => {}} onSelect={vi.fn()} />)
+    await screen.findByRole('option', { name: /second\.jpg/i })
+    expect(kinds.length).toBeGreaterThan(0)
+    expect(new Set(kinds)).toEqual(new Set(['image']))
+  })
+
   it('blocks images without alt text and filters by search', async () => {
     listHandler()
     renderWithProviders(<MediaPicker open onClose={() => {}} onSelect={vi.fn()} />)

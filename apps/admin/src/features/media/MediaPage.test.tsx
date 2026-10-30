@@ -53,6 +53,35 @@ describe('MediaPage', () => {
     await waitFor(() => expect(requests.at(-1)!.searchParams.get('page')).toBe('2'))
   })
 
+  it('syncs the type filter to the URL and request', async () => {
+    const { requests, router } = setup()
+    await screen.findByText('No alt text')
+    expect(requests.at(-1)!.searchParams.has('kind')).toBe(false)
+    const user = userEvent.setup()
+    const select = screen.getByLabelText('Type')
+    expect(select).toHaveValue('')
+    await user.selectOptions(select, 'video')
+    await waitFor(() => expect(router.state.location.search).toContain('kind=video'))
+    await waitFor(() => expect(requests.at(-1)!.searchParams.get('kind')).toBe('video'))
+    await user.selectOptions(select, '')
+    await waitFor(() => expect(router.state.location.search).not.toContain('kind'))
+    await waitFor(() => expect(requests.at(-1)!.searchParams.has('kind')).toBe(false))
+  })
+
+  it('reads the type filter from the URL', async () => {
+    const { requests } = setup('/media?kind=image')
+    await screen.findByText('No alt text')
+    expect(screen.getByLabelText('Type')).toHaveValue('image')
+    expect(requests.at(-1)!.searchParams.get('kind')).toBe('image')
+  })
+
+  it('ignores an unknown type in the URL', async () => {
+    const { requests } = setup('/media?kind=bogus')
+    await screen.findByText('No alt text')
+    expect(screen.getByLabelText('Type')).toHaveValue('')
+    expect(requests.at(-1)!.searchParams.has('kind')).toBe(false)
+  })
+
   it('moves focus between tiles with arrow keys and selects with Enter', async () => {
     setup('/media?q=&page=1')
     const first = await screen.findByRole('option', { name: /m1\.jpg/i })

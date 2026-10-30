@@ -13,6 +13,7 @@ export function makeMedia(over: Partial<Media> = {}): Media {
     width: 2400,
     height: 1600,
     mime: 'image/jpeg',
+    kind: 'IMAGE',
     bytes: 1_258_291,
     alt: 'Tidewater hero',
     caption: null,

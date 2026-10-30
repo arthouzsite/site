@@ -20,7 +20,7 @@ import type { PublicUser } from '../auth/public-user'
 import { withMeta } from '../common/envelope.interceptor'
 import { parsePagination } from '../common/pagination'
 import { ZodBody } from '../common/zod-body.pipe'
-import { ALLOWED_MIMES, MAX_UPLOAD_BYTES } from './media.constants'
+import { ALLOWED_IMAGE_MIMES, ALLOWED_VIDEO_MIMES, MAX_VIDEO_UPLOAD_BYTES } from './media.constants'
 import { MediaService } from './media.service'
 
 const uploadSchema = z.object({
@@ -28,10 +28,16 @@ const uploadSchema = z.object({
   alt: z.string('Alt text is required').trim().min(1, 'Alt text is required').max(500),
 })
 
+const listQuerySchema = z.object({
+  kind: z.enum(['image', 'video'], 'Kind must be image or video').optional(),
+})
+
+const KIND_BY_QUERY = { image: 'IMAGE', video: 'VIDEO' } as const
+
 type FileCallback = (error: Error | null, accept: boolean) => void
 
-function imageFileFilter(_req: unknown, file: Express.Multer.File, callback: FileCallback): void {
-  if (!ALLOWED_MIMES.includes(file.mimetype)) {
+function mediaFileFilter(_req: unknown, file: Express.Multer.File, callback: FileCallback): void {
+  if (!ALLOWED_IMAGE_MIMES.includes(file.mimetype) && !ALLOWED_VIDEO_MIMES.includes(file.mimetype)) {
     callback(new UnsupportedMediaTypeException(`Unsupported file type ${file.mimetype}`), false)
     return
   }
@@ -43,7 +49,7 @@ export class MediaController {
   constructor(private readonly media: MediaService) {}
 
   @Post()
-  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_UPLOAD_BYTES }, fileFilter: imageFileFilter }))
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_VIDEO_UPLOAD_BYTES }, fileFilter: mediaFileFilter }))
   upload(
     @UploadedFile() file: Express.Multer.File | undefined,
     @Body() body: { alt?: unknown },
@@ -54,11 +60,13 @@ export class MediaController {
   }
 
   @Get()
-  async list(@Query() query: { q?: string; page?: string; limit?: string; missingAlt?: string }) {
+  async list(@Query() query: { q?: string; page?: string; limit?: string; missingAlt?: string; kind?: string }) {
+    const { kind } = listQuerySchema.parse({ kind: query.kind })
     const pagination = parsePagination(query)
     const { items, total } = await this.media.list({
       q: query.q?.trim() || undefined,
       missingAlt: query.missingAlt === 'true',
+      kind: kind ? KIND_BY_QUERY[kind] : undefined,
       ...pagination,
     })
     return withMeta(items, { total, page: pagination.page, limit: pagination.limit })
