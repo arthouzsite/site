@@ -263,4 +263,13 @@ describe('mobile menu', () => {
     expect(hrefs).toContain('/services')
     expect(hrefs.some((href) => href?.startsWith('/services/'))).toBe(false)
   })
+  it('keeps the toggle hit target clear of the Services link', async () => {
+    renderNav()
+    const toggle = screen.getByRole('button', { name: 'Show services' })
+    // Anchored at the button's own left edge, never centred over the link that precedes it in the DOM.
+    expect(toggle.className).toContain('before:left-0')
+    expect(toggle.className).not.toContain('before:-translate-x-1/2')
+    expect(toggle.className).toContain('[@media(any-pointer:coarse)]:opacity-100')
+  })
+
 })

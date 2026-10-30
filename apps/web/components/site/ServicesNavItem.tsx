@@ -130,6 +130,8 @@ export function ServicesNavItem({ item, pathname, services }: Props) {
       </Link>
       <button
         type="button"
+        // The 44 px target starts at the button's own left edge: centring it would cover the end of the Services link
+        // (the button paints above the earlier link), turning a click on "…ES" into a toggle instead of navigation.
         aria-label="Show services"
         aria-expanded={open}
         aria-controls={panelId}
@@ -137,7 +139,7 @@ export function ServicesNavItem({ item, pathname, services }: Props) {
           press.current = { wasOpen: open, at: performance.now() }
         }}
         onClick={onToggleClick}
-        className="absolute top-1/2 left-full ml-px flex h-[44px] w-4 -translate-y-1/2 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-ink opacity-0 before:absolute before:top-1/2 before:left-1/2 before:h-[44px] before:w-[44px] before:-translate-x-1/2 before:-translate-y-1/2 focus-visible:opacity-100 aria-expanded:opacity-100 [@media(pointer:coarse)]:opacity-100"
+        className="absolute top-1/2 left-full ml-px flex h-[44px] w-4 -translate-y-1/2 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-ink opacity-0 before:absolute before:top-1/2 before:left-0 before:h-[44px] before:w-[44px] before:-translate-y-1/2 focus-visible:opacity-100 aria-expanded:opacity-100 [@media(any-pointer:coarse)]:opacity-100"
       >
         <svg aria-hidden="true" width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" strokeWidth="1.25" className="transition-transform duration-150 in-aria-expanded:rotate-180">
           <path d="M1 1l4 4 4-4" />
