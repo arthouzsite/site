@@ -2,12 +2,15 @@
   "name": "arthouz",
   "private": true,
   "packageManager": "pnpm@10.0.0",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "pnpm -r --parallel dev",
-    "build": "pnpm -r build",
+    "build": "pnpm build:shared && pnpm -r build",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm build:shared && pnpm -r typecheck",
+    "build:shared": "pnpm --filter @arthouz/shared build"
   }
 }
