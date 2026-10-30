@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Container } from '@/components/site/Container'
 import { Eyebrow } from '@/components/site/Eyebrow'
 import { ImageSlot } from '@/components/site/ImageSlot'
+import { heroStatusLabel } from '@/lib/format'
 import { coverSizes } from './coverSizes'
 
 type Props = { exhibition: PublicExhibition }
@@ -18,7 +19,7 @@ export function HeroSplit({ exhibition }: Props) {
       <Container className="flex flex-wrap items-stretch gap-x-16 gap-y-10 pt-[clamp(32px,5vw,72px)] pb-[clamp(64px,8vw,120px)]">
         <div className="flex min-w-0 flex-[1_1_380px] flex-col justify-between gap-10">
           <Eyebrow dot>
-            Now on view ·<span>{exhibition.city}</span>
+            {`${heroStatusLabel(exhibition)} ·`}<span>{exhibition.city}</span>
           </Eyebrow>
           <div>
             <h1

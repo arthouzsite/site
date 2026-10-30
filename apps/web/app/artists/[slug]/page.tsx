@@ -9,6 +9,7 @@ import { Eyebrow } from '@/components/site/Eyebrow'
 import { ImageSlot } from '@/components/site/ImageSlot'
 import { PrimaryButton } from '@/components/site/PrimaryButton'
 import { ApiError, apiGet } from '@/lib/api'
+import { detailMetadata } from '@/lib/site-metadata'
 import { TAGS } from '@/lib/tags'
 
 type Props = { params: Promise<{ slug: string }> }
@@ -17,7 +18,7 @@ const NOT_FOUND_STATUS = 404
 
 async function loadArtist(slug: string): Promise<PublicArtistDetail> {
   try {
-    return await apiGet(`/public/artists/${encodeURIComponent(slug)}`, publicArtistDetailSchema, [TAGS.artist(slug)])
+    return await apiGet(`/public/artists/${encodeURIComponent(slug)}`, publicArtistDetailSchema, [TAGS.artists, TAGS.artist(slug)])
   } catch (error) {
     if (error instanceof ApiError && error.status === NOT_FOUND_STATUS) notFound()
     throw error
@@ -26,11 +27,7 @@ async function loadArtist(slug: string): Promise<PublicArtistDetail> {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const artist = await loadArtist((await params).slug)
-  return {
-    title: { absolute: `${artist.name} – Art Houz` },
-    description: artist.lede,
-    openGraph: artist.image ? { images: [{ url: artist.image.url }] } : undefined,
-  }
+  return detailMetadata({ title: artist.name, description: artist.lede, image: artist.image })
 }
 
 export default async function ArtistPage({ params }: Props) {

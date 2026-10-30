@@ -13,6 +13,12 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Exhibition status is date-derived on the API, so pages need a time-based refresh even without CMS edits;
+ * the revalidate webhook still expires tags immediately on edits.
+ */
+export const REVALIDATE_SECONDS = 3600
+
 type Envelope = { ok?: unknown; data?: unknown; error?: { code?: unknown; message?: unknown } | null }
 
 function apiBaseUrl(): string {
@@ -63,7 +69,7 @@ async function unwrap<T>(response: Response, path: string, schema: ZodType<T>): 
 
 /** GETs an API path, unwraps the `{ ok, data, error }` envelope and validates `data` with `schema`. */
 export async function apiGet<T>(path: string, schema: ZodType<T>, tags: string[]): Promise<T> {
-  const response = await request(path, { next: { tags } })
+  const response = await request(path, { cache: 'force-cache', next: { tags, revalidate: REVALIDATE_SECONDS } })
   return unwrap(response, path, schema)
 }
 

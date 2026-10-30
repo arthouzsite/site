@@ -3,6 +3,7 @@ import { Container } from '@/components/site/Container'
 import { Eyebrow } from '@/components/site/Eyebrow'
 import { ImageSlot } from '@/components/site/ImageSlot'
 import { PrimaryButton } from '@/components/site/PrimaryButton'
+import { heroStatusLabel } from '@/lib/format'
 import { fullWidthCoverSizes } from './coverSizes'
 
 type Props = { exhibition: PublicExhibition }
@@ -22,7 +23,7 @@ export function HeroFullBleed({ exhibition }: Props) {
         <div className="min-w-0 flex-[1_1_560px]">
           {/* The city is its own flex item, as in the prototype, so the eyebrow's 10 px gap follows the dot. */}
           <Eyebrow dot className="mb-[18px]">
-            Now on view ·<span>{exhibition.city}</span>
+            {`${heroStatusLabel(exhibition)} ·`}<span>{exhibition.city}</span>
           </Eyebrow>
           <h1
             id={HEADING_ID}

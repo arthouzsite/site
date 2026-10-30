@@ -7,7 +7,7 @@ import { apiGet } from '@/lib/api'
 import { TAGS } from '@/lib/tags'
 
 export function generateMetadata(): Metadata {
-  return { title: { absolute: 'Visit – Art Houz' } }
+  return { title: 'Visit' }
 }
 
 export default async function VisitPage() {

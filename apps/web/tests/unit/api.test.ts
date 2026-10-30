@@ -6,7 +6,7 @@ vi.mock('next/cache', () => ({ revalidateTag: (...args: unknown[]) => revalidate
 const connection = vi.fn(async () => undefined)
 vi.mock('next/server', () => ({ connection: () => connection() }))
 
-import { ApiError, apiGet } from '@/lib/api'
+import { ApiError, REVALIDATE_SECONDS, apiGet, apiGetUncached } from '@/lib/api'
 import { POST } from '@/app/api/revalidate/route'
 
 const API_URL = 'http://api.test'
@@ -65,7 +65,20 @@ describe('apiGet', () => {
 
     // Assert
     expect(result).toEqual({ slug: 'tidewater', count: 3 })
-    expect(fetchMock).toHaveBeenCalledWith(`${API_URL}/public/thing`, { next: { tags: ['home', 'exhibitions'] } })
+    expect(fetchMock).toHaveBeenCalledWith(`${API_URL}/public/thing`, {
+      cache: 'force-cache',
+      next: { tags: ['home', 'exhibitions'], revalidate: REVALIDATE_SECONDS },
+    })
+    expect(REVALIDATE_SECONDS).toBe(3600)
+  })
+
+  it('apiGetUncached never caches', async () => {
+    const fetchMock = vi.fn(async () => jsonResponse({ ok: true, data: { slug: 'a', count: 1 }, error: null }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await apiGetUncached('/public/search?q=a', itemSchema)
+
+    expect(fetchMock).toHaveBeenCalledWith(`${API_URL}/public/search?q=a`, { cache: 'no-store' })
   })
 
   it('apiGet throws ApiError with code on ok:false', async () => {

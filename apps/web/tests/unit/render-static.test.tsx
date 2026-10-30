@@ -50,7 +50,7 @@ import { Wordmark } from '@/components/site/Wordmark'
 import { LocationCard } from '@/components/visit/LocationCard'
 import { TAGS } from '@/lib/tags'
 import {
-  about, artist, artistDetail, exhibition, exhibitionDetail, fair, home, image, location, news, pastExhibition, upcomingExhibition,
+  about, artist, artistDetail, exhibition, exhibitionDetail, fair, home, location, news, pastExhibition, upcomingExhibition,
 } from './support/publicFixtures'
 
 const html = (node: React.ReactElement) => renderToStaticMarkup(node)
@@ -112,6 +112,11 @@ describe('exhibition components', () => {
     expect(html(<EmptyState />)).toContain('No exhibitions match')
   })
 
+  it('renders nothing for works sections without items', () => {
+    expect(html(<WorksGrid works={[]} />)).toBe('')
+    expect(html(<SelectedWorks works={[]} />)).toBe('')
+  })
+
   it('renders a list row linking to the detail page', () => {
     const out = html(<ExhibitionRow exhibition={exhibition} />)
     expect(out).toContain('href="/exhibitions/salt-line"')
@@ -126,6 +131,23 @@ describe('fairs, visit and home', () => {
     const plain = html(<LocationCard location={{ ...location, tel: null }} />)
     expect(plain).not.toContain('href="tel:')
     expect(plain).toContain('Directions')
+  })
+
+  it('links a phone number stored without the tel: prefix (as the admin saves it)', () => {
+    const bare = { ...location, tel: '+914400000000' }
+    expect(html(<LocationCard location={bare} />)).toContain('href="tel:+914400000000"')
+    expect(html(<FooterLocation location={bare} />)).toContain('href="tel:+914400000000"')
+    expect(html(<LocationCard location={bare} />)).not.toContain('tel:tel:')
+  })
+
+  it('labels the hero from the exhibition status in both layouts', () => {
+    const upcoming = { ...exhibition, status: 'UPCOMING' as const, statusLabel: 'Opens 3 Dec' }
+    for (const Hero of [HeroSplit, HeroFullBleed]) {
+      expect(html(<Hero exhibition={exhibition} />)).toContain('Now on view ·')
+      const out = html(<Hero exhibition={upcoming} />)
+      expect(out).toContain('Opens 3 Dec ·')
+      expect(out).not.toContain('Now on view')
+    }
   })
 
   it('renders both hero layouts and the upcoming band', () => {

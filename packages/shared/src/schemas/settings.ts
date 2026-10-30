@@ -2,7 +2,7 @@ import { z, type ZodType } from 'zod'
 import {
   ARTIST_INDEX_LAYOUTS, DEFAULT_COPYRIGHT_FROM, DEFAULT_HOME_ARTIST_COUNT, HERO_LAYOUTS, MAX_HOME_ARTIST_COUNT,
 } from '../constants'
-import { idSchema } from './common'
+import { httpUrl, idSchema } from './common'
 
 export const SETTING_KEYS = [
   'heroLayout', 'artistIndexLayout', 'homeHeroExhibitionId', 'homeArtistCount', 'homeFocus',
@@ -12,7 +12,9 @@ export type SettingKey = (typeof SETTING_KEYS)[number]
 
 const text = z.string()
 const nullableId = idSchema.nullable()
-const nullableUrl = z.string().url().nullable()
+const nullableUrl = httpUrl().nullable()
+/** Optional social link: an http(s) URL, or '' when unset. */
+const optionalSocialUrl = httpUrl().or(z.literal(''))
 
 export const settingSchemas: { [K in SettingKey]: ZodType } = {
   heroLayout: z.enum(HERO_LAYOUTS),
@@ -27,7 +29,7 @@ export const settingSchemas: { [K in SettingKey]: ZodType } = {
   'about.services': z.object({ title: text, body: text, ctaLabel: text, imageId: nullableId }),
   'about.publications': z.object({ title: text, body: text, externalUrl: nullableUrl, imageId: nullableId }),
   footer: z.object({
-    tagline: text, instagramUrl: text, facebookUrl: text, copyrightFrom: z.number().int(),
+    tagline: text, instagramUrl: optionalSocialUrl, facebookUrl: optionalSocialUrl, copyrightFrom: z.number().int(),
   }),
   site: z.object({ title: text, description: text, ogImageId: nullableId }),
 }

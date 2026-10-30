@@ -1,14 +1,39 @@
 import type { NextConfig } from 'next'
 import type { RemotePattern } from 'next/dist/shared/lib/image-config'
 
-const isProduction = process.env.NODE_ENV === 'production'
-const imageHost = process.env.IMAGE_HOST?.trim() ?? ''
+type Env = Readonly<Record<string, string | undefined>>
 
-const remotePatterns: RemotePattern[] = [
-  { protocol: 'https', hostname: 'picsum.photos' },
-  { protocol: 'https', hostname: 'fastly.picsum.photos' },
-  ...(imageHost ? [{ protocol: 'https' as const, hostname: imageHost }] : []),
-]
+const BUILD_PHASE = 'phase-production-build'
+const LOCAL_HOST = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i
+
+/** Test harnesses (visual, a11y, admin e2e) build with a localhost origin and opt in with ALLOW_TEST_OVERRIDES=1. */
+const allowsTestOverrides = (env: Env) => env.NODE_ENV !== 'production' || env.ALLOW_TEST_OVERRIDES === '1'
+
+/**
+ * NEXT_PUBLIC_SITE_URL is inlined at build time (robots, sitemap and metadataBase are prerendered), so a production
+ * build without a real origin would ship localhost URLs to search engines. Fails the build instead.
+ */
+export function assertProductionSiteUrl(env: Env): void {
+  if (env.NODE_ENV !== 'production' || env.NEXT_PHASE !== BUILD_PHASE || env.ALLOW_TEST_OVERRIDES === '1') return
+  const siteUrl = env.NEXT_PUBLIC_SITE_URL?.trim() ?? ''
+  if (!siteUrl) throw new Error('NEXT_PUBLIC_SITE_URL must be set to the public origin (e.g. https://arthouz.example) before `next build`.')
+  if (LOCAL_HOST.test(siteUrl)) {
+    throw new Error(`NEXT_PUBLIC_SITE_URL is "${siteUrl}", a localhost URL; set it to the public origin before \`next build\`.`)
+  }
+}
+
+/** Seed images come from picsum, which production must not allow; IMAGE_HOST is the real bucket/CDN host. */
+export function buildRemotePatterns(env: Env): RemotePattern[] {
+  const imageHost = env.IMAGE_HOST?.trim() ?? ''
+  return [
+    ...(allowsTestOverrides(env)
+      ? [{ protocol: 'https' as const, hostname: 'picsum.photos' }, { protocol: 'https' as const, hostname: 'fastly.picsum.photos' }]
+      : []),
+    ...(imageHost ? [{ protocol: 'https' as const, hostname: imageHost }] : []),
+  ]
+}
+
+assertProductionSiteUrl(process.env)
 
 /** Section-level redirects from the old site's URL scheme; old detail slugs do not map one to one. */
 const LEGACY_REDIRECTS = [
@@ -26,8 +51,8 @@ const nextConfig: NextConfig = {
   transpilePackages: ['@arthouz/shared'],
   devIndicators: false,
   images: {
-    remotePatterns,
-    unoptimized: process.env.NEXT_IMAGE_UNOPTIMIZED === '1' && (!isProduction || process.env.ALLOW_TEST_OVERRIDES === '1'),
+    remotePatterns: buildRemotePatterns(process.env),
+    unoptimized: process.env.NEXT_IMAGE_UNOPTIMIZED === '1' && allowsTestOverrides(process.env),
   },
 }
 

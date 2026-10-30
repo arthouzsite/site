@@ -7,7 +7,7 @@ import { apiGet } from '@/lib/api'
 import { TAGS } from '@/lib/tags'
 
 export function generateMetadata(): Metadata {
-  return { title: { absolute: 'About – Art Houz' } }
+  return { title: 'About' }
 }
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> }

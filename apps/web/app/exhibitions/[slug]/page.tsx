@@ -10,6 +10,7 @@ import { Container } from '@/components/site/Container'
 import { ImageSlot } from '@/components/site/ImageSlot'
 import { StatusBadge } from '@/components/site/StatusBadge'
 import { ApiError, apiGet } from '@/lib/api'
+import { detailMetadata } from '@/lib/site-metadata'
 import { TAGS } from '@/lib/tags'
 
 type Props = { params: Promise<{ slug: string }> }
@@ -19,7 +20,7 @@ const TYPE_LABELS = { SOLO: 'Solo', GROUP: 'Group' } as const
 
 async function loadExhibition(slug: string): Promise<PublicExhibitionDetail> {
   try {
-    return await apiGet(`/public/exhibitions/${encodeURIComponent(slug)}`, publicExhibitionDetailSchema, [TAGS.exhibition(slug)])
+    return await apiGet(`/public/exhibitions/${encodeURIComponent(slug)}`, publicExhibitionDetailSchema, [TAGS.exhibitions, TAGS.exhibition(slug)])
   } catch (error) {
     if (error instanceof ApiError && error.status === NOT_FOUND_STATUS) notFound()
     throw error
@@ -28,11 +29,7 @@ async function loadExhibition(slug: string): Promise<PublicExhibitionDetail> {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const exhibition = await loadExhibition((await params).slug)
-  return {
-    title: { absolute: `${exhibition.title} – Art Houz` },
-    description: exhibition.blurb,
-    openGraph: exhibition.image ? { images: [{ url: exhibition.image.url }] } : undefined,
-  }
+  return detailMetadata({ title: exhibition.title, description: exhibition.blurb, image: exhibition.image })
 }
 
 export default async function ExhibitionPage({ params }: Props) {

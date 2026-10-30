@@ -9,7 +9,7 @@ import { apiGet } from '@/lib/api'
 import { buildExhibitionQuery, parseExhibitionParams } from '@/lib/searchParams'
 import { TAGS } from '@/lib/tags'
 
-export const metadata: Metadata = { title: { absolute: 'Exhibitions – Art Houz' } }
+export const metadata: Metadata = { title: 'Exhibitions' }
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> }
 

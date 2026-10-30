@@ -8,6 +8,7 @@ import { decorateArrows } from './decorateArrows'
 import { FooterLocation } from './FooterLocation'
 import { Wordmark } from './Wordmark'
 
+const HTTP_URL = /^https?:\/\//i
 const DARK_LINK = 'text-paper hover:text-amber'
 
 export async function Footer() {
@@ -19,7 +20,7 @@ export async function Footer() {
   const socials = [
     { label: 'Instagram ↗', href: data.instagramUrl },
     { label: 'Facebook ↗', href: data.facebookUrl },
-  ].filter((social): social is { label: string; href: string } => social.href !== null)
+  ].filter((social): social is { label: string; href: string } => social.href !== null && HTTP_URL.test(social.href))
 
   return (
     <footer className="bg-ink text-paper">

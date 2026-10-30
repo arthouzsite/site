@@ -5,6 +5,7 @@ import { SectionRule } from '@/components/site/SectionRule'
 const WORK_IMAGE_SIZES = '(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw'
 
 export function SelectedWorks({ works }: { works: PublicArtistDetail['works'] }) {
+  if (works.length === 0) return null
   return (
     <section>
       <SectionRule title="Selected works" className="mt-[clamp(56px,7vw,100px)] mb-8" />

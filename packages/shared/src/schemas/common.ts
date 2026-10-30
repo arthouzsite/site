@@ -5,7 +5,9 @@ export const nullableIdSchema = idSchema.nullable().default(null)
 export const slugSchema = z.string().min(1).max(200).optional()
 export const requiredText = (max = 500) => z.string().trim().min(1).max(max)
 export const optionalText = (max = 5000) => z.string().trim().max(max).default('')
-export const urlSchema = z.string().url().max(2000)
+/** http(s) only: rejects javascript:, data: and other schemes that would be unsafe in an href. */
+export const httpUrl = () => z.url({ protocol: /^https?$/ })
+export const urlSchema = httpUrl().max(2000)
 export const optionalUrlSchema = urlSchema.nullable().default(null)
 
 export const publishSchema = z.object({ isPublished: z.boolean() })

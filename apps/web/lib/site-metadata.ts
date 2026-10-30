@@ -1,3 +1,4 @@
+import type { PublicImage } from '@arthouz/shared'
 import type { Metadata } from 'next'
 import { unstable_rethrow } from 'next/navigation'
 import { SITE_TAGLINE } from './footer-data'
@@ -9,7 +10,7 @@ type SiteInfo = { readonly title: string; readonly description: string; readonly
 /** Used when /public/settings cannot be loaded (the Task 11 static shell defaults). */
 export const FALLBACK_SITE: SiteInfo = { title: 'Art Houz', description: SITE_TAGLINE, ogImage: null }
 
-async function loadSite(): Promise<SiteInfo> {
+export async function loadSite(): Promise<SiteInfo> {
   try {
     const { site } = await getSettings()
     return {
@@ -26,6 +27,25 @@ async function loadSite(): Promise<SiteInfo> {
   }
 }
 
+function ogImages(image: Pick<PublicImage, 'url' | 'width' | 'height' | 'alt'> | null) {
+  return image ? { images: [{ url: image.url, width: image.width, height: image.height, alt: image.alt }] } : {}
+}
+
+type DetailMetadataInput = { title: string; description: string; image: PublicImage | null }
+
+/**
+ * Metadata for a detail page. A page-level `openGraph` replaces the root object wholesale, so it is built in full
+ * here; the tab title goes through the root `%s · {site title}` template. Without its own image the site one is used.
+ */
+export async function detailMetadata({ title, description, image }: DetailMetadataInput): Promise<Metadata> {
+  const site = await loadSite()
+  return {
+    title,
+    description,
+    openGraph: { type: 'website', siteName: site.title, title, description, ...ogImages(image ?? site.ogImage) },
+  }
+}
+
 /** Root metadata: metadataBase from NEXT_PUBLIC_SITE_URL, title/description/OG image from the CMS settings. */
 export async function loadSiteMetadata(): Promise<Metadata> {
   const site = await loadSite()
@@ -39,7 +59,7 @@ export async function loadSiteMetadata(): Promise<Metadata> {
       siteName: site.title,
       title: site.title,
       description: site.description,
-      ...(ogImage ? { images: [{ url: ogImage.url, width: ogImage.width, height: ogImage.height, alt: ogImage.alt }] } : {}),
+      ...ogImages(ogImage),
     },
   }
 }

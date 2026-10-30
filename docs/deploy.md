@@ -14,9 +14,9 @@ Order matters:
 
 1. Run `pnpm --filter @arthouz/api exec prisma migrate deploy` against the production `DATABASE_URL` before starting a new API version. The database needs the `pg_trgm` extension (created by the first migration; the database role needs permission to create it, or create it beforehand).
 2. Start the API and wait for `GET /health`.
-3. Build the web app after the API is reachable at `API_URL`: static pages fetch API data during `next build`. Pages that cannot reach the API at build time are rendered per request instead.
+3. Build the web app after the API is reachable at `API_URL`, with `NEXT_PUBLIC_SITE_URL` set to the public origin: static pages fetch API data during `next build`, and robots, the sitemap and `metadataBase` are prerendered with the site URL. Pages that cannot reach the API at build time are rendered per request instead.
 
-`apps/api` reads `.env` from its working directory (dotenv) and exits at startup with the list of invalid keys if validation fails. `apps/web` reads `API_URL`, `REVALIDATE_SECRET` and `IMAGE_HOST` when it starts or builds and `NEXT_PUBLIC_SITE_URL` on the server at runtime. The admin build bakes `VITE_*` values into the bundle, so rebuild it when they change.
+`apps/api` reads `.env` from its working directory (dotenv) and exits at startup with the list of invalid keys if validation fails. `apps/web` reads `API_URL`, `REVALIDATE_SECRET` and `IMAGE_HOST` when it starts or builds and `NEXT_PUBLIC_SITE_URL` is inlined at build time, so it must be set before `next build` (the production build fails if it is unset or a localhost URL, unless `ALLOW_TEST_OVERRIDES=1`); changing it needs a rebuild. The admin build bakes `VITE_*` values into the bundle, so rebuild it when they change.
 
 ## Environment
 
@@ -33,6 +33,7 @@ Secrets are marked **secret**; keep them out of the repository and out of the ad
 | `ADMIN_ORIGIN` | no (default `http://localhost:5180`) | Exact admin origin: scheme, host and port, no trailing slash. Used for CORS and the `Origin` check on write requests. Set it explicitly in production |
 | `WEB_URL` | no (default `http://localhost:3100`) | Origin of the public site; the API POSTs `{WEB_URL}/api/revalidate` here. Allowed by CORS. Set it explicitly in production |
 | `REVALIDATE_SECRET` | yes | Sent as `x-revalidate-secret`. Must equal the web app's value. **secret** |
+| `TRUST_PROXY` | behind a proxy | Number of reverse-proxy hops in front of the API. Set `TRUST_PROXY=1` behind one proxy so the login throttle sees the client IP; leave unset (0) when the API is exposed directly. Non-negative integer |
 | `STORAGE_DRIVER` | no | `r2` (default outside tests) or `memory`. Use `r2` in production |
 | `S3_ENDPOINT` | with `r2` | S3 API endpoint, e.g. `https://<account-id>.r2.cloudflarestorage.com` |
 | `AWS_ACCESS_KEY_ID` | with `r2` | **secret** |
@@ -41,6 +42,7 @@ Secrets are marked **secret**; keep them out of the repository and out of the ad
 | `AWS_S3_PUBLIC_URL` | with `r2` | Public base URL of the bucket. Image URLs stored in the database are `{AWS_S3_PUBLIC_URL}/{key}` |
 | `SEED_ADMIN_EMAIL` | yes | Validated at API startup as well as by the seed script. Seed-only in practice |
 | `SEED_ADMIN_PASSWORD` | yes | Same. **secret** |
+| `SEED_FORCE` | seed script only | Set to `1` to reload the prototype content over a database that already has content. Without it `db:seed` only upserts the admin user when content exists, so a re-run cannot overwrite edits |
 | `TODAY_OVERRIDE` | never in production | `YYYY-MM-DD`; test-only |
 | `DATABASE_URL_TEST` | never in production | API e2e tests only |
 
@@ -84,4 +86,4 @@ Secrets are marked **secret**; keep them out of the repository and out of the ad
 - Rate limits: only `POST /auth/login` is throttled (5 per minute). `/public/search` (API) and `/api/search` (web proxy route) have no rate limit; throttle both at the proxy before launch. `/api/search` rejects queries over 120 characters.
 - Upload size: the reverse proxy must allow request bodies of at least 200 MB on `POST /media` (for nginx, `client_max_body_size 200m;`), with request and read timeouts long enough for slow uploads. The API itself enforces 200 MB for videos and 25 MB for images; a proxy limit below 200 MB surfaces in the admin as a 413 on videos.
 - Upload concurrency and timeout: uploads are buffered in memory, so the API allows at most 2 concurrent `POST /media` requests and answers the rest with 429 `TOO_MANY_UPLOADS` (the admin also uploads its queue one file at a time). Back this up at the proxy with a per-IP or per-server connection limit on `POST /media` (for nginx, `limit_conn` in the `/media` location) and a request timeout of at least 600 s so a 200 MB upload on a slow link is not cut off (`client_body_timeout 600s; proxy_read_timeout 600s; proxy_send_timeout 600s;`). The API sets its own `requestTimeout` to 600 s in `apps/api/src/main.ts`.
-- Proxy headers: the API does not set Express `trust proxy`, so the login throttle sees the proxy's address unless the proxy and API share a network layer that preserves client IPs. Check this before relying on the per-IP login limit.
+- Proxy headers: set `TRUST_PROXY=1` (hop count) when the API sits behind one reverse proxy; otherwise the per-IP login throttle sees the proxy's address for every client. The proxy must overwrite `X-Forwarded-For` rather than pass a client-supplied value through.

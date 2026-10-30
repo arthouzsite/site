@@ -10,11 +10,11 @@ import { InThePress } from '@/components/home/InThePress'
 import { RecentExhibitions } from '@/components/home/RecentExhibitions'
 import { UpcomingBand } from '@/components/home/UpcomingBand'
 import { apiGet } from '@/lib/api'
-import { getSettings } from '@/lib/site-data'
+import { loadSite } from '@/lib/site-metadata'
 import { TAGS } from '@/lib/tags'
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { site } = await getSettings()
+  const site = await loadSite()
   return { title: { absolute: site.title }, description: site.description }
 }
 

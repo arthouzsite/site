@@ -3,7 +3,7 @@ import {
   SETTING_DEFAULTS, SETTING_KEYS, artistInputSchema, artworkInputSchema, exhibitionInputSchema,
   exhibitionWorkInputSchema, fairInputSchema, locationInputSchema, loginSchema, mediaPatchSchema,
   newsInputSchema, publicExhibitionSchema, publicHomeSchema, publicImageSchema, publicSearchSchema, publishSchema,
-  reorderSchema, settingSchemas, userInputSchema,
+  reorderSchema, settingSchemas, urlSchema, userInputSchema,
 } from '../src/index'
 
 const id = '3f2b8c1e-8a52-4f0e-9d3b-1c2d3e4f5a6b'
@@ -46,6 +46,28 @@ describe('schemas', () => {
     expect(locationInputSchema.safeParse({ ...base, tel: '044 1234' }).success).toBe(false)
     expect(locationInputSchema.safeParse({ ...base, tel: '+1234567' }).success).toBe(false)
     expect(locationInputSchema.safeParse({ ...base, tel: '+1234567890123456' }).success).toBe(false)
+  })
+  test('url schemas accept http(s) only', () => {
+    expect(urlSchema.safeParse('https://example.com/a').success).toBe(true)
+    expect(urlSchema.safeParse('http://example.com').success).toBe(true)
+    expect(urlSchema.safeParse('javascript:alert(1)').success).toBe(false)
+    expect(urlSchema.safeParse('data:text/html,<script>1</script>').success).toBe(false)
+    expect(urlSchema.safeParse('ftp://example.com').success).toBe(false)
+    expect(locationInputSchema.safeParse({ city: 'c', mapUrl: 'javascript:alert(1)' }).success).toBe(false)
+    expect(locationInputSchema.safeParse({ city: 'c', mapUrl: '' }).success).toBe(true)
+    expect(newsInputSchema.safeParse({ title: 't', publishedAt: '2026-01-01', externalUrl: 'javascript:alert(1)' }).success).toBe(false)
+    expect(newsInputSchema.safeParse({ title: 't', publishedAt: '2026-01-01', externalUrl: 'https://example.com' }).success).toBe(true)
+    expect(settingSchemas['about.publications'].safeParse({ title: '', body: '', externalUrl: 'data:text/plain,x', imageId: null }).success).toBe(false)
+    expect(settingSchemas['about.publications'].safeParse({ title: '', body: '', externalUrl: null, imageId: null }).success).toBe(true)
+  })
+  test('footer social links must be http(s) URLs or empty', () => {
+    const footer = { tagline: '', copyrightFrom: 2012 }
+    const parse = (instagramUrl: string, facebookUrl = '') => settingSchemas.footer.safeParse({ ...footer, instagramUrl, facebookUrl }).success
+    expect(parse('')).toBe(true)
+    expect(parse('https://www.instagram.com/arthouz', 'https://www.facebook.com/arthouz')).toBe(true)
+    expect(parse('instagram.com/arthouz')).toBe(false)
+    expect(parse('javascript:alert(1)')).toBe(false)
+    expect(parse('', 'not a url')).toBe(false)
   })
   test('settingSchemas.heroLayout accepts FULL_BLEED|SPLIT only', () => {
     expect(settingSchemas.heroLayout.safeParse('FULL_BLEED').success).toBe(true)

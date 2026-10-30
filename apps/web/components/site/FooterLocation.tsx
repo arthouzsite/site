@@ -1,4 +1,5 @@
 import type { PublicLocation } from '@arthouz/shared'
+import { telHref } from '@/lib/format'
 
 type Props = { location: PublicLocation }
 
@@ -12,7 +13,7 @@ export function FooterLocation({ location }: Props) {
         {location.hours}
       </div>
       {location.tel ? (
-        <a href={location.tel} className="hit-44 text-paper hover:text-paper">
+        <a href={telHref(location.tel)} className="hit-44 text-paper hover:text-paper">
           {location.phone}
         </a>
       ) : (

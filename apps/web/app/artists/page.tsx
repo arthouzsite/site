@@ -9,7 +9,7 @@ import { Container } from '@/components/site/Container'
 import { apiGet } from '@/lib/api'
 import { TAGS } from '@/lib/tags'
 
-export const metadata: Metadata = { title: { absolute: 'Artists – Art Houz' } }
+export const metadata: Metadata = { title: 'Artists' }
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> }
 

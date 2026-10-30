@@ -2,6 +2,7 @@ import type { PublicLocation } from '@arthouz/shared'
 import type { ReactNode } from 'react'
 import { ImageSlot } from '@/components/site/ImageSlot'
 import { PrimaryButton } from '@/components/site/PrimaryButton'
+import { telHref } from '@/lib/format'
 
 const IMAGE_SIZES = '(min-width: 1024px) 50vw, 100vw'
 
@@ -27,7 +28,7 @@ export function LocationCard({ location: l }: { location: PublicLocation }) {
         </Row>
         <Row label="Call" last>
           {l.tel ? (
-            <a href={l.tel} className="hit-44">
+            <a href={telHref(l.tel)} className="hit-44">
               {l.phone}
             </a>
           ) : (

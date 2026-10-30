@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const apiGet = vi.fn<(path: string) => Promise<unknown>>()
+const apiTags: Array<[string, string[]]> = []
 const loadFooterData = vi.fn()
 
 vi.mock('next/image', () => ({
@@ -24,7 +25,10 @@ vi.mock('next/navigation', () => ({
 vi.mock('next/server', () => ({ connection: () => Promise.resolve() }))
 vi.mock('@/lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/api')>()),
-  apiGet: (path: string) => apiGet(path),
+  apiGet: (path: string, _schema: unknown, tags: string[]) => {
+    apiTags.push([path, tags])
+    return apiGet(path)
+  },
 }))
 vi.mock('@/lib/footer-data', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/footer-data')>()),
@@ -79,6 +83,7 @@ const params = <T,>(value: T) => Promise.resolve(value)
 
 beforeEach(() => {
   apiGet.mockReset()
+  apiTags.length = 0
   apiGet.mockImplementation(async (path) => {
     const key = path.split('?')[0]!
     if (key in byPath) return byPath[key]
@@ -100,6 +105,15 @@ describe('list and static pages', () => {
     expect(await homeMeta()).toMatchObject({ title: { absolute: 'Art Houz' }, description: 'Gallery.' })
   })
 
+  it('falls back to the default home title when the CMS site title is empty', async () => {
+    byPath['/public/settings'] = { ...settings, site: { ...settings.site, title: '' } }
+    try {
+      expect(await homeMeta()).toMatchObject({ title: { absolute: 'Art Houz' } })
+    } finally {
+      byPath['/public/settings'] = settings
+    }
+  })
+
   it('renders home with the full-bleed hero and no hero or upcoming exhibition', async () => {
     apiGet.mockImplementation(async () => ({ ...home, heroLayout: 'FULL_BLEED' }))
     const fullBleed = html(await HomePage())
@@ -118,7 +132,10 @@ describe('list and static pages', () => {
     expect(html(await VisitPage())).toContain('Directions')
     expect(html(await AboutPage({ searchParams: params({ tab: 'services' }) }))).toContain('Framing')
     expect(html(await AboutPage({ searchParams: params({ tab: ['x'] }) }))).toContain('Statement.')
-    for (const meta of [fairsMeta, newsMeta, visitMeta, aboutMeta]) expect(meta()).toHaveProperty('title.absolute')
+    expect(fairsMeta()).toHaveProperty('title', 'Fairs')
+    expect(newsMeta()).toHaveProperty('title', 'News')
+    expect(visitMeta()).toHaveProperty('title', 'Visit')
+    expect(aboutMeta()).toHaveProperty('title', 'About')
   })
 
   it('renders the exhibitions list with its filters applied to the API query', async () => {
@@ -127,7 +144,7 @@ describe('list and static pages', () => {
     expect(apiGet).toHaveBeenCalledWith('/public/exhibitions?status=current&city=Chennai')
     apiGet.mockImplementation(async () => ({ items: [], cities: [] }))
     expect(html(await ExhibitionsPage({ searchParams: params({}) }))).toContain('No exhibitions match')
-    expect(exhibitionsMeta).toHaveProperty('title.absolute')
+    expect(exhibitionsMeta).toHaveProperty('title', 'Exhibitions')
   })
 
   it('renders the artists index in both layouts and for an empty search', async () => {
@@ -137,7 +154,7 @@ describe('list and static pages', () => {
     apiGet.mockImplementation(async () => ({ ...artistList, groups: [], flat: [] }))
     expect(html(await ArtistsPage({ searchParams: params({ q: 'zzz' }) }))).toContain('No artists match')
     expect(apiGet).toHaveBeenLastCalledWith('/public/artists?q=zzz')
-    expect(artistsMeta).toHaveProperty('title.absolute')
+    expect(artistsMeta).toHaveProperty('title', 'Artists')
   })
 })
 
@@ -147,29 +164,48 @@ describe('detail pages', () => {
     expect(out).toContain('Salt Line')
     expect(out).toContain('Works in the exhibition')
     expect(out).toContain('Press')
-    expect(await exhibitionMeta({ params: params({ slug: 'salt-line' }) })).toMatchObject({
-      title: { absolute: 'Salt Line – Art Houz' },
-      openGraph: { images: [{ url: exhibition.image!.url }] },
+    const meta = await exhibitionMeta({ params: params({ slug: 'salt-line' }) })
+    expect(meta).toMatchObject({ title: 'Salt Line', description: exhibition.blurb })
+    expect(meta.openGraph).toMatchObject({
+      type: 'website', siteName: 'Art Houz', title: 'Salt Line', description: exhibition.blurb,
+      images: [{ url: exhibition.image!.url, width: exhibition.image!.width, height: exhibition.image!.height, alt: exhibition.image!.alt }],
     })
   })
 
-  it('omits the press section and og image when there are none', async () => {
-    apiGet.mockImplementation(async () => ({ ...exhibitionDetail, press: [], image: null }))
+  it('omits the press section and falls back to the site og image when there is no cover', async () => {
+    apiGet.mockImplementation(async (path) => (path === '/public/settings' ? settings : { ...exhibitionDetail, press: [], image: null }))
     expect(html(await ExhibitionPage({ params: params({ slug: 'salt-line' }) }))).not.toContain('Press')
-    expect((await exhibitionMeta({ params: params({ slug: 'salt-line' }) })).openGraph).toBeUndefined()
+    const { openGraph } = await exhibitionMeta({ params: params({ slug: 'salt-line' }) })
+    expect(openGraph).toMatchObject({ siteName: 'Art Houz', title: 'Salt Line' })
+    expect(openGraph).not.toHaveProperty('images')
+  })
+
+  it('hides empty works sections on the detail pages', async () => {
+    apiGet.mockImplementation(async () => ({ ...exhibitionDetail, works: [] }))
+    expect(html(await ExhibitionPage({ params: params({ slug: 'salt-line' }) }))).not.toContain('Works in the exhibition')
+    apiGet.mockImplementation(async () => ({ ...artistDetail, works: [] }))
+    expect(html(await ArtistPage({ params: params({ slug: 'parvathi-nayar' }) }))).not.toContain('Selected works')
+  })
+
+  it('fetches detail pages with the list tag and the slug tag so any edit refreshes them', async () => {
+    await ExhibitionPage({ params: params({ slug: 'salt-line' }) })
+    await ArtistPage({ params: params({ slug: 'parvathi-nayar' }) })
+    expect(apiTags).toContainEqual(['/public/exhibitions/salt-line', ['exhibitions', 'exhibition:salt-line']])
+    expect(apiTags).toContainEqual(['/public/artists/parvathi-nayar', ['artists', 'artist:parvathi-nayar']])
   })
 
   it('renders an artist page and metadata', async () => {
     const out = html(await ArtistPage({ params: params({ slug: 'parvathi-nayar' }) }))
     expect(out).toContain('Exhibitions with Art Houz')
     expect(out).toContain('Selected works')
-    expect(await artistMeta({ params: params({ slug: 'parvathi-nayar' }) })).toMatchObject({ description: 'Lede text.' })
+    const meta = await artistMeta({ params: params({ slug: 'parvathi-nayar' }) })
+    expect(meta).toMatchObject({ title: 'Parvathi Nayar', description: 'Lede text.' })
+    expect(meta.openGraph).toMatchObject({ type: 'website', siteName: 'Art Houz', title: 'Parvathi Nayar', description: 'Lede text.' })
   })
 
-  it('omits the artist exhibitions block and og image when absent', async () => {
+  it('omits the artist exhibitions block when absent', async () => {
     apiGet.mockImplementation(async () => ({ ...artistDetail, exhibitions: [], image: null }))
     expect(html(await ArtistPage({ params: params({ slug: 'parvathi-nayar' }) }))).not.toContain('Exhibitions with Art Houz')
-    expect((await artistMeta({ params: params({ slug: 'parvathi-nayar' }) })).openGraph).toBeUndefined()
   })
 
   it('calls notFound for a missing slug and rethrows other API errors', async () => {
@@ -198,6 +234,17 @@ describe('shell', () => {
     expect(out).toContain('Instagram')
     expect(out).not.toContain('Facebook')
     expect(out).toMatch(/© 2012 – \d{4} Art Houz/)
+  })
+
+  it('skips social links whose href is not an http(s) URL', async () => {
+    loadFooterData.mockResolvedValue({ ...footerData, instagramUrl: 'javascript:alert(1)', facebookUrl: 'facebook.com/arthouz' })
+    const out = html((await Footer()) as ReactElement)
+    expect(out).not.toContain('Instagram')
+    expect(out).not.toContain('Facebook')
+    loadFooterData.mockResolvedValue({ ...footerData, instagramUrl: 'https://i.example', facebookUrl: 'https://f.example' })
+    const ok = html((await Footer()) as ReactElement)
+    expect(ok).toContain('Instagram')
+    expect(ok).toContain('Facebook')
   })
 
   it('renders a single year and no socials when the range starts this year', async () => {

@@ -6,6 +6,7 @@ import { SectionRule } from '@/components/site/SectionRule'
 const WORK_IMAGE_SIZES = '(min-width: 1024px) 45vw, (min-width: 640px) 70vw, 150vw'
 
 export function WorksGrid({ works }: { works: PublicExhibitionDetail['works'] }) {
+  if (works.length === 0) return null
   return (
     <section>
       <SectionRule as="h2" title="Works in the exhibition" className="mb-8" />
