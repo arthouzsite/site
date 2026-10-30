@@ -214,6 +214,8 @@ async function hasContent(prisma: PrismaClient): Promise<boolean> {
 export async function runSeed(prisma: PrismaClient, opts: SeedOptions, force: boolean): Promise<SeedOutcome> {
   if (!force && (await hasContent(prisma))) {
     await seedAdmin(prisma, opts)
+    // Services were added after the first launch: a database seeded before then gets them without a forced reload.
+    if ((await prisma.service.count()) === 0) await seedServiceRows(prisma)
     return 'skipped'
   }
   await seedDatabase(prisma, opts)

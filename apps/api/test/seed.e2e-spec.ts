@@ -77,6 +77,16 @@ describe('seed', () => {
     expect(await prisma.user.findUnique({ where: { email: 'second.admin@example.com' } })).toMatchObject({ role: 'ADMIN' })
   })
 
+  it('without SEED_FORCE still adds the services to a database seeded before they existed', async () => {
+    await prisma.service.deleteMany()
+
+    expect(await runSeed(prisma, SEED_OPTS, false)).toBe('skipped')
+    expect((await prisma.service.findMany({ orderBy: { sortOrder: 'asc' } })).map((s) => s.slug)).toEqual([
+      'art-sales', 'gallery-on-rent', 'art-for-rent', 'corporate-painting-execution', 'turn-key-art-projects',
+    ])
+    expect((await prisma.exhibition.findUniqueOrThrow({ where: { slug: 'tidewater' } })).title).toBe('Edited by the gallery')
+  })
+
   it('SEED_FORCE reloads the content over existing rows', async () => {
     const outcome = await runSeed(prisma, SEED_OPTS, true)
 
