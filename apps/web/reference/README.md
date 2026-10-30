@@ -56,6 +56,9 @@ rewrite the `data-props` defaults (`heroLayout`, `artistIndex`) in a further cop
   counted), both images cropped to the smaller height. The gate is ≤ 0.5 % non-anti-aliased
   differing pixels and ≤ 4 px height delta. On failure `prototype.png`, `port.png`
   and `diff.png` are written to `test-results/visual/<name>/`; `result.json` is always written.
+- **Accessibility suite only:** images from non-local hosts are answered with a 1×1 PNG
+  (`tests/a11y/stub-remote-images.ts`), so axe and hit-area checks never wait on the placeholder
+  image host. The visual suite still loads the real images because it compares pixels.
 
 ## Running
 

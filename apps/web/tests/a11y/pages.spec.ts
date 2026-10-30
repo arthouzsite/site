@@ -3,6 +3,7 @@ import { expect, test, type Page } from '@playwright/test'
 import { settle, PORT_SETTLE } from '../visual/harness'
 import { PORT_URL } from '../visual/paths'
 import { findSmallTargets } from './hit-area'
+import { stubRemoteImages } from './stub-remote-images'
 
 const ROUTES = ['/', '/exhibitions', '/exhibitions/tidewater', '/artists', '/artists/vijay-pichumani', '/fairs', '/news', '/services', '/services/art-sales', '/about', '/visit'] as const
 const WIDTHS = [375, 1440] as const
@@ -16,6 +17,7 @@ const BLOCKING_IMPACTS = new Set(['serious', 'critical'])
 const PROTOTYPE_CONTRAST_PAIRS = new Set(['#b4651a on #edeae4'])
 
 async function openRoute(page: Page, route: string, width: number): Promise<void> {
+  await stubRemoteImages(page)
   await page.setViewportSize({ width, height: VIEWPORT_HEIGHT })
   await page.goto(`${PORT_URL}${route}`, { waitUntil: 'load' })
   await settle(page, PORT_SETTLE)

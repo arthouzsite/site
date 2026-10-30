@@ -2,12 +2,14 @@ import { expect, test, type Page } from '@playwright/test'
 import { PORT_SETTLE, settle } from '../visual/harness'
 import { PORT_URL } from '../visual/paths'
 import { findSmallTargets } from './hit-area'
+import { stubRemoteImages } from './stub-remote-images'
 
 const WIDTHS = [880, 1024, 1440] as const
 const VIEWPORT_HEIGHT = 900
 const SUBPIXEL = 0.01
 
 async function openHome(page: Page, width: number): Promise<void> {
+  await stubRemoteImages(page)
   await page.setViewportSize({ width, height: VIEWPORT_HEIGHT })
   await page.goto(`${PORT_URL}/`, { waitUntil: 'load' })
   await settle(page, PORT_SETTLE)
