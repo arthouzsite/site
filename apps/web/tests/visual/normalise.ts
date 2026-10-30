@@ -10,6 +10,7 @@ const ARTISTS_PATTERN = /const AH_ARTISTS = \[[^\]]*\];/g
 const NEWS_PATTERN = /const AH_NEWS = \[\n([\s\S]*?)\n\];/g
 const HOME_NEWS_SLICE = 'AH_NEWS.slice(1, 4)'
 const READ_ARTICLE_PATTERN = /<a href="#" onClick="\{\{ n\.read \}\}"[^>]*>Read article ↗<\/a>/g
+const SIGNED_BASE_INDEX = '(h >> 3) % AH_BASES.length'
 const NEWS_LIST_MAPPING = 'newsList: AH_NEWS.map(n => ({ ...n, '
 
 async function getData<T>(apiUrl: string, pathname: string): Promise<T> {
@@ -90,6 +91,11 @@ export function hideReadArticle(source: string): string {
   return replaceOnce(wrapped, NEWS_LIST_MAPPING, (match) => `${match}hasUrl: !!n.externalUrl, `, 'newsList hasUrl')
 }
 
+/** The prototype's signed shift goes negative for large hashes, so `AH_BASES[...]` is undefined; the seed uses `>>>`. */
+export function fixArtistBaseIndex(source: string): string {
+  return replaceOnce(source, SIGNED_BASE_INDEX, () => '(h >>> 3) % AH_BASES.length', 'artist base index')
+}
+
 /** Writes the patched prototype (and its runtime scripts) under test-results and returns its path. */
 export async function normaliseReference(apiUrl: string): Promise<string> {
   const [artists, news] = await Promise.all([
@@ -97,7 +103,7 @@ export async function normaliseReference(apiUrl: string): Promise<string> {
     getData<NewsItem[]>(apiUrl, '/public/news'),
   ])
   const source = await readFile(REFERENCE_FILE, 'utf8')
-  const patched = hideReadArticle(patchHomeNewsSlice(reorderNews(reorderArtists(source, artists.flat.map((a) => a.name)), news.map((n) => n.title))))
+  const patched = fixArtistBaseIndex(hideReadArticle(patchHomeNewsSlice(reorderNews(reorderArtists(source, artists.flat.map((a) => a.name)), news.map((n) => n.title)))))
   await mkdir(RESULTS_DIR, { recursive: true })
   await Promise.all(REFERENCE_ASSETS.map((asset) => copyFile(path.join(REFERENCE_DIR, asset), path.join(RESULTS_DIR, asset))))
   await writeFile(NORMALISED_FILE, patched, 'utf8')
