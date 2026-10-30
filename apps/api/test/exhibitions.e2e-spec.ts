@@ -123,9 +123,9 @@ describe('exhibitions', () => {
     await create({ title: 'Forced', startDate: '2025-01-01', endDate: '2025-02-01', statusOverride: 'CURRENT' })
     const titles = (r: request.Response) => (r.body.data as { title: string }[]).map((e) => e.title)
 
-    expect(titles(await authed.get('/exhibitions?status=CURRENT').expect(200)).sort()).toEqual(['Forced', 'Now Show'])
-    expect(titles(await authed.get('/exhibitions?status=PAST').expect(200))).toEqual(['Old'])
-    expect(titles(await authed.get('/exhibitions?status=UPCOMING').expect(200))).toEqual(['Future'])
+    expect(titles(await authed.get('/exhibitions?status=current').expect(200)).sort()).toEqual(['Forced', 'Now Show'])
+    expect(titles(await authed.get('/exhibitions?status=past').expect(200))).toEqual(['Old'])
+    expect(titles(await authed.get('/exhibitions?status=upcoming').expect(200))).toEqual(['Future'])
     expect(titles(await authed.get('/exhibitions?city=Delhi').expect(200))).toEqual(['Now Show'])
     expect(titles(await authed.get('/exhibitions?published=true').expect(200))).toEqual(['Now Show'])
     expect(titles(await authed.get('/exhibitions?q=fut').expect(200))).toEqual(['Future'])
@@ -185,6 +185,77 @@ describe('exhibitions', () => {
     expect(await prisma.exhibitionWork.count()).toBe(0)
     expect(await prisma.exhibitionArtist.count()).toBe(0)
     expect(postedTags()).toContain('exhibition:tidewater')
+  })
+
+  it('bad list query -> 400 VALIDATION with fields', async () => {
+    const res = await authed.get('/exhibitions?status=BOGUS&published=maybe').expect(400)
+    expect(res.body.error.code).toBe('VALIDATION')
+    expect(res.body.error.fields).toEqual(expect.objectContaining({ status: expect.any(String), published: expect.any(String) }))
+    await authed.get('/exhibitions?city=a&city=b').expect(400)
+  })
+
+  it('status filter and resolved status agree on the boundary days', async () => {
+    await create({ title: 'Starts today', startDate: '2026-10-30', endDate: '2026-12-01' })
+    await create({ title: 'Ends today', startDate: '2026-09-01', endDate: '2026-10-30' })
+    const res = await authed.get('/exhibitions?status=current').expect(200)
+    expect((res.body.data as { title: string; status: string }[]).map((e) => [e.title, e.status]).sort()).toEqual([
+      ['Ends today', 'CURRENT'],
+      ['Starts today', 'CURRENT'],
+    ])
+  })
+
+  it('create dedupes artistIds; unknown artist and hero image -> 400', async () => {
+    const a = await makeArtist('Aa')
+    const ex = await create({ artistIds: [a.id, a.id] })
+    expect(await prisma.exhibitionArtist.count({ where: { exhibitionId: ex.id } })).toBe(1)
+    const ghost = '00000000-0000-4000-8000-000000000001'
+    const bad = await authed.post('/exhibitions').send(baseInput({ artistIds: [ghost] })).expect(400)
+    expect(bad.body.error.code).toBe('UNKNOWN_ARTIST')
+    expect(bad.body.error.details.missingIds).toEqual([ghost])
+    const hero = await authed.post('/exhibitions').send(baseInput({ heroImageId: ghost })).expect(400)
+    expect(hero.body.error.code).toBe('UNKNOWN_MEDIA')
+    expect(await prisma.exhibition.count()).toBe(1)
+  })
+
+  it('setArtists dedupes and rejects unknown ids', async () => {
+    const a = await makeArtist('Aa')
+    const ex = await create()
+    await authed.put(`/exhibitions/${ex.id}/artists`).send({ ids: [a.id, a.id] }).expect(200)
+    expect(await prisma.exhibitionArtist.count({ where: { exhibitionId: ex.id } })).toBe(1)
+    const res = await authed.put(`/exhibitions/${ex.id}/artists`).send({ ids: [a.id, '00000000-0000-4000-8000-000000000001'] }).expect(400)
+    expect(res.body.error.code).toBe('UNKNOWN_ARTIST')
+    expect(await prisma.exhibitionArtist.count({ where: { exhibitionId: ex.id } })).toBe(1)
+  })
+
+  it('PATCH keeps isPublished and artists when omitted', async () => {
+    const a = await makeArtist('Aa')
+    const ex = await create({ artistIds: [a.id], isPublished: true })
+    const res = await authed.patch(`/exhibitions/${ex.id}`).send(baseInput({ city: 'Pune' })).expect(200)
+    expect(res.body.data).toMatchObject({ isPublished: true, city: 'Pune' })
+    expect(await prisma.exhibitionArtist.count({ where: { exhibitionId: ex.id } })).toBe(1)
+  })
+
+  it('bulk publish with an unknown id -> 404 with details.missingIds and no changes', async () => {
+    const ex = await create()
+    const ghost = '00000000-0000-4000-8000-000000000001'
+    const res = await authed.patch('/exhibitions/publish').send({ ids: [ex.id, ghost], isPublished: true }).expect(404)
+    expect(res.body.error.code).toBe('NOT_FOUND')
+    expect(res.body.error.details.missingIds).toEqual([ghost])
+    expect(await prisma.exhibition.count({ where: { isPublished: true } })).toBe(0)
+  })
+
+  it('reorder rejects partial, duplicate and foreign ids -> 400 INVALID_ORDER', async () => {
+    const artist = await makeArtist('Aa')
+    const img = await makeMedia('w')
+    const ex = await create({ artistIds: [artist.id] })
+    const other = await create({ artistIds: [artist.id] })
+    const mk = async (exId: string) =>
+      (await authed.post(`/exhibitions/${exId}/works`).send({ imageId: img.id, title: 't', artistId: artist.id }).expect(201)).body.data.id as string
+    const [w1, w2, foreign] = [await mk(ex.id), await mk(ex.id), await mk(other.id)]
+    for (const ids of [[w1], [w1, w1], [w1, foreign], [w1, w2, foreign]]) {
+      const res = await authed.put(`/exhibitions/${ex.id}/works/order`).send({ ids }).expect(400)
+      expect(res.body.error.code).toBe('INVALID_ORDER')
+    }
   })
 
   describe('works', () => {

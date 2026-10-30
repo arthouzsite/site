@@ -21,7 +21,8 @@ const CODE_BY_STATUS: Readonly<Record<number, string>> = {
   [HttpStatus.TOO_MANY_REQUESTS]: 'RATE_LIMITED',
 }
 
-type Mapped = { status: number; body: ReturnType<typeof fail> }
+type ErrorBody = ReturnType<typeof fail> | (Omit<ReturnType<typeof fail>, 'error'> & { error: Record<string, unknown> })
+type Mapped = { status: number; body: ErrorBody }
 
 export function zodFields(error: ZodError): Record<string, string> {
   const fields: Record<string, string> = {}
@@ -46,6 +47,15 @@ function httpExceptionCode(exception: HttpException): string | undefined {
   if (typeof response === 'object' && response !== null && 'code' in response) {
     const { code } = response as { code: unknown }
     return typeof code === 'string' ? code : undefined
+  }
+  return undefined
+}
+
+function httpExceptionDetails(exception: HttpException): Record<string, unknown> | undefined {
+  const response = exception.getResponse()
+  if (typeof response === 'object' && response !== null && 'details' in response) {
+    const { details } = response as { details: unknown }
+    return typeof details === 'object' && details !== null ? (details as Record<string, unknown>) : undefined
   }
   return undefined
 }
@@ -81,7 +91,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       const status = exception.getStatus()
       const code = httpExceptionCode(exception) ?? CODE_BY_STATUS[status] ?? 'ERROR'
-      return { status, body: fail(code, httpExceptionMessage(exception)) }
+      const base = fail(code, httpExceptionMessage(exception))
+      const details = httpExceptionDetails(exception)
+      return { status, body: details ? { ...base, error: { ...base.error!, details } } : base }
     }
     this.logger.error(
       exception instanceof Error ? exception.message : String(exception),

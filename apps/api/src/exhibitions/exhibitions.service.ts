@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
-import { slugify, tagsFor, type ExhibitionInput, type ExhibitionStatus } from '@arthouz/shared'
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import { z } from 'zod'
+import { EXHIBITION_STATUSES, slugify, tagsFor, type ExhibitionInput, type ExhibitionStatus } from '@arthouz/shared'
 import { withMeta } from '../common/envelope.interceptor'
 import { parsePagination } from '../common/pagination'
 import { PrismaService } from '../common/prisma.service'
@@ -9,16 +10,27 @@ import type { Prisma } from '../generated/prisma/client'
 import { RevalidateService } from '../revalidate/revalidate.service'
 import { EXHIBITION_INCLUDE, toAdminExhibition } from './exhibitions.mapper'
 
-export type ExhibitionListQuery = {
-  status?: ExhibitionStatus
-  city?: string
-  published?: string
-  q?: string
-  page?: unknown
-  limit?: unknown
-}
+const STATUS_QUERY_VALUES = EXHIBITION_STATUSES.map((s) => s.toLowerCase()) as [string, ...string[]]
+const MAX_CITY_LENGTH = 80
+const MAX_SEARCH_LENGTH = 120
+
+export const exhibitionListQuerySchema = z.object({
+  status: z
+    .enum(STATUS_QUERY_VALUES)
+    .transform((v) => v.toUpperCase() as ExhibitionStatus)
+    .optional(),
+  city: z.string().trim().max(MAX_CITY_LENGTH).optional(),
+  q: z.string().trim().max(MAX_SEARCH_LENGTH).optional(),
+  published: z.enum(['true', 'false']).optional(),
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).optional(),
+})
+
+export type ExhibitionListQuery = z.infer<typeof exhibitionListQuerySchema>
 
 const NOT_FOUND = 'Exhibition not found'
+const UNKNOWN_ARTIST = 'UNKNOWN_ARTIST'
+const UNKNOWN_MEDIA = 'UNKNOWN_MEDIA'
 
 // Status is computed from dates unless overridden, so it is filtered in SQL using the same rule
 // as resolveExhibitionStatus: an explicit override wins, otherwise compare dates with today().
@@ -43,9 +55,16 @@ function listWhere(query: ExhibitionListQuery): Prisma.ExhibitionWhereInput {
   return { AND: and }
 }
 
-function scalarData(input: ExhibitionInput, slug: string) {
+// Scalars written on create; artists have their own join handling.
+function createData(input: ExhibitionInput, slug: string) {
   const { artistIds: _artistIds, slug: _slug, ...rest } = input
   return { ...rest, slug }
+}
+
+// PATCH never touches publish state (own endpoints) or artists (setArtists).
+function updateData(input: ExhibitionInput, slug: string) {
+  const { isPublished: _isPublished, ...rest } = createData(input, slug)
+  return rest
 }
 
 @Injectable()
@@ -70,11 +89,13 @@ export class ExhibitionsService {
   }
 
   async create(input: ExhibitionInput, _userId: string) {
+    const artistIds = await this.validArtistIds(input.artistIds)
+    await this.assertMedia(input.heroImageId)
     const slug = await uniqueSlug(this.prisma, 'exhibition', input.slug ?? input.title)
     const created = await this.prisma.exhibition.create({
       data: {
-        ...scalarData(input, slug),
-        artists: { create: input.artistIds.map((artistId, sortOrder) => ({ artistId, sortOrder })) },
+        ...createData(input, slug),
+        artists: { create: artistIds.map((artistId, sortOrder) => ({ artistId, sortOrder })) },
       },
       include: EXHIBITION_INCLUDE,
     })
@@ -84,19 +105,21 @@ export class ExhibitionsService {
 
   async update(id: string, input: ExhibitionInput) {
     const existing = await this.find(id)
+    await this.assertMedia(input.heroImageId)
     const wantsNewSlug = input.slug !== undefined && slugify(input.slug) !== existing.slug
     const slug = wantsNewSlug ? await uniqueSlug(this.prisma, 'exhibition', input.slug ?? '', id) : existing.slug
     const updated = await this.prisma.exhibition.update({
       where: { id },
-      data: scalarData(input, slug),
+      data: updateData(input, slug),
       include: EXHIBITION_INCLUDE,
     })
     this.revalidate.trigger([...tagsFor('exhibition', existing.slug), ...tagsFor('exhibition', updated.slug)])
     return toAdminExhibition(updated)
   }
 
-  async setArtists(id: string, artistIds: string[]) {
+  async setArtists(id: string, requestedIds: string[]) {
     const existing = await this.find(id)
+    const artistIds = await this.validArtistIds(requestedIds)
     await this.prisma.$transaction([
       this.prisma.exhibitionArtist.deleteMany({ where: { exhibitionId: id } }),
       this.prisma.exhibitionArtist.createMany({
@@ -114,9 +137,21 @@ export class ExhibitionsService {
     return toAdminExhibition(updated)
   }
 
-  async bulkPublish(ids: string[], isPublished: boolean) {
-    const rows = await this.prisma.exhibition.findMany({ where: { id: { in: ids } }, select: { slug: true } })
-    const { count } = await this.prisma.exhibition.updateMany({ where: { id: { in: ids } }, data: { isPublished } })
+  async bulkPublish(requestedIds: string[], isPublished: boolean) {
+    const ids = Array.from(new Set(requestedIds))
+    const { rows, count } = await this.prisma.$transaction(async (tx) => {
+      const found = await tx.exhibition.findMany({ where: { id: { in: ids } }, select: { id: true, slug: true } })
+      if (found.length !== ids.length) {
+        const known = new Set(found.map((r) => r.id))
+        throw new NotFoundException({
+          code: 'NOT_FOUND',
+          message: NOT_FOUND,
+          details: { missingIds: ids.filter((i) => !known.has(i)) },
+        })
+      }
+      const result = await tx.exhibition.updateMany({ where: { id: { in: ids } }, data: { isPublished } })
+      return { rows: found, count: result.count }
+    })
     this.revalidate.trigger(rows.flatMap((r) => tagsFor('exhibition', r.slug)))
     return { updated: count }
   }
@@ -126,6 +161,23 @@ export class ExhibitionsService {
     await this.prisma.exhibition.delete({ where: { id } })
     this.revalidate.trigger(tagsFor('exhibition', existing.slug))
     return { id }
+  }
+
+  private async validArtistIds(requested: string[]): Promise<string[]> {
+    const ids = Array.from(new Set(requested))
+    const found = await this.prisma.artist.findMany({ where: { id: { in: ids } }, select: { id: true } })
+    const known = new Set(found.map((a) => a.id))
+    const missing = ids.filter((i) => !known.has(i))
+    if (missing.length > 0) {
+      throw new BadRequestException({ code: UNKNOWN_ARTIST, message: `Unknown artist ids: ${missing.join(', ')}`, details: { missingIds: missing } })
+    }
+    return ids
+  }
+
+  private async assertMedia(mediaId: string | null): Promise<void> {
+    if (!mediaId) return
+    const media = await this.prisma.media.findUnique({ where: { id: mediaId }, select: { id: true } })
+    if (!media) throw new BadRequestException({ code: UNKNOWN_MEDIA, message: `Unknown hero image: ${mediaId}` })
   }
 
   private async find(id: string) {

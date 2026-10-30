@@ -76,8 +76,14 @@ export class ExhibitionWorksService {
 
   async reorder(exhibitionId: string, ids: string[]) {
     const { slug } = await this.exhibition(exhibitionId)
+    const current = await this.prisma.exhibitionWork.findMany({ where: { exhibitionId }, select: { id: true } })
+    const expected = new Set(current.map((w) => w.id))
+    const isExactSet = ids.length === expected.size && new Set(ids).size === ids.length && ids.every((id) => expected.has(id))
+    if (!isExactSet) {
+      throw new BadRequestException({ code: 'INVALID_ORDER', message: 'ids must list every work of this exhibition exactly once' })
+    }
     await this.prisma.$transaction(
-      ids.map((id, sortOrder) => this.prisma.exhibitionWork.updateMany({ where: { id, exhibitionId }, data: { sortOrder } })),
+      ids.map((id, sortOrder) => this.prisma.exhibitionWork.update({ where: { id }, data: { sortOrder } })),
     )
     this.revalidate.trigger(tagsFor('exhibition', slug))
     return this.list(exhibitionId)

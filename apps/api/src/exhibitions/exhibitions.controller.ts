@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Param, Patch, Post, Put, Query } from '@nestjs/common'
+import { Controller, Delete, Get, Param, Patch, Post, Put } from '@nestjs/common'
 import {
   exhibitionInputSchema,
   publishSchema,
@@ -8,8 +8,8 @@ import {
 import { z } from 'zod'
 import { CurrentUser } from '../auth/current-user.decorator'
 import type { PublicUser } from '../auth/public-user'
-import { ZodBody } from '../common/zod-body.pipe'
-import { ExhibitionsService, type ExhibitionListQuery } from './exhibitions.service'
+import { ZodBody, ZodQuery } from '../common/zod-body.pipe'
+import { exhibitionListQuerySchema, ExhibitionsService, type ExhibitionListQuery } from './exhibitions.service'
 
 const artistsSchema = z.object({ ids: z.array(z.string().uuid()) })
 const bulkPublishSchema = publishSchema.extend({ ids: z.array(z.string().uuid()).min(1) })
@@ -19,7 +19,7 @@ export class ExhibitionsController {
   constructor(private readonly exhibitions: ExhibitionsService) {}
 
   @Get()
-  list(@Query() query: ExhibitionListQuery) {
+  list(@ZodQuery(exhibitionListQuerySchema) query: ExhibitionListQuery) {
     return this.exhibitions.list(query)
   }
 
