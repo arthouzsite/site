@@ -30,7 +30,7 @@ export const routes: RouteObject[] = [
           { path: 'locations', ...page(() => import('../features/locations/LocationsPage.placeholder')) },
           { path: 'about', ...page(() => import('../features/about/AboutPage.placeholder')) },
           { path: 'settings', ...page(() => import('../features/settings/SettingsPage.placeholder')) },
-          { path: 'media', ...page(() => import('../features/media/MediaPage.placeholder')) },
+          { path: 'media', ...page(() => import('../features/media/MediaPage')) },
           {
             element: <RequireRole allow="ADMIN" />,
             children: [{ path: 'users', ...page(() => import('../features/users/UsersPage.placeholder')) }],
