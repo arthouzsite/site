@@ -84,7 +84,7 @@ export function toPublicArtist(row: PublicArtistRow): PublicArtist {
 export function toPublicFair(row: Prisma.FairGetPayload<{ include: { image: true } }>): PublicFair {
   const place = [row.venue, row.city].filter(Boolean).join(', ')
   return {
-    id: row.id, slug: row.slug, title: row.title, where: `${place} · ${row.dateLabel}`, booth: row.booth,
+    id: row.id, slug: row.slug, title: row.title, where: [place, row.dateLabel].filter(Boolean).join(' · '), booth: row.booth,
     text: row.text, image: toPublicImage(row.image),
   }
 }

@@ -49,9 +49,17 @@ describe('HomeService.build', () => {
     expect((await service.build(TODAY)).hero?.slug).toBe('current')
   })
 
-  it('hero falls back to most recent when nothing current', async () => {
-    const { service } = build({ exhibitions: [past[2], past[0], past[1]] })
-    expect((await service.build(TODAY)).hero?.slug).toBe('past-c')
+  it('hero falls back to the soonest upcoming when nothing current', async () => {
+    const later = exhibition('later', '2027-03-01', '2027-04-01')
+    const sooner = exhibition('sooner', '2027-01-01', '2027-02-01')
+    const { service } = build({ exhibitions: [later, sooner, past[0]] })
+    expect((await service.build(TODAY)).hero?.slug).toBe('sooner')
+  })
+
+  it('hero falls back to the most recently ended past show when nothing current or upcoming', async () => {
+    const longRunning = exhibition('long', '2024-01-01', '2025-12-01')
+    const { service } = build({ exhibitions: [past[2], longRunning, past[0]] })
+    expect((await service.build(TODAY)).hero?.slug).toBe('long')
   })
 
   it('upcoming is null when none, else the soonest by startDate', async () => {

@@ -36,9 +36,10 @@ export class PublicService {
       include: PUBLIC_EXHIBITION_INCLUDE,
       orderBy: [...START_DESC],
     })
+    const wantedCity = query.city?.toLowerCase()
     const cities = [...new Set(rows.map((r) => r.city))]
     const items = rows
-      .filter((r) => !query.city || r.city === query.city)
+      .filter((r) => !wantedCity || r.city.toLowerCase() === wantedCity)
       .filter((r) => !query.status || resolveExhibitionStatus(r, now) === query.status)
       .map((r) => toPublicExhibition(r, now))
     return { items, cities }

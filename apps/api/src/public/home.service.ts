@@ -55,9 +55,10 @@ export class HomeService {
     const sorted = [...exhibitions].sort(byStartDesc)
     const statused = sorted.map(withStatus)
     const override = settings.homeHeroExhibitionId as string | null
-    const hero =
-      sorted.find((e) => e.id === override) ?? statused.find((s) => s.status === 'CURRENT')?.row ?? sorted[0] ?? null
     const upcoming = statused.filter((s) => s.status === 'UPCOMING').map((s) => s.row).sort(byStartAsc)[0] ?? null
+    const latestPast = statused.filter((s) => s.status === 'PAST').map((s) => s.row).sort(byEndDesc)[0] ?? null
+    const hero =
+      sorted.find((e) => e.id === override) ?? statused.find((s) => s.status === 'CURRENT')?.row ?? upcoming ?? latestPast
 
     return {
       hero: hero ? dto(hero) : null,

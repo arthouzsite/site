@@ -124,6 +124,8 @@ describe('public API', () => {
       expect(res.items.map((e) => e.slug)).toEqual(['chennai-past'])
       expect(res.items[0]).toMatchObject({ status: 'PAST', statusLabel: 'Past', datesLabel: 'January 1 – February 1, 2025' })
       expect(res.cities).toEqual(['Chennai', 'Mumbai'])
+      const lower = await ok('/public/exhibitions?city=chennai', publicExhibitionListSchema)
+      expect(lower.items.map((e) => e.slug).sort()).toEqual(['chennai-future', 'chennai-past'])
       await get('/public/exhibitions?status=PAST').expect(400)
     })
 
@@ -162,6 +164,8 @@ describe('public API', () => {
         data: [
           { slug: 'f1', title: 'Fair', venue: 'Hall', city: 'Delhi', dateLabel: '2022', isPublished: true },
           { slug: 'f2', title: 'Draft fair', isPublished: false },
+          { slug: 'f3', title: 'No date', city: 'Delhi', isPublished: true, sortOrder: 1 },
+          { slug: 'f4', title: 'No place', dateLabel: '2024', isPublished: true, sortOrder: 2 },
         ],
       })
       await prisma.location.createMany({ data: [{ slug: 'l1', city: 'Chennai', tel: '' }, { slug: 'l2', city: 'Delhi', tel: '+91 1', sortOrder: 1 }] })
@@ -172,7 +176,7 @@ describe('public API', () => {
         ],
       })
       const fairs = await ok('/public/fairs', arrayOf(publicFairSchema))
-      expect(fairs).toMatchObject([{ slug: 'f1', where: 'Hall, Delhi · 2022' }])
+      expect(fairs).toMatchObject([{ slug: 'f1', where: 'Hall, Delhi · 2022' }, { slug: 'f3', where: 'Delhi' }, { slug: 'f4', where: '2024' }])
       const locations = await ok('/public/locations', arrayOf(publicLocationSchema))
       expect(locations.map((l) => l.tel)).toEqual([null, '+91 1'])
       const about = await ok('/public/about', publicAboutSchema)
