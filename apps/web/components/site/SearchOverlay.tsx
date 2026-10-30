@@ -9,6 +9,8 @@ import { SearchResults } from './SearchResults'
 type Props = { onClose: () => void; returnFocus?: HTMLElement | null }
 
 const PLACEHOLDER = 'Search artists, exhibitions, news'
+/** Same cap as the /api/search route's validation, so typing can never produce a 400. */
+const MAX_QUERY_LENGTH = 120
 
 /** Full-screen paper search overlay (prototype `searchOpen` block): Close, display-size input, grouped results. */
 export function SearchOverlay({ onClose, returnFocus }: Props) {
@@ -33,6 +35,7 @@ export function SearchOverlay({ onClose, returnFocus }: Props) {
             onChange={(event) => setQuery(event.target.value)}
             aria-label={PLACEHOLDER}
             placeholder={PLACEHOLDER}
+            maxLength={MAX_QUERY_LENGTH}
             autoComplete="off"
             enterKeyHint="search"
             className="w-full border-0 border-b border-solid border-ink bg-transparent px-0 pt-2 pb-4 font-display text-[clamp(32px,5vw,64px)] text-ink outline-none"

@@ -44,13 +44,22 @@ async function fetchGroups(q: string, signal: AbortSignal): Promise<SearchGroup[
 export function useSiteSearch(query: string, delay = SEARCH_DEBOUNCE_MS): SearchResult | null {
   const [result, setResult] = useState<SearchResult | null>(null)
   const q = query.trim()
+  const [previousQ, setPreviousQ] = useState(q)
+  // Blanking the query drops the last result, so it cannot flash back while the next query is debounced.
+  if (q !== previousQ) {
+    setPreviousQ(q)
+    if (!q) setResult(null)
+  }
 
   useEffect(() => {
     if (!q) return undefined
     const controller = new AbortController()
     const timer = setTimeout(() => {
       fetchGroups(q, controller.signal)
-        .then((groups) => setResult({ query: q, groups, failed: false }))
+        .then((groups) => {
+          if (controller.signal.aborted) return
+          setResult({ query: q, groups, failed: false })
+        })
         .catch((error: unknown) => {
           if (controller.signal.aborted) return
           console.error('[web] search failed', error)

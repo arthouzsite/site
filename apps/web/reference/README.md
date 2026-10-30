@@ -87,3 +87,6 @@ Deliberate departures from a literal reading of the markup, each confirmed by th
   control in `header`, `main` and `footer`. Decorative arrows are `aria-hidden` (`decorateArrows`).
 - **Contrast** — the prototype's rust (`#B4651A`) on paper is 3.63:1, under WCAG AA for its small eyebrows. It is
   kept (pixels are the spec); `tests/a11y` allows exactly that pair and fails on any other contrast violation.
+- **Search proxy (deployment follow-up)** — `app/api/search` validates `q` (≤ 120 characters) but has no rate limit
+  of its own, and the API throttles only login, not `/public/*`. Rate-limit `/api/search` (and `/public/search`) at the
+  edge or reverse proxy before launch.

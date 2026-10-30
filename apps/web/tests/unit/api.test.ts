@@ -40,6 +40,7 @@ describe('apiGet', () => {
   it('defers to request time (connection) and throws a NETWORK ApiError when the API is unreachable', async () => {
     // Arrange
     connection.mockClear()
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(new TypeError('fetch failed'))))
 
     // Act
@@ -48,6 +49,10 @@ describe('apiGet', () => {
     // Assert: during a build prerender connection() bails the route out to dynamic instead of failing the build
     await expect(promise).rejects.toMatchObject({ name: 'ApiError', code: 'NETWORK', status: 0 })
     expect(connection).toHaveBeenCalledTimes(1)
+    // ...and the failure is logged first, so a build against an unreachable API is not silently all-dynamic
+    expect(warn).toHaveBeenCalledWith('[web] GET /public/fairs failed: fetch failed')
+    expect(warn.mock.invocationCallOrder[0]).toBeLessThan(connection.mock.invocationCallOrder[0] ?? 0)
+    warn.mockRestore()
   })
 
   it('apiGet unwraps the envelope and parses with the schema', async () => {

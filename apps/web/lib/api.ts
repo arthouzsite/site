@@ -39,8 +39,10 @@ async function request(path: string, init: RequestInit): Promise<Response> {
     return await fetch(`${apiBaseUrl()}${path}`, init)
   } catch (error) {
     if (error instanceof ApiError) throw error
-    await connection()
     const detail = error instanceof Error ? error.message : String(error)
+    // Logged before deferring: otherwise a build against an unreachable API silently ships every route dynamic.
+    console.warn(`[web] GET ${path} failed: ${detail}`)
+    await connection()
     throw new ApiError('NETWORK', `GET ${path} failed: ${detail}`, 0)
   }
 }

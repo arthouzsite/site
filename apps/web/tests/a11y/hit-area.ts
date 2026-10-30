@@ -7,7 +7,7 @@ export type SmallTarget = { selector: string; text: string; width: number; heigh
 /**
  * Lists every visible `a` / `button` inside `header`, `main` and `footer` whose effective hit box is under
  * `min` px on either axis. The effective box is the larger of the element's own border box and its
- * absolutely positioned `::before` box (the `hit-44` utility), measured per axis.
+ * absolutely positioned `::before` box (the `hit-44` utility, counted only on a positioned host), measured per axis.
  */
 export function findSmallTargets(page: Page, min = MIN_HIT_PX): Promise<SmallTarget[]> {
   return page.evaluate((minPx) => {
@@ -19,6 +19,8 @@ export function findSmallTargets(page: Page, min = MIN_HIT_PX): Promise<SmallTar
       return parts.join(' > ')
     }
     const pseudoBox = (el: Element): { width: number; height: number } => {
+      // A statically positioned host would size an absolute ::before against some ancestor, not itself.
+      if (getComputedStyle(el).position === 'static') return { width: 0, height: 0 }
       const style = getComputedStyle(el, '::before')
       if (style.content === 'none' || style.content === 'normal' || style.position !== 'absolute') return { width: 0, height: 0 }
       return { width: parseFloat(style.width) || 0, height: parseFloat(style.height) || 0 }

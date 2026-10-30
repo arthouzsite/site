@@ -124,6 +124,43 @@ describe('SearchOverlay', () => {
     expect(screen.queryByText(/Nothing found/)).toBeNull()
   })
 
+  it('ignores a response that settles after its request was aborted', async () => {
+    const pending: Array<(response: Response) => void> = []
+    fetchMock.mockImplementation(() => new Promise<Response>((resolve) => pending.push(resolve)))
+    const { input } = renderOverlay()
+
+    await type(input, 'pi')
+    await flush()
+    await type(input, 'pich')
+    await flush()
+    // The first (aborted) request resolves late; its stale groups must not render.
+    await act(async () => {
+      pending[0]?.(json({ groups: [{ label: 'Artists', items: [{ label: 'Stale', href: '/artists/stale' }] }] }))
+      await vi.advanceTimersByTimeAsync(0)
+    })
+
+    expect(screen.queryByRole('link', { name: 'Stale' })).toBeNull()
+  })
+
+  it('does not flash the previous results when typing again after blanking', async () => {
+    fetchMock.mockResolvedValueOnce(json({ groups: GROUPS }))
+    fetchMock.mockImplementation(() => new Promise<Response>(() => undefined))
+    const { input } = renderOverlay()
+
+    await type(input, 'pich')
+    await flush()
+    await type(input, '')
+    await flush()
+    await type(input, 'zz')
+
+    expect(screen.queryByRole('link', { name: 'Vijay Pichumani' })).toBeNull()
+  })
+
+  it('caps the input at 120 characters, matching the search route', () => {
+    const { input } = renderOverlay()
+    expect(input.getAttribute('maxlength')).toBe('120')
+  })
+
   it('closes on Escape', async () => {
     const { onClose } = renderOverlay()
     fireEvent.keyDown(document, { key: 'Escape' })
