@@ -8,7 +8,7 @@ import { normaliseReference } from './normalise'
 import { decodePng, encodePng } from './png'
 import { API_URL, PORT_URL, RESULTS_DIR, VISUAL_RESULTS_DIR } from './paths'
 
-export type PrototypeRoute = { page: string; param?: string | null }
+export type PrototypeRoute = { page: string; param?: string | null; city?: string; status?: string }
 export type PrototypeProps = { heroLayout?: 'Full-bleed' | 'Split'; artistIndex?: 'Grouped A–Z' | 'Flowing' }
 type Viewport = { width: number; height?: number }
 type MatchOptions = { name: string; maxDiffRatio?: number; maxHeightDelta?: number }
@@ -45,9 +45,10 @@ async function withProps(file: string, props: PrototypeProps): Promise<string> {
 
 type SettleOptions = { networkIdle: boolean }
 
-async function waitForQuiet(page: Page, { networkIdle }: SettleOptions): Promise<void> {
+async function waitForQuiet(page: Page, { networkIdle }: SettleOptions, { images }: { images: boolean }): Promise<void> {
   if (networkIdle) await page.waitForLoadState('networkidle')
   await page.evaluate(() => document.fonts.ready.then(() => undefined))
+  if (!images) return
   await page.waitForFunction(() => Array.from(document.images).every((img) => img.complete))
 }
 
@@ -56,7 +57,8 @@ async function waitForQuiet(page: Page, { networkIdle }: SettleOptions): Promise
  * The port skips `networkidle`: Next's router keeps link-prefetch requests open, so it never fires.
  */
 export async function settle(page: Page, options: SettleOptions): Promise<void> {
-  await waitForQuiet(page, options)
+  // Lazy images below the fold report complete=false until scrolled into view, so they are awaited only after the walk.
+  await waitForQuiet(page, options, { images: false })
   await page.evaluate(async (delay) => {
     const pause = () => new Promise((resolve) => setTimeout(resolve, delay))
     for (let y = 0; y < document.documentElement.scrollHeight; y += window.innerHeight) {
@@ -67,7 +69,7 @@ export async function settle(page: Page, options: SettleOptions): Promise<void> 
     await pause()
     window.scrollTo(0, 0)
   }, SCROLL_STEP_DELAY_MS)
-  await waitForQuiet(page, options)
+  await waitForQuiet(page, options, { images: true })
 }
 
 export const PROTOTYPE_SETTLE: SettleOptions = { networkIdle: true }
@@ -82,7 +84,7 @@ async function open(page: Page, url: string, viewport: Viewport, options: Settle
 
 export async function renderPrototype(page: Page, options: { route: PrototypeRoute; props?: PrototypeProps } & Viewport): Promise<Buffer> {
   const file = await withProps(await normalisedReference(), options.props ?? {})
-  const route = { page: options.route.page, param: options.route.param ?? null }
+  const route = { ...options.route, param: options.route.param ?? null }
   await page.addInitScript((value) => window.localStorage.setItem('arthouz-route', value), JSON.stringify(route))
   return open(page, pathToFileURL(file).href, options, PROTOTYPE_SETTLE)
 }
