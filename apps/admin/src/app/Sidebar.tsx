@@ -46,7 +46,7 @@ export function Sidebar({ user, counts = {} }: Props) {
         ))}
       </nav>
       <div className="mt-auto flex flex-col gap-1.5 border-t border-line-dark px-6 pt-4 text-12 text-on-dark-muted max-[1024px]:hidden">
-        <a href={PUBLIC_SITE_URL} target="_blank" rel="noreferrer" className="flex min-h-6 items-center gap-2 hover:text-amber">
+        <a href={PUBLIC_SITE_URL} target="_blank" rel="noreferrer" className="flex min-h-11 items-center gap-2 hover:text-amber">
           <Icon name="external" /> View public site
         </a>
         <span>Signed in as {user.name} · {ROLE_LABEL[user.role]}</span>

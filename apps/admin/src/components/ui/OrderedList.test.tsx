@@ -11,7 +11,7 @@ const initial: Item[] = [
   { id: 'c', name: 'Gamma' },
 ]
 
-function Harness({ onRemove }: { onRemove?: (id: string) => void }) {
+function Harness({ onRemove, removable }: { onRemove?: (id: string) => void; removable?: boolean }) {
   const [items, setItems] = useState(initial)
   return (
     <OrderedList
@@ -29,7 +29,7 @@ function Harness({ onRemove }: { onRemove?: (id: string) => void }) {
           return next
         })
       }
-      onRemove={onRemove}
+      onRemove={removable ? (id) => setItems((cur) => cur.filter((x) => x.id !== id)) : onRemove}
       renderItem={(it) => it.name}
     />
   )
@@ -56,5 +56,14 @@ describe('OrderedList', () => {
     render(<Harness onRemove={onRemove} />)
     await userEvent.click(screen.getByRole('button', { name: 'Remove Beta' }))
     expect(onRemove).toHaveBeenCalledWith('b')
+  })
+
+  it('does not steal focus on later list changes after a move', async () => {
+    render(<Harness removable />)
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: 'Move Alpha down' }))
+    expect(screen.getByRole('button', { name: 'Move Alpha down' })).toHaveFocus()
+    await user.click(screen.getByRole('button', { name: 'Remove Gamma' }))
+    expect(screen.getByRole('button', { name: 'Move Alpha down' })).not.toHaveFocus()
   })
 })

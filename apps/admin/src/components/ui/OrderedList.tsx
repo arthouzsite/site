@@ -27,6 +27,7 @@ export function OrderedList<T extends Item>({ label, items, onMove, onRemove, re
     const preferred = row?.querySelector<HTMLButtonElement>(`[data-move="${moved.dir}"]`)
     const other = row?.querySelector<HTMLButtonElement>(`[data-move="${moved.dir === 'up' ? 'down' : 'up'}"]`)
     ;(preferred && !preferred.disabled ? preferred : other)?.focus()
+    setMoved(null) // one-shot: later list changes (e.g. removals) must not pull focus back
   }, [items, moved])
 
   const move = (item: T, index: number, dir: MoveDirection) => {

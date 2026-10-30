@@ -11,7 +11,7 @@ const data: Row[] = [{ id: '1', title: 'Alpha' }, { id: '2', title: 'Beta' }]
 
 function Harness({ rows = data }: { rows?: Row[] }) {
   const [sel, setSel] = useState<RowSelectionState>({})
-  return <DataTable label="Exhibitions" data={rows} columns={columns} getRowId={(r) => r.id} selectable selection={sel} onSelectionChange={setSel} />
+  return <DataTable label="Exhibitions" data={rows} columns={columns} getRowId={(r) => r.id} getRowLabel={(r) => r.title} selectable selection={sel} onSelectionChange={setSel} />
 }
 
 describe('DataTable', () => {
@@ -23,10 +23,18 @@ describe('DataTable', () => {
     expect(rows[2]).toHaveAttribute('aria-selected', 'false')
   })
 
+  it('wraps row checkboxes in a 44px hit area with distinct labels', () => {
+    render(<Harness />)
+    const box = screen.getByRole('checkbox', { name: 'Select Alpha' })
+    expect(box.closest('label')).toHaveClass('hit-area')
+    expect(screen.getByRole('checkbox', { name: 'Select Beta' })).not.toBe(box)
+  })
+
   it('select-all toggles every row', async () => {
     render(<Harness />)
     await userEvent.click(screen.getByRole('checkbox', { name: 'Select all rows' }))
-    screen.getAllByRole('checkbox', { name: 'Select row' }).forEach((c) => expect(c).toBeChecked())
+    expect(screen.getByRole('checkbox', { name: 'Select Alpha' })).toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'Select Beta' })).toBeChecked()
   })
 
   it('shows the empty message', () => {

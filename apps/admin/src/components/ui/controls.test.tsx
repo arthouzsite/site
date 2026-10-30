@@ -61,6 +61,17 @@ describe('Switch', () => {
     await userEvent.click(screen.getByRole('switch', { name: 'Featured' }))
     expect(onChange).toHaveBeenCalled()
   })
+
+  // jsdom cannot measure layout, so assert the structure that guarantees a 44px target:
+  // the whole label (min 44x44) wraps the 20px switch, and clicking the label text toggles it.
+  it('wraps the switch in a 44px minimum clickable label', async () => {
+    render(<Switch label="Featured" />)
+    const input = screen.getByRole('switch', { name: 'Featured' })
+    const label = input.closest('label')!
+    expect(label).toHaveClass('min-h-11', 'min-w-11')
+    await userEvent.click(screen.getByText('Featured'))
+    expect(input).toBeChecked()
+  })
 })
 
 describe('Tabs', () => {

@@ -12,7 +12,7 @@ export default mergeConfig(
       coverage: {
         provider: 'v8',
         include: ['src/**/*.{ts,tsx}'],
-        exclude: ['src/**/*.test.{ts,tsx}', 'src/test/**', 'src/main.tsx', 'src/features/**/*Page.tsx', 'src/vite-env.d.ts'],
+        exclude: ['src/**/*.test.{ts,tsx}', 'src/test/**', 'src/main.tsx', 'src/features/**/*.placeholder.tsx', 'src/vite-env.d.ts'],
         thresholds: { lines: 80, functions: 80, statements: 80, branches: 80 },
       },
     },

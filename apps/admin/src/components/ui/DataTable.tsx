@@ -13,6 +13,8 @@ type Props<T> = {
   data: T[]
   columns: ColumnDef<T, unknown>[]
   getRowId: (row: T) => string
+  /** Accessible name for a row's checkbox; required when `selectable`. */
+  getRowLabel?: (row: T) => string
   selectable?: boolean
   selection?: RowSelectionState
   onSelectionChange?: OnChangeFn<RowSelectionState>
@@ -21,27 +23,31 @@ type Props<T> = {
 
 const CELL = 'h-row whitespace-nowrap border-b border-line px-3.5 text-left align-middle'
 
-export function DataTable<T>({ label, data, columns, getRowId, selectable, selection, onSelectionChange, empty = 'Nothing to show.' }: Props<T>) {
+export function DataTable<T>({ label, data, columns, getRowId, getRowLabel, selectable, selection, onSelectionChange, empty = 'Nothing to show.' }: Props<T>) {
   const allColumns = useMemo<ColumnDef<T, unknown>[]>(() => {
     if (!selectable) return columns
     const select: ColumnDef<T, unknown> = {
       id: 'select',
       header: ({ table }) => (
-        <input
-          type="checkbox"
-          className="checkbox"
-          aria-label="Select all rows"
-          checked={table.getIsAllRowsSelected()}
-          ref={(el) => { if (el) el.indeterminate = table.getIsSomeRowsSelected() }}
-          onChange={table.getToggleAllRowsSelectedHandler()}
-        />
+        <label className="hit-area">
+          <input
+            type="checkbox"
+            className="checkbox"
+            aria-label="Select all rows"
+            checked={table.getIsAllRowsSelected()}
+            ref={(el) => { if (el) el.indeterminate = table.getIsSomeRowsSelected() }}
+            onChange={table.getToggleAllRowsSelectedHandler()}
+          />
+        </label>
       ),
       cell: ({ row }) => (
-        <input type="checkbox" className="checkbox" aria-label="Select row" checked={row.getIsSelected()} onChange={row.getToggleSelectedHandler()} />
+        <label className="hit-area">
+          <input type="checkbox" className="checkbox" aria-label={`Select ${getRowLabel?.(row.original) ?? row.id}`} checked={row.getIsSelected()} onChange={row.getToggleSelectedHandler()} />
+        </label>
       ),
     }
     return [select, ...columns]
-  }, [columns, selectable])
+  }, [columns, selectable, getRowLabel])
 
   const table = useReactTable({
     data,

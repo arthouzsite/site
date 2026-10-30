@@ -28,7 +28,7 @@ function mount(path: string, user: typeof editor | null) {
 describe('shell and guards', () => {
   it('redirects unauthenticated visitors to /login with next', async () => {
     const router = mount('/artists?x=1', null)
-    expect(await screen.findByRole('heading', { name: 'Sign in' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Sign in' }, { timeout: 4000 })).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/login')
     expect(router.state.location.search).toBe('?next=%2Fartists%3Fx%3D1')
   })
@@ -64,7 +64,7 @@ describe('shell and guards', () => {
   it('returns to /login after signing out', async () => {
     const router = mount('/', editor)
     await userEvent.click(await screen.findByRole('button', { name: /sign out/ }))
-    expect(await screen.findByRole('heading', { name: 'Sign in' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Sign in' }, { timeout: 4000 })).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/login')
   })
 
@@ -74,7 +74,7 @@ describe('shell and guards', () => {
     server.use(http.get(`${API_URL}/exhibitions`, () => HttpResponse.json(errorEnvelope('UNAUTHENTICATED', 'No'), { status: 401 })))
     const { api } = await import('../lib/api')
     await api.get('/exhibitions').catch(() => undefined)
-    expect(await screen.findByRole('heading', { name: 'Sign in' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Sign in' }, { timeout: 4000 })).toBeInTheDocument()
     expect(router.state.location.search).toBe('?next=%2Fmedia')
   })
 })

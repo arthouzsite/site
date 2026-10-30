@@ -31,7 +31,7 @@ export function ErrorSummary({ errors, focusKey }: { errors: SummaryError[]; foc
     >
       <h2 id="error-summary-title" className="m-0 text-13 font-semibold text-danger">There is a problem</h2>
       {errors.map((e) => (
-        <a key={`${e.name}-${e.message}`} href={`#${fieldId(e.name)}`} onClick={goTo(e.name)} className="inline-flex min-h-6 items-center text-13 text-danger underline">
+        <a key={`${e.name}-${e.message}`} href={`#${fieldId(e.name)}`} onClick={goTo(e.name)} className="inline-flex min-h-11 items-center text-13 text-danger underline">
           {e.message}
         </a>
       ))}
