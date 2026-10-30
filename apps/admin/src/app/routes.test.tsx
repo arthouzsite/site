@@ -4,10 +4,18 @@ import { RouterProvider, createMemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import { ToastProvider } from '../lib/toast'
 import { routes } from './router'
+import { ToastProvider } from '../lib/toast'
 import { API_URL, HttpResponse, envelope, http, server } from '../test/msw'
 
-const PAGES: Array<[string, string]> = [
-  ['/', 'Dashboard'], ['/exhibitions', 'Exhibitions'], ['/exhibitions/new', 'New exhibition'], ['/exhibitions/abc', 'Exhibition'],
+// Pages with real data calls get empty answers so these route tests stay about routing.
+const empty = (path: string, data: unknown = []) => http.get(`${API_URL}${path}`, () => HttpResponse.json(envelope(data)))
+const emptyHandlers = [
+  empty('/exhibitions'), empty('/artists'), empty('/news'), empty('/media'), empty('/users'), empty('/settings', {}),
+  empty('/public/home', { hero: null, heroLayout: 'FULL_BLEED', upcoming: null, focus: { artist: null }, artistsLine: [] }),
+]
+
+const PAGES: Array<[string, string | RegExp]> = [
+  ['/', /^Good (morning|afternoon|evening)/], ['/exhibitions', 'Exhibitions'], ['/exhibitions/new', 'New exhibition'], ['/exhibitions/abc', 'Exhibition'],
   ['/artists', 'Artists'], ['/artists/new', 'New artist'], ['/artists/a1', 'Alpha Artist'],
   ['/fairs', 'Fairs'], ['/fairs/new', 'New fair'],
   ['/news', 'News'], ['/news/new', 'New news item'], ['/locations', 'Locations'], ['/about', 'About page'],
@@ -26,6 +34,7 @@ describe('routes', () => {
       http.get(`${API_URL}/artists/a1/artworks`, () => HttpResponse.json(envelope([]))),
       http.get(`${API_URL}/exhibitions`, () => HttpResponse.json({ ...envelope([]), meta: { total: 0, page: 1, limit: 50 } })),
       http.get(`${API_URL}/settings/homeFocus`, () => HttpResponse.json(envelope({ artistId: null }))),
+      ...emptyHandlers,
     )
     server.use(http.get(`${API_URL}/auth/me`, () => HttpResponse.json(envelope({ id: '1', email: 'a@x.com', name: 'Ada Admin', role: 'ADMIN' }))))
     const router = createMemoryRouter(routes, { initialEntries: [path] })

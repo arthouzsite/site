@@ -16,7 +16,7 @@ export const routes: RouteObject[] = [
       {
         element: <AppShell />,
         children: [
-          { index: true, ...page(() => import('../features/dashboard/DashboardPage.placeholder')) },
+          { index: true, ...page(() => import('../features/dashboard/DashboardPage')) },
           { path: 'exhibitions', ...page(() => import('../features/exhibitions/ExhibitionsListPage')) },
           { path: 'exhibitions/new', ...page(() => import('../features/exhibitions/ExhibitionEditorPage')) },
           { path: 'exhibitions/:id', ...page(() => import('../features/exhibitions/ExhibitionEditorPage')) },
@@ -30,12 +30,12 @@ export const routes: RouteObject[] = [
           { path: 'news/new', ...page(() => import('../features/news/NewsEditorPage')) },
           { path: 'news/:id', ...page(() => import('../features/news/NewsEditorPage')) },
           { path: 'locations', ...page(() => import('../features/locations/LocationsPage')) },
-          { path: 'about', ...page(() => import('../features/about/AboutPage.placeholder')) },
-          { path: 'settings', ...page(() => import('../features/settings/SettingsPage.placeholder')) },
+          { path: 'about', ...page(() => import('../features/about/AboutPage')) },
+          { path: 'settings', ...page(() => import('../features/settings/SettingsPage')) },
           { path: 'media', ...page(() => import('../features/media/MediaPage')) },
           {
             element: <RequireRole allow="ADMIN" />,
-            children: [{ path: 'users', ...page(() => import('../features/users/UsersPage.placeholder')) }],
+            children: [{ path: 'users', ...page(() => import('../features/users/UsersPage')) }],
           },
         ],
       },

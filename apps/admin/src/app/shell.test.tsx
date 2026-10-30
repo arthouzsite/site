@@ -52,7 +52,7 @@ describe('shell and guards', () => {
 
   it('hides Users from editors and sends them home from /users', async () => {
     const router = mount('/users', editor)
-    expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: /^Good (morning|afternoon|evening)/ })).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/')
     expect(screen.queryByRole('link', { name: 'Users' })).not.toBeInTheDocument()
   })
