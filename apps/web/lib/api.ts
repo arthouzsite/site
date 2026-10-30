@@ -1,3 +1,4 @@
+import { connection } from 'next/server'
 import type { ZodType } from 'zod'
 
 export class ApiError extends Error {
@@ -28,9 +29,23 @@ async function readEnvelope(response: Response, path: string): Promise<Envelope>
   }
 }
 
-/** GETs an API path, unwraps the `{ ok, data, error }` envelope and validates `data` with `schema`. */
-export async function apiGet<T>(path: string, schema: ZodType<T>, tags: string[]): Promise<T> {
-  const response = await fetch(`${apiBaseUrl()}${path}`, { next: { tags } })
+/**
+ * Fetches, turning a network failure into `ApiError('NETWORK')`. `connection()` first defers the render to
+ * request time: during `next build` the route is excluded from prerendering instead of failing the build
+ * (or caching an error), and at request time it resolves immediately so the error reaches the error boundary.
+ */
+async function request(path: string, init: RequestInit): Promise<Response> {
+  try {
+    return await fetch(`${apiBaseUrl()}${path}`, init)
+  } catch (error) {
+    if (error instanceof ApiError) throw error
+    await connection()
+    const detail = error instanceof Error ? error.message : String(error)
+    throw new ApiError('NETWORK', `GET ${path} failed: ${detail}`, 0)
+  }
+}
+
+async function unwrap<T>(response: Response, path: string, schema: ZodType<T>): Promise<T> {
   const body = await readEnvelope(response, path)
   if (!response.ok || body.ok !== true) {
     const code = typeof body.error?.code === 'string' ? body.error.code : 'HTTP_ERROR'
@@ -42,4 +57,16 @@ export async function apiGet<T>(path: string, schema: ZodType<T>, tags: string[]
     throw new ApiError('INVALID_RESPONSE', `GET ${path} returned data that does not match the contract: ${parsed.error.message}`, response.status)
   }
   return parsed.data
+}
+
+/** GETs an API path, unwraps the `{ ok, data, error }` envelope and validates `data` with `schema`. */
+export async function apiGet<T>(path: string, schema: ZodType<T>, tags: string[]): Promise<T> {
+  const response = await request(path, { next: { tags } })
+  return unwrap(response, path, schema)
+}
+
+/** As `apiGet`, but never cached (per-keystroke search). */
+export async function apiGetUncached<T>(path: string, schema: ZodType<T>): Promise<T> {
+  const response = await request(path, { cache: 'no-store' })
+  return unwrap(response, path, schema)
 }

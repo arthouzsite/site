@@ -3,16 +3,12 @@ import type { ReactNode } from 'react'
 import { Footer } from '@/components/site/Footer'
 import { Header } from '@/components/site/Header'
 import { APP_ROOT_ID } from '@/lib/dom'
-import { SITE_TAGLINE } from '@/lib/footer-data'
+import { loadSiteMetadata } from '@/lib/site-metadata'
 import { fontVariables } from './fonts'
 import '@/styles/globals.css'
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3100'
-
-export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
-  title: { default: 'Art Houz', template: '%s · Art Houz' },
-  description: SITE_TAGLINE,
+export function generateMetadata(): Promise<Metadata> {
+  return loadSiteMetadata()
 }
 
 export default function RootLayout({ children }: { children: ReactNode }) {

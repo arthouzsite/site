@@ -3,6 +3,8 @@ import { z } from 'zod'
 
 const revalidateTag = vi.fn()
 vi.mock('next/cache', () => ({ revalidateTag: (...args: unknown[]) => revalidateTag(...args) }))
+const connection = vi.fn(async () => undefined)
+vi.mock('next/server', () => ({ connection: () => connection() }))
 
 import { ApiError, apiGet } from '@/lib/api'
 import { POST } from '@/app/api/revalidate/route'
@@ -35,6 +37,19 @@ afterEach(() => {
 })
 
 describe('apiGet', () => {
+  it('defers to request time (connection) and throws a NETWORK ApiError when the API is unreachable', async () => {
+    // Arrange
+    connection.mockClear()
+    vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(new TypeError('fetch failed'))))
+
+    // Act
+    const promise = apiGet('/public/fairs', itemSchema, ['fairs'])
+
+    // Assert: during a build prerender connection() bails the route out to dynamic instead of failing the build
+    await expect(promise).rejects.toMatchObject({ name: 'ApiError', code: 'NETWORK', status: 0 })
+    expect(connection).toHaveBeenCalledTimes(1)
+  })
+
   it('apiGet unwraps the envelope and parses with the schema', async () => {
     // Arrange
     const fetchMock = vi.fn(async () => jsonResponse({ ok: true, data: { slug: 'tidewater', count: 3, extra: 'x' }, error: null }))

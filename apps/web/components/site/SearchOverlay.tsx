@@ -1,14 +1,20 @@
 'use client'
 
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { useModalDialog } from '@/hooks/useModalDialog'
+import { useSiteSearch } from '@/hooks/useSiteSearch'
 import { OutlineButton } from './OutlineButton'
+import { SearchResults } from './SearchResults'
 
 type Props = { onClose: () => void; returnFocus?: HTMLElement | null }
 
-/** Search overlay shell (Close + input). Results arrive with Task 16. */
+const PLACEHOLDER = 'Search artists, exhibitions, news'
+
+/** Full-screen paper search overlay (prototype `searchOpen` block): Close, display-size input, grouped results. */
 export function SearchOverlay({ onClose, returnFocus }: Props) {
   const panel = useRef<HTMLDivElement>(null)
+  const [query, setQuery] = useState('')
+  const result = useSiteSearch(query)
   useModalDialog(panel, onClose, returnFocus)
 
   return (
@@ -19,13 +25,20 @@ export function SearchOverlay({ onClose, returnFocus }: Props) {
             Close
           </OutlineButton>
         </div>
-        <input
-          type="text"
-          data-autofocus
-          aria-label="Search artists, exhibitions, news"
-          placeholder="Search artists, exhibitions, news"
-          className="w-full border-0 border-b border-solid border-ink bg-transparent px-0 pt-2 pb-4 font-display text-[clamp(32px,5vw,64px)] text-ink outline-none"
-        />
+        <div role="search">
+          <input
+            type="text"
+            data-autofocus
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            aria-label={PLACEHOLDER}
+            placeholder={PLACEHOLDER}
+            autoComplete="off"
+            enterKeyHint="search"
+            className="w-full border-0 border-b border-solid border-ink bg-transparent px-0 pt-2 pb-4 font-display text-[clamp(32px,5vw,64px)] text-ink outline-none"
+          />
+        </div>
+        {result && <SearchResults result={result} onNavigate={onClose} />}
       </div>
     </div>
   )

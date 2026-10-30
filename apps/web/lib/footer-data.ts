@@ -1,4 +1,5 @@
 import { DEFAULT_COPYRIGHT_FROM, type PublicLocation } from '@arthouz/shared'
+import { unstable_rethrow } from 'next/navigation'
 import { getLocations, getSettings } from './site-data'
 
 /** Static tagline used when settings cannot be loaded (also the default site description). */
@@ -42,6 +43,8 @@ export async function loadFooterData(): Promise<FooterData> {
       degraded: false,
     }
   } catch (error) {
+    // A build-time `connection()` bail-out is not a failure: rethrow it so the shell renders per request.
+    unstable_rethrow(error)
     console.error(`[web] footer data unavailable, rendering fallback shell: ${describe(error)}`)
     return FALLBACK
   }
