@@ -1,0 +1,65 @@
+/*
+ * Tailwind without preflight: the prototype renders on browser defaults (line-height: normal,
+ * default margins), so the reset would shift every measurement. Base rules below are the
+ * prototype's own <style> block, layered so utilities still win (as its inline styles did).
+ */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+@import './tokens.css';
+
+@source '../app';
+@source '../components';
+
+@layer base {
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    background: var(--color-paper);
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  a {
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: var(--color-rust);
+  }
+
+  ::selection {
+    background: var(--color-amber);
+    color: var(--color-ink);
+  }
+
+  input::placeholder {
+    color: var(--color-faint);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-rust);
+    outline-offset: 2px;
+  }
+}
+
+/* Invisible minimum 44×44 hit area centred on a smaller control; leaves layout and visuals untouched. */
+@utility hit-44 {
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+}
