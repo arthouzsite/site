@@ -7,3 +7,7 @@ test('K.M. Adimoolam → K; 2 → #', () => {
   expect(indexLetter('adi')).toBe('A')
   expect(indexLetter('')).toBe('#')
 })
+test('non A–Z initials map to #', () => {
+  expect(indexLetter('Élan')).toBe('#')
+  expect(indexLetter('நான் யார்')).toBe('#')
+})

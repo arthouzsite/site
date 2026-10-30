@@ -10,3 +10,4 @@ test-results/
 .worktrees/
 *.log
 .DS_Store
+mockups/**/*.png
