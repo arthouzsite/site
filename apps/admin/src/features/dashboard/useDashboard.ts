@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
-import type { PublicHome } from '@arthouz/shared'
+import type { ExhibitionStatus, PublicHome } from '@arthouz/shared'
 import { api } from '../../lib/api'
+import type { ChipStatus } from '../../components/ui/StatusChip'
+import { STATUS_TO_CHIP } from '../exhibitions/types'
 
 export type Thumb = { thumbUrl: string } | null
 export type DashExhibition = {
@@ -9,7 +11,7 @@ export type DashExhibition = {
   startDate: string
   endDate: string
   isPublished: boolean
-  status: 'current' | 'upcoming' | 'past'
+  status: ExhibitionStatus
   updatedAt: string
   heroImage: Thumb
 }
@@ -23,7 +25,7 @@ export type RecentItem = {
   href: string
   updatedAt: string
   thumbUrl: string | null
-  status: 'current' | 'upcoming' | 'past' | 'draft' | 'live'
+  status: ChipStatus
 }
 
 const RECENT_LIMIT = 6
@@ -41,7 +43,7 @@ function recentFrom(ex: DashExhibition[], artists: ArtistRow[], news: NewsRow[])
   const items: RecentItem[] = [
     ...ex.map((e): RecentItem => ({
       key: `ex-${e.id}`, kind: 'Exhibition', title: e.title, href: `/exhibitions/${e.id}`, updatedAt: e.updatedAt,
-      thumbUrl: e.heroImage?.thumbUrl ?? null, status: e.isPublished ? e.status : 'draft',
+      thumbUrl: e.heroImage?.thumbUrl ?? null, status: e.isPublished ? STATUS_TO_CHIP[e.status] : 'draft',
     })),
     ...artists.map((a): RecentItem => ({
       key: `ar-${a.id}`, kind: 'Artist', title: a.name, href: `/artists/${a.id}`, updatedAt: a.updatedAt,

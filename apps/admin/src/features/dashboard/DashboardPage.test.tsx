@@ -7,7 +7,7 @@ import DashboardPage from './DashboardPage'
 import { dateLine, greeting, timeAgo } from './dates'
 
 const ex = (over: Record<string, unknown>) => ({
-  id: 'x', title: 'X', startDate: '2026-10-01', endDate: '2026-11-22', isPublished: true, status: 'current',
+  id: 'x', title: 'X', startDate: '2026-10-01', endDate: '2026-11-22', isPublished: true, status: 'CURRENT',
   updatedAt: new Date(Date.now() - 12.5 * 60_000).toISOString(), heroImage: null, ...over,
 })
 const withMeta = (data: unknown[], total: number) => HttpResponse.json({ ...envelope(data), meta: { total, page: 1, limit: 5 } })
@@ -18,9 +18,9 @@ function setup() {
     http.get(`${API_URL}/exhibitions`, ({ request }) => {
       const q = new URL(request.url).searchParams
       if (q.get('status') === 'current') return withMeta([ex({ id: 'c1', title: 'Tidewater', endDate: '2026-11-22' })], 1)
-      if (q.get('status') === 'upcoming') return withMeta([ex({ id: 'u1', title: 'The Weight of Light', startDate: '2027-01-14', status: 'upcoming' })], 1)
+      if (q.get('status') === 'upcoming') return withMeta([ex({ id: 'u1', title: 'The Weight of Light', startDate: '2027-01-14', status: 'UPCOMING' })], 1)
       if (q.get('published') === 'false') return withMeta([ex({ id: 'd1' }), ex({ id: 'd2' }), ex({ id: 'd3' })], 3)
-      return withMeta([ex({ id: 'c1', title: 'Tidewater', heroImage: { thumbUrl: 'https://cdn.example/t.jpg' } }), ex({ id: 'p1', title: 'Quiet Matter', status: 'past', updatedAt: '2020-01-01T00:00:00.000Z' })], 2)
+      return withMeta([ex({ id: 'c1', title: 'Tidewater', heroImage: { thumbUrl: 'https://cdn.example/t.jpg' } }), ex({ id: 'p1', title: 'Quiet Matter', status: 'PAST', updatedAt: '2020-01-01T00:00:00.000Z' })], 2)
     }),
     http.get(`${API_URL}/artists`, () => HttpResponse.json(envelope([
       { id: 'a1', name: 'Vijay Pichumani', isPublished: true, updatedAt: new Date(Date.now() - 3_600_000 * 2).toISOString(), portraitImage: null },
@@ -67,6 +67,8 @@ describe('DashboardPage', () => {
     expect(within(list).getByRole('link', { name: 'Vijay Pichumani' })).toHaveAttribute('href', '/artists/a1')
     expect(within(list).getByText('Exhibition · edited 12 min ago')).toBeInTheDocument()
     expect(within(list).getByText('Draft')).toBeInTheDocument()
+    expect(within(list).getByText('Now on view')).toBeInTheDocument()
+    expect(within(list).getByText('Past')).toBeInTheDocument()
   })
 
   it('summarises the home page with change links and quick actions', async () => {
