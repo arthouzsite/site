@@ -13,8 +13,8 @@ const allowsTestOverrides = (env: Env) => env.NODE_ENV !== 'production' || env.A
  * NEXT_PUBLIC_SITE_URL is inlined at build time (robots, sitemap and metadataBase are prerendered), so a production
  * build without a real origin would ship localhost URLs to search engines. Fails the build instead.
  */
-export function assertProductionSiteUrl(env: Env): void {
-  if (env.NODE_ENV !== 'production' || env.NEXT_PHASE !== BUILD_PHASE || env.ALLOW_TEST_OVERRIDES === '1') return
+export function assertProductionSiteUrl(env: Env, phase: string | undefined = env.NEXT_PHASE): void {
+  if (env.NODE_ENV !== 'production' || phase !== BUILD_PHASE || env.ALLOW_TEST_OVERRIDES === '1') return
   const siteUrl = env.NEXT_PUBLIC_SITE_URL?.trim() ?? ''
   if (!siteUrl) throw new Error('NEXT_PUBLIC_SITE_URL must be set to the public origin (e.g. https://arthouz.example) before `next build`.')
   if (LOCAL_HOST.test(siteUrl)) {
@@ -32,8 +32,6 @@ export function buildRemotePatterns(env: Env): RemotePattern[] {
     ...(imageHost ? [{ protocol: 'https' as const, hostname: imageHost }] : []),
   ]
 }
-
-assertProductionSiteUrl(process.env)
 
 /** Section-level redirects from the old site's URL scheme; old detail slugs do not map one to one. */
 const LEGACY_REDIRECTS = [
@@ -56,4 +54,8 @@ const nextConfig: NextConfig = {
   },
 }
 
-export default nextConfig
+/** Next passes the phase explicitly; NEXT_PHASE is only set in the environment after compilation, so the guard keys on it. */
+export default function configForPhase(phase: string): NextConfig {
+  assertProductionSiteUrl(process.env, phase)
+  return nextConfig
+}

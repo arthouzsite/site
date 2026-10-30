@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import nextConfig, { assertProductionSiteUrl, buildRemotePatterns } from '@/next.config'
+import configForPhase, { assertProductionSiteUrl, buildRemotePatterns } from '@/next.config'
+
+const nextConfig = configForPhase('phase-development-server')
 import { FALLBACK_SITE, detailMetadata, loadSiteMetadata } from '@/lib/site-metadata'
 import { buildSitemap } from '@/lib/sitemap-entries'
 
@@ -133,6 +135,9 @@ describe('next config guards', () => {
     expect(() => assertProductionSiteUrl({ ...build, NEXT_PUBLIC_SITE_URL: 'http://localhost:3102', ALLOW_TEST_OVERRIDES: '1' })).not.toThrow()
     expect(() => assertProductionSiteUrl({ NODE_ENV: 'development' })).not.toThrow()
     expect(() => assertProductionSiteUrl({ NODE_ENV: 'production', NEXT_PHASE: 'phase-production-server' })).not.toThrow()
+    // Next hands the phase to the config function; the env var is not set yet while the config loads.
+    expect(() => assertProductionSiteUrl({ NODE_ENV: 'production' }, 'phase-production-build')).toThrow('NEXT_PUBLIC_SITE_URL')
+    expect(() => configForPhase('phase-production-build')).not.toThrow()
   })
 
   it('allows picsum image hosts only outside production or with the test override', () => {

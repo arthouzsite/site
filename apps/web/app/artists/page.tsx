@@ -6,7 +6,7 @@ import { FlowingIndex } from '@/components/artists/FlowingIndex'
 import { GroupedIndex } from '@/components/artists/GroupedIndex'
 import { LetterStrip } from '@/components/artists/LetterStrip'
 import { Container } from '@/components/site/Container'
-import { apiGet } from '@/lib/api'
+import { apiGet, apiGetUncached } from '@/lib/api'
 import { TAGS } from '@/lib/tags'
 
 export const metadata: Metadata = { title: 'Artists' }
@@ -20,7 +20,10 @@ function readQuery(value: string | string[] | undefined): string {
 
 export default async function ArtistsPage({ searchParams }: Props) {
   const q = readQuery((await searchParams).q)
-  const { featured, groups, flat, layout } = await apiGet(`/public/artists${q ? `?q=${encodeURIComponent(q)}` : ''}`, publicArtistListSchema, [TAGS.artists])
+  // Free-text queries are per request: caching them would let arbitrary ?q values grow the data cache without bound.
+  const { featured, groups, flat, layout } = q
+    ? await apiGetUncached(`/public/artists?q=${encodeURIComponent(q)}`, publicArtistListSchema)
+    : await apiGet('/public/artists', publicArtistListSchema, [TAGS.artists])
   return (
     <main>
       <Container className="pt-[clamp(40px,6vw,88px)] pb-[clamp(72px,9vw,140px)]">

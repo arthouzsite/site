@@ -29,6 +29,10 @@ vi.mock('@/lib/api', async (importOriginal) => ({
     apiTags.push([path, tags])
     return apiGet(path)
   },
+  apiGetUncached: (path: string) => {
+    apiTags.push([path, []])
+    return apiGet(path)
+  },
 }))
 vi.mock('@/lib/footer-data', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/footer-data')>()),
@@ -154,6 +158,9 @@ describe('list and static pages', () => {
     apiGet.mockImplementation(async () => ({ ...artistList, groups: [], flat: [] }))
     expect(html(await ArtistsPage({ searchParams: params({ q: 'zzz' }) }))).toContain('No artists match')
     expect(apiGet).toHaveBeenLastCalledWith('/public/artists?q=zzz')
+    // Free-text searches bypass the data cache; the plain index stays cached under the artists tag.
+    expect(apiTags.find(([path]) => path === '/public/artists?q=zzz')?.[1]).toEqual([])
+    expect(apiTags.find(([path]) => path === '/public/artists')?.[1]).toEqual(['artists'])
     expect(artistsMeta).toHaveProperty('title', 'Artists')
   })
 })
