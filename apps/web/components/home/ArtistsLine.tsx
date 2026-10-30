@@ -18,7 +18,7 @@ export function ArtistsLine({ artists }: Props) {
         <p className="m-0 font-display text-[clamp(28px,3.6vw,52px)] leading-[1.22] text-pretty">
           {artists.map((artist, index) => (
             <Fragment key={artist.slug}>
-              <Link href={`/artists/${artist.slug}`} className="text-ink hover:text-rust">
+              <Link href={`/artists/${artist.slug}`} className="hit-44 text-ink hover:text-rust">
                 {artist.name}
               </Link>
               {index < artists.length - 1 && (

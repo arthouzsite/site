@@ -40,8 +40,8 @@ export default async function ExhibitionPage({ params }: Props) {
   return (
     <main>
       <Container className="pt-[clamp(28px,4vw,48px)] pb-[clamp(32px,4vw,56px)]">
-        <Link href="/exhibitions" className="text-[12.5px] tracking-[0.16em] text-muted uppercase">
-          ← Exhibitions
+        <Link href="/exhibitions" className="hit-44 text-[12.5px] tracking-[0.16em] text-muted uppercase">
+          <span aria-hidden="true">←</span> Exhibitions
         </Link>
         <div className="mt-10 mb-[18px] flex flex-wrap items-center gap-x-4 gap-y-2">
           <span className="text-[12px] tracking-[0.18em] text-rust uppercase">

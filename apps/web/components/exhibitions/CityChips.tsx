@@ -18,7 +18,7 @@ export function CityChips({ cities, current }: Props) {
             type="button"
             aria-pressed={active}
             onClick={() => navigate({ city: value })}
-            className={`relative h-10 font-ui cursor-pointer border-0 border-b bg-transparent p-0 text-[13px] tracking-[0.08em] whitespace-nowrap before:absolute before:-inset-x-1 before:-inset-y-[2px] before:content-[''] ${active ? 'border-amber text-ink' : 'border-transparent text-muted'}`}
+            className={`relative h-10 font-ui cursor-pointer border-0 border-b bg-transparent p-0 text-[13px] tracking-[0.08em] whitespace-nowrap before:absolute before:-inset-x-1 before:-inset-y-[3px] before:content-[''] ${active ? 'border-amber text-ink' : 'border-transparent text-muted'}`}
           >
             {label}
           </button>

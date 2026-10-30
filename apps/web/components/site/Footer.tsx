@@ -4,6 +4,7 @@ import { loadFooterData } from '@/lib/footer-data'
 import { FOOTER_NAV } from '@/lib/nav'
 import { currentYear } from '@/lib/site-clock'
 import { Container } from './Container'
+import { decorateArrows } from './decorateArrows'
 import { FooterLocation } from './FooterLocation'
 import { Wordmark } from './Wordmark'
 
@@ -33,7 +34,7 @@ export async function Footer() {
           <div className="flex flex-[1_1_420px] flex-wrap gap-x-16 gap-y-10">
             <nav aria-label="Footer" className="flex flex-col gap-3">
               {FOOTER_NAV.map((item) => (
-                <Link key={item.label} href={item.href} className={`text-[15px] ${DARK_LINK}`}>
+                <Link key={item.label} href={item.href} className={`hit-44 text-[15px] ${DARK_LINK}`}>
                   {item.label}
                 </Link>
               ))}
@@ -49,7 +50,7 @@ export async function Footer() {
             <div className="flex gap-6">
               {socials.map((social) => (
                 <a key={social.label} href={social.href} target="_blank" rel="noopener noreferrer" className={`hit-44 ${DARK_LINK}`}>
-                  {social.label}
+                  {decorateArrows(social.label)}
                 </a>
               ))}
             </div>

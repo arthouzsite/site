@@ -8,7 +8,9 @@ const TEST_TIMEOUT_MS = 120_000
 const VISUAL_JWT_SECRET = 'visual-test-jwt-secret-at-least-32-characters'
 
 export default defineConfig({
-  testDir: './tests/visual',
+  // Visual comparisons and the accessibility pass share the harness servers; unit tests (vitest) live in tests/unit.
+  testDir: './tests',
+  testMatch: ['visual/**/*.spec.ts', 'a11y/**/*.spec.ts'],
   outputDir: './test-results/playwright',
   timeout: TEST_TIMEOUT_MS,
   fullyParallel: false,

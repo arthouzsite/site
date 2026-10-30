@@ -38,8 +38,8 @@ export default async function ArtistPage({ params }: Props) {
   return (
     <main>
       <Container className="pt-[clamp(28px,4vw,48px)] pb-[clamp(72px,9vw,140px)]">
-        <Link href="/artists" className="text-[12.5px] tracking-[0.16em] text-muted uppercase">
-          ← Artists
+        <Link href="/artists" className="hit-44 text-[12.5px] tracking-[0.16em] text-muted uppercase">
+          <span aria-hidden="true">←</span> Artists
         </Link>
         <Eyebrow className="mt-10 mb-4">
           {a.medium} · Lives and works in {a.base}

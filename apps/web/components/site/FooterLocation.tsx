@@ -12,7 +12,7 @@ export function FooterLocation({ location }: Props) {
         {location.hours}
       </div>
       {location.tel ? (
-        <a href={location.tel} className="text-paper hover:text-paper">
+        <a href={location.tel} className="hit-44 text-paper hover:text-paper">
           {location.phone}
         </a>
       ) : (

@@ -28,7 +28,8 @@ copy (g). Each patch must match exactly once or the run fails:
    `clientWidth/clientHeight` round to integers, so a 251.25 px frame was cropped as 251 px (image 0.3 px too
    tall); only fractional 375 px frames were affected. `support.js` is copied unchanged.
 
-`renderPrototype` seeds `localStorage['arthouz-route']` (`{ page, param, city, status, aq }`) before load and can
+`renderPrototype` seeds `localStorage['arthouz-route']` (`{ page, param, city, status, aq, tab, search, q }`) before load
+(the prototype applies the whole stored object on mount, so `search: true, q` opens its search overlay) and can
 rewrite the `data-props` defaults (`heroLayout`, `artistIndex`) in a further copy.
 
 ### Determinism
@@ -78,3 +79,11 @@ Deliberate departures from a literal reading of the markup, each confirmed by th
   separate flex item, so the port wraps the city in its own `<span>` to reproduce the gap after `·`.
 - **Footer visual baseline** — `shell.spec.ts` compares the footer against the prototype's home page:
   the footer's fractional offset follows the content above it, so both sides must be the same page.
+- **Font stacks** — `styles/tokens.css` names the families literally (`'Space Grotesk', 'Noto Sans Tamil', sans-serif`
+  etc.), which is how next/font registers its self-hosted faces under Turbopack. The next/font `--font-*` variables
+  carry a size-adjusted `… Fallback` face even with `adjustFontFallback: false`, which drew glyphs outside the
+  subsets (→ ↗) wider than the prototype's plain generic fallback.
+- **Hit areas** — small links and buttons get an invisible 44 × 44 `::before` (`hit-44`); `tests/a11y` checks every
+  control in `header`, `main` and `footer`. Decorative arrows are `aria-hidden` (`decorateArrows`).
+- **Contrast** — the prototype's rust (`#B4651A`) on paper is 3.63:1, under WCAG AA for its small eyebrows. It is
+  kept (pixels are the spec); `tests/a11y` allows exactly that pair and fails on any other contrast violation.

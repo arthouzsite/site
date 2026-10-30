@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
+import { decorateArrows } from './decorateArrows'
 
 type Props = {
   href: string
@@ -10,19 +11,19 @@ type Props = {
   className?: string
 }
 
-/** Uppercase 12.5 px link; rust on hover via the base `a:hover` rule. */
+/** Uppercase 12.5 px link; rust on hover via the base `a:hover` rule; invisible 44 px hit area. */
 export function TextLink({ href, children, underline = false, external = false, className = '' }: Props) {
-  const classes = `text-[12.5px] tracking-[0.16em] uppercase ${underline ? 'border-b border-current pb-1' : ''} ${className}`
+  const classes = `hit-44 text-[12.5px] tracking-[0.16em] uppercase ${underline ? 'border-b border-current pb-1' : ''} ${className}`
   if (external) {
     return (
       <a href={href} target="_blank" rel="noopener noreferrer" className={classes}>
-        {children}
+        {decorateArrows(children)}
       </a>
     )
   }
   return (
     <Link href={href} className={classes}>
-      {children}
+      {decorateArrows(children)}
     </Link>
   )
 }

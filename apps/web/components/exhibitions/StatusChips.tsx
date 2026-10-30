@@ -22,7 +22,7 @@ export function StatusChips({ current }: { current: ExhibitionParams }) {
             type="button"
             aria-pressed={active}
             onClick={() => navigate({ status: value })}
-            className={`relative h-10 font-ui cursor-pointer border border-ink px-[18px] text-[12.5px] tracking-[0.14em] whitespace-nowrap uppercase before:absolute before:inset-x-0 before:-inset-y-[2px] before:content-[''] ${active ? 'bg-ink text-paper' : 'bg-transparent text-ink'}`}
+            className={`relative h-10 font-ui cursor-pointer border border-ink px-[18px] text-[12.5px] tracking-[0.14em] whitespace-nowrap uppercase before:absolute before:inset-x-0 before:-inset-y-[3px] before:content-[''] ${active ? 'bg-ink text-paper' : 'bg-transparent text-ink'}`}
           >
             {label}
           </button>

@@ -19,7 +19,7 @@ export function ExhibitionRow({ exhibition: e }: { exhibition: PublicExhibition 
           <StatusBadge status={e.status} />
         </div>
         <h2 className="m-0 font-display text-[clamp(32px,3.6vw,54px)] leading-[1.02] font-normal text-balance">
-          <Link href={href} className="text-ink hover:text-rust">
+          <Link href={href} className="hit-44 text-ink hover:text-rust">
             {e.title}
           </Link>
         </h2>
