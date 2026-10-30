@@ -12,7 +12,7 @@ export function ArtistExhibitions({ exhibitions }: { exhibitions: PublicArtistDe
         <Link
           key={exhibition.slug}
           href={`/exhibitions/${exhibition.slug}`}
-          className="flex items-baseline justify-between gap-4 border-b border-line-14 py-[18px] text-ink"
+          className="flex items-baseline justify-between gap-4 border-b border-line-14 py-[18px] text-ink hover:text-rust"
         >
           <span className="font-display text-[26px] leading-[1.15]">{exhibition.title}</span>
           <span className="text-[12px] tracking-[0.16em] whitespace-nowrap text-muted uppercase">{exhibition.city}</span>

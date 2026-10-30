@@ -12,6 +12,12 @@ export function ArtistSearch({ initialQuery }: { initialQuery: string }) {
   const lastPushed = useRef(initialQuery)
 
   useEffect(() => {
+    if (initialQuery === lastPushed.current) return
+    lastPushed.current = initialQuery
+    setValue(initialQuery)
+  }, [initialQuery])
+
+  useEffect(() => {
     if (value === lastPushed.current) return
     const timer = setTimeout(() => {
       lastPushed.current = value

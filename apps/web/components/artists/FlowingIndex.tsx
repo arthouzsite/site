@@ -6,7 +6,7 @@ export function FlowingIndex({ artists }: { artists: PublicArtist[] }) {
     <p className="mt-6 mb-0 font-display text-[clamp(30px,4.2vw,64px)] leading-[1.2] text-pretty">
       {artists.map((artist, index) => (
         <span key={artist.id}>
-          <Link href={`/artists/${artist.slug}`} className="text-ink">
+          <Link href={`/artists/${artist.slug}`} className="text-ink hover:text-rust">
             {artist.name}
           </Link>
           <span aria-hidden="true" className="px-[0.3em] text-amber">

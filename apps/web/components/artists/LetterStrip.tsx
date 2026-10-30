@@ -2,10 +2,14 @@
 
 const SCROLL_OFFSET_PX = 96
 
+function prefersReducedMotion(): boolean {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
 function jumpTo(letter: string): void {
   const target = document.getElementById(`L-${letter}`)
   if (!target) return
-  window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - SCROLL_OFFSET_PX, behavior: 'smooth' })
+  window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - SCROLL_OFFSET_PX, behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
 }
 
 export function LetterStrip({ letters }: { letters: string[] }) {
