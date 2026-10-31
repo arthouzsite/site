@@ -76,7 +76,8 @@ describe('shell and guards', () => {
 
   it('returns to /login after signing out', async () => {
     const router = mount('/', editor)
-    await userEvent.click(await screen.findByRole('button', { name: /sign out/ }))
+    await userEvent.click(await screen.findByRole('button', { name: /account menu/ }))
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Sign out' }))
     expect(await screen.findByRole('heading', { name: 'Sign in' }, { timeout: 4000 })).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/login')
   })
@@ -84,7 +85,8 @@ describe('shell and guards', () => {
   it('drops every cached query on sign out so the next user starts clean', async () => {
     const router = mount('/', editor)
     router.client.setQueryData(['exhibitions', 'list'], { items: [{ title: 'Private draft' }] })
-    await userEvent.click(await screen.findByRole('button', { name: /sign out/ }))
+    await userEvent.click(await screen.findByRole('button', { name: /account menu/ }))
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Sign out' }))
     await screen.findByRole('heading', { name: 'Sign in' }, { timeout: 4000 })
     expect(router.client.getQueryData(['exhibitions', 'list'])).toBeUndefined()
   })

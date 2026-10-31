@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router'
 import { Icon } from '../components/ui/Icon'
+import { ROLE_LABEL } from '../features/auth/roleLabel'
 import type { SessionUser } from '../features/auth/useSession'
 import { NAV_ITEMS } from './navItems'
 
@@ -13,7 +14,6 @@ export function publicSiteUrl(env: SiteEnv): string {
 }
 
 const PUBLIC_SITE_URL = publicSiteUrl(import.meta.env)
-const ROLE_LABEL: Record<SessionUser['role'], string> = { ADMIN: 'Admin', EDITOR: 'Editor' }
 
 export function Sidebar({ user, counts = {} }: Props) {
   const items = NAV_ITEMS.filter((i) => !i.adminOnly || user.role === 'ADMIN')

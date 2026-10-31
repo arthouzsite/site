@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useLocation } from 'react-router'
 import { Icon } from '../components/ui/Icon'
-import { initials } from '../lib/format'
 import type { SessionUser } from '../features/auth/useSession'
 import { useBreadcrumbLabel } from './breadcrumb'
+import { AccountMenu } from './AccountMenu'
 import { CommandPalette } from './CommandPalette'
 
 const SEGMENT_LABEL: Record<string, string> = { new: 'New', about: 'About page', settings: 'Home & settings' }
@@ -77,9 +77,7 @@ export function Topbar({ user, breadcrumb, onLogout }: Props) {
           <span className="max-[1024px]:hidden">Search records</span>
           <kbd className="ml-auto border border-line px-1.5 py-px font-ui text-11 tracking-[0.08em] text-faint max-[1024px]:hidden">⌘K</kbd>
         </button>
-        <button type="button" onClick={onLogout} aria-label={`${user.name}, sign out`} title="Sign out" className="grid h-11 w-11 place-items-center rounded-full border-0 bg-transparent">
-          <span className="grid h-8 w-8 place-items-center rounded-full bg-amber text-12 font-semibold text-ink">{initials(user.name, user.email[0]?.toUpperCase() ?? "?")}</span>
-        </button>
+        <AccountMenu user={user} onLogout={onLogout} />
       </div>
       <CommandPalette open={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </header>
