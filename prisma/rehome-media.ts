@@ -1,12 +1,10 @@
 import 'dotenv/config'
-import { tagsFor, type TagEntity } from '@/lib/shared'
 import { env } from '@/lib/server/env'
 import type { PrismaClient } from '@/lib/server/generated/prisma/client'
 import { processImage } from '@/lib/server/media/image.service'
 import { rehomedKey, selectCandidates, thumbKeyFor } from '@/lib/server/media/rehome'
 import { R2Storage } from '@/lib/server/media/storage/r2.storage'
 import { prisma } from '@/lib/server/prisma'
-import { revalidateSite } from '@/lib/server/revalidate'
 
 /**
  * Moves every image row whose file is hosted outside the bucket (the seed's picsum placeholders)
@@ -15,7 +13,6 @@ import { revalidateSite } from '@/lib/server/revalidate'
  */
 
 const FETCH_TIMEOUT_MS = 30_000
-const REVALIDATE_ENTITIES: readonly TagEntity[] = ['exhibition', 'artist', 'fair', 'service', 'news', 'location', 'setting']
 
 type Outcome = { readonly key: string; readonly ok: boolean; readonly detail: string }
 
@@ -57,18 +54,6 @@ async function rehomeOne(
   }
 }
 
-async function revalidateRehomed(db: PrismaClient): Promise<void> {
-  const [exhibitions, artists] = await Promise.all([
-    db.exhibition.findMany({ select: { slug: true } }),
-    db.artist.findMany({ select: { slug: true } }),
-  ])
-  const tags = new Set<string>(REVALIDATE_ENTITIES.flatMap((entity) => tagsFor(entity)))
-  exhibitions.forEach((e) => tagsFor('exhibition', e.slug).forEach((t) => tags.add(t)))
-  artists.forEach((a) => tagsFor('artist', a.slug).forEach((t) => tags.add(t)))
-  revalidateSite([...tags])
-  console.log(`rehome: requested revalidation of ${tags.size} tags`)
-}
-
 async function main(): Promise<void> {
   if (env.STORAGE_DRIVER !== 'r2' || !env.AWS_S3_PUBLIC_URL) {
     throw new Error('rehome: STORAGE_DRIVER must be r2 with the S3_*/AWS_* keys set')
@@ -85,9 +70,8 @@ async function main(): Promise<void> {
       outcomes.push(outcome)
     }
     const failed = outcomes.filter((o) => !o.ok)
-    if (outcomes.length > failed.length) await revalidateRehomed(prisma)
     if (failed.length > 0) throw new Error(`rehome: ${failed.length} of ${outcomes.length} rows failed; re-run to retry them`)
-    console.log('rehome: done')
+    console.log('rehome: done — restart or redeploy the app to refresh cached pages')
   } finally {
     await prisma.$disconnect()
   }

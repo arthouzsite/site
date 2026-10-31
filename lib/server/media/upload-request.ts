@@ -33,17 +33,42 @@ export function assertUploadAllowed(file: { type: string; size: number }): void 
   throw unsupportedMediaType(`Unsupported file type ${file.type}`)
 }
 
+const MAX_BODY_BYTES = MAX_VIDEO_UPLOAD_BYTES + MULTIPART_OVERHEAD_BYTES
+
 function assertDeclaredLength(request: Request): void {
   const declared = Number(request.headers.get('content-length'))
-  if (Number.isFinite(declared) && declared > MAX_VIDEO_UPLOAD_BYTES + MULTIPART_OVERHEAD_BYTES) {
+  if (Number.isFinite(declared) && declared > MAX_BODY_BYTES) {
     throw payloadTooLarge(VIDEO_TOO_LARGE)
   }
 }
 
+/** Passes bytes through and errors the stream (cancelling the source) once more than `limit` have gone by. */
+function limitBytes(limit: number, onExceeded: () => void): TransformStream<Uint8Array, Uint8Array> {
+  let seen = 0
+  return new TransformStream({
+    transform(chunk, controller) {
+      seen += chunk.byteLength
+      if (seen > limit) {
+        onExceeded()
+        controller.error(new Error('Upload body too large'))
+        return
+      }
+      controller.enqueue(chunk)
+    },
+  })
+}
+
+/**
+ * Parses the multipart body while counting bytes, so a chunked request with no Content-Length cannot be
+ * buffered without bound; the declared length (when present) is only an early exit.
+ */
 async function readForm(request: Request): Promise<FormData> {
+  let isTooLarge = false
+  const counted = request.body?.pipeThrough(limitBytes(MAX_BODY_BYTES, () => (isTooLarge = true))) ?? null
   try {
-    return await request.formData()
+    return await new Response(counted, { headers: request.headers }).formData()
   } catch {
+    if (isTooLarge) throw payloadTooLarge(VIDEO_TOO_LARGE)
     throw badRequest('BAD_REQUEST', 'Expected a multipart/form-data body')
   }
 }

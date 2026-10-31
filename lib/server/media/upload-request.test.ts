@@ -60,4 +60,36 @@ describe('readUploadForm', () => {
     const request = post(form, { 'content-length': String(MAX_VIDEO_UPLOAD_BYTES + 2 * MB) })
     await expect(readUploadForm(request)).rejects.toMatchObject({ status: 413 })
   })
+
+  it('rejects a chunked body with no Content-Length once it passes the limit, cancelling the source', async () => {
+    const CHUNK = 8 * MB
+    let sent = 0
+    let isCancelled = false
+    const body = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        sent += CHUNK
+        controller.enqueue(new Uint8Array(CHUNK))
+      },
+      cancel() {
+        isCancelled = true
+      },
+    })
+    const request = new Request('http://localhost/api/media', {
+      method: 'POST',
+      body,
+      headers: { 'content-type': 'multipart/form-data; boundary=x' },
+      duplex: 'half',
+    } as RequestInit)
+    expect(request.headers.get('content-length')).toBeNull()
+
+    await expect(readUploadForm(request)).rejects.toMatchObject({ status: 413, code: 'PAYLOAD_TOO_LARGE' })
+
+    expect(isCancelled).toBe(true)
+    expect(sent).toBeLessThan(MAX_VIDEO_UPLOAD_BYTES + 6 * CHUNK)
+  })
+
+  it('rejects a request with no body as 400 BAD_REQUEST', async () => {
+    const request = new Request('http://localhost/api/media', { method: 'POST' })
+    await expect(readUploadForm(request)).rejects.toMatchObject({ status: 400, code: 'BAD_REQUEST' })
+  })
 })
