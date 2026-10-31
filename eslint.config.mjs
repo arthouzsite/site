@@ -7,6 +7,7 @@ const config = [
   {
     ignores: [
       '.next/**',
+      '.worktrees/**',
       'apps/**',
       'packages/**',
       'admin/**',
