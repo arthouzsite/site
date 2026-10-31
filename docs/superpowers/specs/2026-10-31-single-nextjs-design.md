@@ -36,17 +36,19 @@ arthouz-next/
       layout.tsx       <html>-less segment layout: noindex metadata, admin fonts, .admin-root wrapper
       [[...slug]]/page.tsx   client-only mount of the existing React Router CMS (basename /admin)
     api/               route handlers: one folder per endpoint (see "API")
-  components/site, components/admin (= apps/admin/src/{app,components,features,lib}), components/ui
-  lib/
+  components/, hooks/  = apps/web/components and hooks, unchanged (site imports stay `@/components/...`)
+  admin/               = apps/admin/src moved whole (app, components, features, lib, styles, test);
+                       its relative imports stay valid; `admin/AdminApp.tsx` replaces main.tsx
+  lib/                 = apps/web/lib, unchanged paths (site imports stay `@/lib/...`), plus:
     shared/            = packages/shared/src (schemas, api envelope, format, tags) — imported as @/lib/shared
-    server/            = apps/api/src minus Nest: config/env, prisma, auth, errors, envelope,
-                       pagination, slugs, media (image, storage, video-signature, usage), domain
-                       services + mappers per entity, public read services, search, seed helpers
-    site/              = apps/web/lib (api → data loaders, nav, services, site-data, …)
+    server/            = apps/api/src minus Nest: env, prisma, http (errors, route, parse),
+                       auth, revalidate, common helpers, media (image, storage, video-signature,
+                       usage), domain services + mappers per entity, public read services, search
   prisma/              schema, migrations, seed, seed-data, rehome-media (unchanged, plus one migration)
   styles/              tokens.css (merged), globals.css (site base), admin.css (scoped admin base)
   tests/
-    unit/site, unit/admin, unit/server   vitest (jsdom for the first two, node for the third)
+    unit/                                site unit tests (unchanged); admin tests stay co-located in
+                                         admin/**, server tests co-located in lib/server/** as *.test.ts
     api/                                 database-backed endpoint tests (ex apps/api/test)
     visual/, a11y/                       Playwright harness, unchanged logic; reference/ prototype
     e2e/                                 admin publish flow
@@ -132,7 +134,7 @@ follow-up, with the flow sketched (create upload → PUT to R2 → complete).
 
 ## Public site
 
-- Pages, components, hooks and styles move unchanged. `lib/site/api.ts` keeps its public surface
+- Pages, components, hooks and styles move unchanged. `lib/api.ts` keeps its public surface
   (`apiGet`, `apiGetUncached`, `ApiError`, `REVALIDATE_SECONDS`) but no longer performs HTTP:
   `apiGet(path, schema, tags)` resolves `path` against the public read services in
   `lib/server/public` through a small path table (`/public/home` → `getHome()`, `/public/
@@ -157,7 +159,7 @@ The CMS stays a client-rendered React Router application, mounted by Next:
   current `main.tsx` body (QueryClientProvider, ToastProvider, RouterProvider) with
   `createBrowserRouter(routes, { basename: '/admin' })`. Route table, pages, hooks, forms and the
   AccountMenu are untouched.
-- `components/admin/lib/api.ts`: base URL becomes `/api` (same origin, cookie sent
+- `admin/lib/api.ts`: base URL becomes `/api` (same origin, cookie sent
   automatically); `credentials: 'include'` and the XHR upload stay. `VITE_*` reads become
   constants: public site URL is `/`, API base is `/api`.
 - `app/admin/layout.tsx`: `robots: noindex`, loads the admin fonts (the Google Fonts link from
@@ -170,13 +172,13 @@ The CMS stays a client-rendered React Router application, mounted by Next:
   screenshots at 1440 and 390 are attached to the task report.
 - Favicons: admin icon files move to `public/admin/` and the admin layout points at them; the
   site's `app/icon.*` stay.
-- Unit tests move to `tests/unit/admin` unchanged apart from import paths; MSW handlers keep
+- Unit tests stay co-located under `admin/` unchanged; MSW handlers keep
   their `API_URL` constant (now `http://localhost/api`, matching the fetch calls under jsdom).
 
 ## Tests and gates
 
-- `vitest.config.ts` defines three projects: `site` (jsdom, `tests/unit/site`), `admin` (jsdom,
-  setup file, `tests/unit/admin`), `server` (node, `tests/unit/server` + `tests/api`). Coverage
+- `vitest.config.ts` defines three projects: `site` (node, `tests/unit`), `admin` (jsdom,
+  setup file, `admin/**/*.test.tsx`), `server` (node, `lib/server/**/*.test.ts` + `tests/api`). Coverage
   thresholds stay 80 % per project; the `server` coverage includes `lib/server` and `app/api`.
 - API database tests (`tests/api/*.spec.ts`, ex `apps/api/test`) run against
   `DATABASE_URL_TEST` with the same migrate + truncate helpers. Instead of supertest against a
