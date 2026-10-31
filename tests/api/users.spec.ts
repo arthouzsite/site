@@ -25,17 +25,43 @@ describe('users', () => {
     await prisma.$disconnect()
   })
 
-  it('EDITOR calling POST /users -> 403', async () => {
-    await seedUser({ email: 'ed@example.test', role: 'EDITOR' })
-    const editorCookie = await loginAs('ed@example.test')
-    const res = await authedClient(() => editorCookie).post('/api/users', {
-      email: 'n@example.test',
-      name: 'N',
-      role: 'EDITOR',
-      password: NEW_PASSWORD,
+  describe('as an EDITOR', () => {
+    let editor: ReturnType<typeof authedClient>
+    let editorId: string
+
+    beforeEach(async () => {
+      editorId = (await seedUser({ email: 'ed@example.test', role: 'EDITOR' })).id
+      const editorCookie = await loginAs('ed@example.test')
+      editor = authedClient(() => editorCookie)
     })
-    expect(res.status).toBe(403)
-    expect(res.body.error.code).toBe('FORBIDDEN')
+
+    it('POST /users -> 403 and no user is created', async () => {
+      const res = await editor.post('/api/users', { email: 'n@example.test', name: 'N', role: 'EDITOR', password: NEW_PASSWORD })
+      expect(res.status).toBe(403)
+      expect(res.body.error.code).toBe('FORBIDDEN')
+      expect(await prisma.user.count()).toBe(2)
+      expect(await prisma.user.findUnique({ where: { email: 'n@example.test' } })).toBeNull()
+    })
+
+    it('GET /users -> 403', async () => {
+      const res = await editor.get('/api/users')
+      expect(res.status).toBe(403)
+      expect(res.body.error.code).toBe('FORBIDDEN')
+    })
+
+    it('PATCH /users/:id -> 403 and the row is unchanged', async () => {
+      const res = await editor.patch(`/api/users/${editorId}`, { role: 'ADMIN', name: 'Promoted' })
+      expect(res.status).toBe(403)
+      expect(res.body.error.code).toBe('FORBIDDEN')
+      expect(await prisma.user.findUnique({ where: { id: editorId } })).toMatchObject({ role: 'EDITOR', name: 'Test User' })
+    })
+
+    it('DELETE /users/:id -> 403 and the row is still present', async () => {
+      const res = await editor.del(`/api/users/${adminId}`)
+      expect(res.status).toBe(403)
+      expect(res.body.error.code).toBe('FORBIDDEN')
+      expect(await prisma.user.findUnique({ where: { id: adminId } })).not.toBeNull()
+    })
   })
 
   it('unauthenticated GET /users -> 401', async () => {
