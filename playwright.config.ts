@@ -43,6 +43,7 @@ export default defineConfig({
       SEED_ADMIN_EMAIL: SEED_ADMIN.email,
       SEED_ADMIN_PASSWORD: SEED_ADMIN.password,
       NEXT_PUBLIC_SITE_URL: `http://localhost:${WEB_PORT}`,
+      NEXT_DIST_DIR: '.next-visual',
       NEXT_IMAGE_UNOPTIMIZED: '1',
       // next start forces NODE_ENV=production; opt in to the frozen date (footer year) and unoptimised images.
       ALLOW_TEST_OVERRIDES: '1',

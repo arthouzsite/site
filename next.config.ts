@@ -43,6 +43,8 @@ const LEGACY_REDIRECTS = [
 ] as const
 
 const nextConfig: NextConfig = {
+  // Each Playwright harness builds into its own directory: .next/cache is the unstable_cache store, which otherwise leaks data across harness databases.
+  distDir: process.env.NEXT_DIST_DIR || '.next',
   async redirects() {
     return LEGACY_REDIRECTS.map((redirect) => ({ ...redirect, permanent: true }))
   },

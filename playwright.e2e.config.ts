@@ -6,8 +6,7 @@
  *     Override with E2E_DATABASE_URL. The database is wiped (schema dropped) on every run.
  *   - One production server on 3102 (E2E_PORT). The dev server (3300) and the visual harness (3100) are left alone.
  *   - Google Chrome installed (channel 'chrome'); browsers are never downloaded.
- * `next build` writes .next, which the visual harness (playwright.config.ts) also builds into: never run the two
- * at the same time.
+ * `next build` writes .next-e2e (NEXT_DIST_DIR), so it never shares a build or cache with the other harnesses.
  */
 import { defineConfig } from '@playwright/test'
 import { ADMIN_URL, E2E_DATABASE_URL, E2E_JWT_SECRET, E2E_PORT, E2E_TODAY, SEED_ADMIN, WEB_URL } from './tests/e2e/fixtures'
@@ -55,6 +54,7 @@ export default defineConfig({
       SEED_ADMIN_EMAIL: SEED_ADMIN.email,
       SEED_ADMIN_PASSWORD: SEED_ADMIN.password,
       NEXT_PUBLIC_SITE_URL: WEB_URL,
+      NEXT_DIST_DIR: '.next-e2e',
       NEXT_IMAGE_UNOPTIMIZED: '1',
       // next start forces NODE_ENV=production; opt in to the frozen date and unoptimised images.
       ALLOW_TEST_OVERRIDES: '1',

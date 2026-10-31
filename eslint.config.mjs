@@ -9,9 +9,8 @@ const config = [
   {
     ignores: [
       '.next/**',
+      '.next-*/**',
       '.worktrees/**',
-      'apps/**',
-      'packages/**',
       'lib/server/generated/**',
       'tests/visual/reference/**',
       'test-results/**',
@@ -29,12 +28,6 @@ const config = [
       ...jsxA11y.flatConfigs.recommended.rules,
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
-      // The CMS predates the React Compiler lint rules and is not compiled with it; its original config ran only the two classic hook rules.
-      'react-hooks/set-state-in-effect': 'off',
-      'react-hooks/refs': 'off',
-      'react-hooks/incompatible-library': 'off',
-      // Uploaded media are served from the bucket at stored sizes; next/image has nothing to optimise there.
-      '@next/next/no-img-element': 'off',
       'no-alert': 'error',
       'no-restricted-globals': ['error', 'confirm', 'alert', 'prompt'],
     },

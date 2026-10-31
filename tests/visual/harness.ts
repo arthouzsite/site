@@ -7,6 +7,7 @@ import { PNG } from 'pngjs'
 import { normaliseReference } from './normalise'
 import { decodePng, encodePng } from './png'
 import { API_BASE, PORT_URL, RESULTS_DIR, VISUAL_RESULTS_DIR } from './paths'
+import { stubPicsum } from './stub-picsum'
 
 export type PrototypeRoute = { page: string; param?: string | null; city?: string; status?: string; aq?: string; tab?: string; search?: boolean; q?: string }
 export type PrototypeProps = { heroLayout?: 'Full-bleed' | 'Split'; artistIndex?: 'Grouped A–Z' | 'Flowing' }
@@ -76,6 +77,7 @@ export const PROTOTYPE_SETTLE: SettleOptions = { networkIdle: true }
 export const PORT_SETTLE: SettleOptions = { networkIdle: false }
 
 async function open(page: Page, url: string, viewport: Viewport, options: SettleOptions): Promise<Buffer> {
+  await stubPicsum(page)
   await page.setViewportSize({ width: viewport.width, height: viewport.height ?? DEFAULT_VIEWPORT_HEIGHT })
   await page.goto(url, { waitUntil: 'load' })
   await settle(page, options)
