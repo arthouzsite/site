@@ -9,7 +9,7 @@ import { processImage } from './image.service'
 import { KEY_PREFIX, VIDEO_EXT_BY_MIME, type VideoMime } from './media.constants'
 import { findMediaUsage, type MediaUsage } from './media.usage'
 import { getStorage } from './storage/storage.provider'
-import { mediaUsageTags } from './usage-tags'
+import { mediaUsageTags } from '@/lib/server/revalidate/related-tags'
 import { hasVideoSignature, isVideoMime } from './video-signature'
 
 export type MediaListQuery = { q?: string; missingAlt?: boolean; kind?: MediaKind; page: number; limit: number; skip: number }

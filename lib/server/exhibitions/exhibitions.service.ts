@@ -9,7 +9,7 @@ import { prisma } from '@/lib/server/prisma'
 import { revalidateSite } from '@/lib/server/revalidate'
 import { listWhere, type ExhibitionListQuery } from './exhibition-status'
 import { EXHIBITION_INCLUDE, toAdminExhibition } from './exhibitions.mapper'
-import { exhibitionTagsWithArtists, linkedArtistSlugs } from './related-tags'
+import { exhibitionTagsWithArtists, linkedArtistSlugs } from '@/lib/server/revalidate/related-tags'
 
 const NOT_FOUND = 'Exhibition not found'
 const UNKNOWN_ARTIST = 'UNKNOWN_ARTIST'

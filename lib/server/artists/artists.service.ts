@@ -8,7 +8,7 @@ import { prisma } from '@/lib/server/prisma'
 import { revalidateSite } from '@/lib/server/revalidate'
 import { ARTIST_INCLUDE, toAdminArtist } from './artists.mapper'
 import { artistListWhere, type ArtistListQuery } from './artists.query'
-import { artistTagsWithExhibitions } from './related-tags'
+import { artistTagsWithExhibitions } from '@/lib/server/revalidate/related-tags'
 
 const NOT_FOUND = 'Artist not found'
 const UNKNOWN_ARTIST = 'UNKNOWN_ARTIST'

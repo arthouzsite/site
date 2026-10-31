@@ -4,7 +4,7 @@ import { assertMediaExists } from '@/lib/server/common/media-exists'
 import { badRequest, notFound } from '@/lib/server/http/errors'
 import { prisma } from '@/lib/server/prisma'
 import { revalidateSite } from '@/lib/server/revalidate'
-import { exhibitionTagsWithArtists } from './related-tags'
+import { exhibitionTagsWithArtists } from '@/lib/server/revalidate/related-tags'
 
 const WORK_NOT_FOUND = 'Work not found'
 const EXHIBITION_NOT_FOUND = 'Exhibition not found'

@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { parsePagination } from '@/lib/server/common/pagination'
 import { route, withMeta } from '@/lib/server/http/route'
 import { parseQuery, queryRecord } from '@/lib/server/http/parse'
+import { CREATED } from '@/lib/server/http/status'
 import * as media from '@/lib/server/media/media.service'
 import { readUploadForm } from '@/lib/server/media/upload-request'
 import { withUploadSlot } from '@/lib/server/media/upload-slots'
@@ -38,5 +39,5 @@ export const POST = route(
       media.upload({ buffer: Buffer.from(await file.arrayBuffer()), mimetype: file.type }, alt, user?.id ?? null),
     )
   },
-  { status: 201 },
+  { status: CREATED },
 )

@@ -1,9 +1,8 @@
 import { newsInputSchema } from '@/lib/shared'
 import { parseBody, parseQuery } from '@/lib/server/http/parse'
 import { route } from '@/lib/server/http/route'
+import { CREATED } from '@/lib/server/http/status'
 import { newsListQuerySchema, newsService } from '@/lib/server/news/news.service'
-
-const CREATED = 201
 
 export const GET = route('user', ({ url }) => newsService.list(parseQuery(url, newsListQuerySchema)))
 

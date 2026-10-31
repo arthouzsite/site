@@ -18,7 +18,7 @@ vi.mock('@/lib/server/log', () => ({ logError: vi.fn() }))
 vi.mock('@/lib/server/revalidate', () => ({ revalidateSite: vi.fn() }))
 vi.mock('./storage/storage.provider', () => ({ getStorage: () => hoisted.storage.current }))
 vi.mock('./media.usage', () => ({ findMediaUsage: vi.fn(async () => []) }))
-vi.mock('./usage-tags', () => ({ mediaUsageTags: vi.fn(async () => ['exhibition:sea']) }))
+vi.mock('@/lib/server/revalidate/related-tags', () => ({ mediaUsageTags: vi.fn(async () => ['exhibition:sea']) }))
 
 const fake = hoisted.fake
 

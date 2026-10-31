@@ -1,6 +1,7 @@
 import { exhibitionInputSchema } from '@/lib/shared'
 import { parseBody } from '@/lib/server/http/parse'
 import { route } from '@/lib/server/http/route'
+import { CREATED } from '@/lib/server/http/status'
 import { exhibitionListQuerySchema, listQueryRecord } from '@/lib/server/exhibitions/exhibition-status'
 import { exhibitionsService } from '@/lib/server/exhibitions/exhibitions.service'
 
@@ -9,5 +10,5 @@ export const GET = route('user', ({ url }) => exhibitionsService.list(exhibition
 export const POST = route(
   'user',
   async ({ request }) => exhibitionsService.create(await parseBody(request, exhibitionInputSchema)),
-  { status: 201 },
+  { status: CREATED },
 )

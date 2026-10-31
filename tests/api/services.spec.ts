@@ -193,6 +193,20 @@ describe('services', () => {
     expect((await api.del(`/api/services/${s.id}`)).status).toBe(404)
   })
 
+  it('a service image appears in media usage and blocks deleting the media', async () => {
+    const image = await media('IMAGE', 'used')
+    const s = await create({ title: 'Uses image', imageId: image.id })
+    const usage = { type: 'service', id: s.id, title: 'Uses image' }
+    const got = await api.get(`/api/media/${image.id}`)
+    expect(got.status).toBe(200)
+    expect(got.body.data.usedBy).toEqual([usage])
+    const res = await api.del(`/api/media/${image.id}`)
+    expect(res.status).toBe(409)
+    expect(res.body.error.code).toBe('MEDIA_IN_USE')
+    expect(res.body.error.details.usedBy).toEqual([usage])
+    expect(await prisma.media.count({ where: { id: image.id } })).toBe(1)
+  })
+
   it('gets one service by id', async () => {
     const s = await create()
     const res = await api.get(`/api/services/${s.id}`)

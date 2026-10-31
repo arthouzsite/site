@@ -8,7 +8,7 @@ import { notFound } from '@/lib/server/http/errors'
 import { withMeta } from '@/lib/server/http/route'
 import { prisma } from '@/lib/server/prisma'
 import { revalidateSite } from '@/lib/server/revalidate'
-import { exhibitionSlugsByIds, exhibitionTagsForSlugs } from './exhibition-tags'
+import { exhibitionFanOutTags, exhibitionSlugsByIds } from '@/lib/server/revalidate/related-tags'
 import { NEWS_INCLUDE, toAdminNews } from './news.mapper'
 
 const MAX_SEARCH_LENGTH = 120
@@ -45,7 +45,7 @@ const slugBase = (text: string) => slugify(text) || FALLBACK_SLUG
 
 // News is listed on its exhibition's page, so a linked exhibition (old or new) must refresh too.
 async function exhibitionTags(exhibitionIds: ReadonlyArray<string | null>): Promise<string[]> {
-  return exhibitionTagsForSlugs(await exhibitionSlugsByIds(prisma, exhibitionIds))
+  return exhibitionFanOutTags(await exhibitionSlugsByIds(prisma, exhibitionIds), [])
 }
 
 async function assertReferences(input: NewsInput): Promise<void> {
