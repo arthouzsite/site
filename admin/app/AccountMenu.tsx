@@ -43,6 +43,7 @@ export function AccountMenu({ user, onLogout }: Props) {
     if (!isOpen || !focusOn) return
     const all = items()
     all[focusOn === 'first' ? 0 : all.length - 1]?.focus()
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot state reset after the effect has acted on it (focus handoff / result-set change)
     setFocusOn(null)
   }, [isOpen, focusOn])
 

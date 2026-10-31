@@ -33,6 +33,7 @@ export function useSettingCard(id: string, keyMap: KeyMap, settings: Partial<Set
   const { handleSubmit, reset, applyServerErrors, formState } = form
   const saved = useRef<Record<string, unknown>>(defaults)
   const values = form.watch()
+  // eslint-disable-next-line react-hooks/refs -- watch() is the form library's public read API; its value is only used during render
   const isDirty = Object.keys(keyMap).some((field) => !same(values[field], saved.current[field]))
 
   const save = useCallback(async (): Promise<boolean> => {

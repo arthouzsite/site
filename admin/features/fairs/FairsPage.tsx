@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element -- Uploaded media are served from the bucket at stored sizes; next/image has nothing to optimise in the CMS. */
 import { useMemo } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { Link } from 'react-router'

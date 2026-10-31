@@ -49,6 +49,7 @@ export function DataTable<T>({ label, data, columns, getRowId, getRowLabel, sele
     return [select, ...columns]
   }, [columns, selectable, getRowLabel])
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table returns unmemoisable functions; the compiler skips this component, which is intended
   const table = useReactTable({
     data,
     columns: allColumns,

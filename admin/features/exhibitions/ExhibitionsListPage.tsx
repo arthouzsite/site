@@ -48,6 +48,7 @@ export default function ExhibitionsListPage() {
   const filter = (key: string) => (value: string) => update({ [key]: value || null, page: null })
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot state reset after the effect has acted on it (focus handoff / result-set change)
     if (debounced !== q) update({ q: debounced || null, page: null })
     // Only the debounced input should drive the URL; `q` is compared, not tracked.
     // eslint-disable-next-line react-hooks/exhaustive-deps

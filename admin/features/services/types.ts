@@ -1,4 +1,3 @@
-import { WEB_URL } from '../exhibitions/types'
 import type { MediaRef } from '../media/types'
 
 export type AdminService = {
@@ -24,4 +23,4 @@ export type ServicesQuery = { q: string; page: number; limit: number }
 
 export const DEFAULT_CTA_LABEL = 'Enquire →'
 
-export const serviceUrl = (slug: string) => `${WEB_URL}/services/${slug}`
+export const serviceUrl = (slug: string) => `/services/${slug}`

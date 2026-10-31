@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element -- Uploaded media are served from the bucket at stored sizes; next/image has nothing to optimise in the CMS. */
 import { Button, Dialog } from '../../components/ui'
 import { useToast } from '../../lib/toast'
 import { ApiError } from '../../lib/api'

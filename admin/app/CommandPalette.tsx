@@ -32,6 +32,7 @@ function Palette({ onClose }: { onClose: () => void }) {
   const hitCount = hits.length
 
   // A new result set starts at its first row.
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot state reset after the effect has acted on it (focus handoff / result-set change)
   useEffect(() => setActive(0), [debounced, hitCount])
 
   const searching = debounced.length >= SEARCH_MIN_CHARS

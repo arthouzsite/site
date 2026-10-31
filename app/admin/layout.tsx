@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
-import { fontVariables } from '../fonts'
 import '@/styles/admin.css'
 
 export const metadata: Metadata = {
@@ -11,9 +10,8 @@ export const metadata: Metadata = {
 
 /**
  * The root layout already provides <html>, <body> and the site fonts (app/fonts.ts, next/font/google: EB Garamond,
- * Space Grotesk, Noto Serif Tamil). Reusing them avoids registering the same faces twice; the variables are set again
- * here so the wrapper does not depend on where the fonts are applied.
+ * Space Grotesk, Noto Serif Tamil); the CMS reuses them through the CSS variables set on <html>.
  */
 export default function AdminLayout({ children }: { children: ReactNode }) {
-  return <div className={`admin-root ${fontVariables}`}>{children}</div>
+  return <div className="admin-root">{children}</div>
 }

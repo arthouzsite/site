@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element -- Uploaded media are served from the bucket at stored sizes; next/image has nothing to optimise in the CMS. */
 import type { ReactNode } from 'react'
 import { cx } from './cx'
 

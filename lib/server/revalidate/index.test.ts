@@ -1,7 +1,7 @@
 import { revalidateTag } from 'next/cache'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { logError } from '@/lib/server/log'
-import { revalidateSite } from './revalidate'
+import { revalidateSite } from '.'
 
 vi.mock('next/cache', () => ({ revalidateTag: vi.fn() }))
 vi.mock('@/lib/server/log', () => ({ logError: vi.fn() }))
