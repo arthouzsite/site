@@ -21,6 +21,11 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  /* No elastic overscroll: the bounce past the dark footer exposed the paper background below it. */
+  html {
+    overscroll-behavior-y: none;
+  }
+
   * {
     box-sizing: border-box;
   }
