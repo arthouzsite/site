@@ -55,15 +55,33 @@ export function AccountMenu({ user, onLogout }: Props) {
     return () => document.removeEventListener('pointerdown', onPointerDown)
   }, [isOpen, close])
 
-  // Focus leaving the avatar and its list (Tab, or a click elsewhere) dismisses the menu.
+  /**
+   * Focus moving to another element outside the avatar and its list dismisses the menu. A null
+   * target (window blur, or a browser that drops focus to body on mousedown) is left alone: the
+   * pointer listener and the Tab handlers cover those cases without closing and reopening.
+   */
   const onBlur = (e: FocusEvent<HTMLDivElement>) => {
-    if (isOpen && !root.current?.contains(e.relatedTarget as Node | null)) close(false)
+    const next = e.relatedTarget as Node | null
+    if (isOpen && next && !root.current?.contains(next)) close(false)
+  }
+
+  const onTriggerClick = () => {
+    if (isOpen) {
+      close(false)
+      return
+    }
+    // Safari and Firefox on macOS do not focus a clicked button; the keyboard handlers need it.
+    trigger.current?.focus()
+    setIsOpen(true)
   }
 
   const onTriggerKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
+    if (e.repeat) return
     if (e.key === 'Escape' && isOpen) {
       e.preventDefault()
       close(true)
+    } else if (e.key === 'Tab') {
+      close(false)
     } else if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
       openAt('first')
@@ -73,19 +91,27 @@ export function AccountMenu({ user, onLogout }: Props) {
     }
   }
 
+  // Some browsers fire the click on Space keyup; by then focus is on the first item.
+  const onTriggerKeyUp = (e: KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === ' ') e.preventDefault()
+  }
+
   const onMenuKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.repeat) return
     const all = items()
     const current = all.indexOf(document.activeElement as HTMLElement)
     const focusAt = (index: number) => all[wrap(index, all.length)]?.focus()
     if (e.key === 'Escape') {
       e.preventDefault()
       close(true)
+    } else if (e.key === 'Tab') {
+      close(false)
     } else if (e.key === 'ArrowDown') {
       e.preventDefault()
       focusAt(current + 1)
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
-      focusAt(current - 1)
+      focusAt(current < 0 ? all.length - 1 : current - 1)
     } else if (e.key === 'Home') {
       e.preventDefault()
       focusAt(0)
@@ -104,8 +130,9 @@ export function AccountMenu({ user, onLogout }: Props) {
         aria-haspopup="menu"
         aria-expanded={isOpen}
         aria-controls={isOpen ? menuId : undefined}
-        onClick={() => (isOpen ? close(false) : setIsOpen(true))}
+        onClick={onTriggerClick}
         onKeyDown={onTriggerKeyDown}
+        onKeyUp={onTriggerKeyUp}
         className="grid h-11 w-11 place-items-center rounded-full border-0 bg-transparent"
       >
         <span className="grid h-8 w-8 place-items-center rounded-full bg-amber text-12 font-semibold text-ink">
@@ -113,23 +140,15 @@ export function AccountMenu({ user, onLogout }: Props) {
         </span>
       </button>
       {isOpen && (
-        <div
-          ref={menu}
-          id={menuId}
-          role="menu"
-          aria-labelledby={labelId}
-          tabIndex={-1}
-          onKeyDown={onMenuKeyDown}
-          className="absolute right-0 top-full z-30 mt-1 w-64 rounded-xs border border-line bg-surface-2 py-1.5 shadow-toast"
-        >
+        <div className="absolute right-0 top-full z-30 mt-1 w-64 rounded-xs border border-line bg-surface-2 py-1.5 shadow-toast">
           <div className="border-b border-line px-4 pb-3 pt-2">
             <div id={labelId} className="text-14 font-medium text-ink">{user.name}</div>
             <div className="truncate text-12 text-muted">{user.email}</div>
             <div className="mt-1.5 text-11 uppercase tracking-eyebrow text-faint">{ROLE_LABEL[user.role]}</div>
           </div>
-          <div className="pt-1.5">
+          <div ref={menu} id={menuId} role="menu" aria-labelledby={labelId} tabIndex={-1} onKeyDown={onMenuKeyDown} className="pt-1.5">
             {isAdmin && (
-              <Link to="/users" role="menuitem" tabIndex={-1} onClick={() => close(false)} className={ITEM_CLASS}>
+              <Link to="/users" role="menuitem" tabIndex={-1} onClick={() => close(true)} className={ITEM_CLASS}>
                 Users
               </Link>
             )}
