@@ -7,6 +7,7 @@ const TEST_DATABASE_URL = env.DATABASE_URL_TEST ?? 'postgresql://manoranjith@loc
 
 env.NODE_ENV = 'test'
 env.DATABASE_URL = TEST_DATABASE_URL
+env.DIRECT_DATABASE_URL = TEST_DATABASE_URL
 env.DATABASE_URL_TEST = TEST_DATABASE_URL
 env.STORAGE_DRIVER = 'memory'
 env.JWT_SECRET ??= 'test-jwt-secret-test-jwt-secret-test'

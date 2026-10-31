@@ -14,7 +14,8 @@ export function migrateTestDb(): void {
   if (hasMigrated) return
   execSync('pnpm exec prisma migrate deploy', {
     cwd: process.cwd(),
-    env: { ...process.env, DATABASE_URL: testDatabaseUrl() },
+    // prisma.config.ts prefers DIRECT_DATABASE_URL for migrations; both must point at the test database.
+    env: { ...process.env, DATABASE_URL: testDatabaseUrl(), DIRECT_DATABASE_URL: testDatabaseUrl() },
     stdio: 'pipe',
   })
   hasMigrated = true
