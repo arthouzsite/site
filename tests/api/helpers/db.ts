@@ -1,12 +1,9 @@
 import { execSync } from 'node:child_process'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { Prisma, PrismaClient } from '@/lib/server/generated/prisma/client'
+import { resolveApiTestDatabaseUrl } from '@/tests/db-guard'
 
-const DEFAULT_TEST_DATABASE_URL = 'postgresql://manoranjith@localhost:5433/arthouz_next_test'
-
-function testDatabaseUrl(): string {
-  return process.env.DATABASE_URL_TEST ?? DEFAULT_TEST_DATABASE_URL
-}
+const testDatabaseUrl = (): string => resolveApiTestDatabaseUrl()
 
 let hasMigrated = false
 

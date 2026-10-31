@@ -33,7 +33,7 @@ function resolveVisualDatabaseUrl(rawUrl: string): string {
 }
 
 export const VISUAL_DATABASE_URL = resolveVisualDatabaseUrl(process.env.VISUAL_DATABASE_URL ?? DEFAULT_DATABASE_URL)
-export const VISUAL_TODAY = process.env.TODAY_OVERRIDE ?? '2026-10-30'
+export const VISUAL_TODAY = '2026-10-30'
 export const SEED_ADMIN = { email: 'visual-admin@example.com', password: 'visual-admin-password' } as const
 
 // Overridable so two visual runs can execute concurrently on one machine.

@@ -1,9 +1,11 @@
 import 'dotenv/config'
+import { resolveApiTestDatabaseUrl } from './tests/db-guard'
 
 // Next's typings make NODE_ENV read-only; the harness has to set it before any module reads the environment.
 const env = process.env as Record<string, string | undefined>
 
-const TEST_DATABASE_URL = env.DATABASE_URL_TEST ?? 'postgresql://manoranjith@localhost:5433/arthouz_next_test'
+// Throws before anything migrates or truncates when the URL is not a local throwaway test database.
+const TEST_DATABASE_URL = resolveApiTestDatabaseUrl()
 
 env.NODE_ENV = 'test'
 env.DATABASE_URL = TEST_DATABASE_URL
