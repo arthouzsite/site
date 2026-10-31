@@ -11,18 +11,22 @@ export const API_URL = `${WEB_URL}/api`
 // Prisma's CLI does not fall back to the OS user like libpq does, so the default names it explicitly.
 const DEFAULT_DATABASE_URL = `postgresql://${encodeURIComponent(userInfo().username)}@localhost:5433/arthouz_next_test_e2e`
 const E2E_DATABASE_SUFFIX = '_e2e'
+const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]'])
 
 /** The webServer drops the whole public schema, so refuse any database not explicitly named for e2e. */
 function resolveE2eDatabaseUrl(rawUrl: string): string {
   let databaseName: string
+  let hostName: string
   try {
-    databaseName = decodeURIComponent(new URL(rawUrl).pathname.replace(/^\//, ''))
+    const url = new URL(rawUrl)
+    databaseName = decodeURIComponent(url.pathname.replace(/^\//, ''))
+    hostName = url.hostname
   } catch {
     throw new Error('E2E_DATABASE_URL is not a valid database URL.')
   }
-  if (!databaseName.endsWith(E2E_DATABASE_SUFFIX)) {
+  if (!LOCAL_HOSTS.has(hostName) || !databaseName.endsWith(E2E_DATABASE_SUFFIX)) {
     throw new Error(
-      `Refusing to run e2e: the database "${databaseName}" does not end in "${E2E_DATABASE_SUFFIX}". ` +
+      `Refusing to run e2e: "${databaseName}" on host "${hostName}" is not a local database ending in "${E2E_DATABASE_SUFFIX}". ` +
         'The e2e run drops the public schema; point E2E_DATABASE_URL at a throwaway database such as arthouz_next_test_e2e.',
     )
   }

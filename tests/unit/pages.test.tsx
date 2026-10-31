@@ -43,23 +43,25 @@ vi.mock('@/lib/footer-data', async (importOriginal) => ({
 vi.mock('@/app/fonts', () => ({ fontVariables: 'font-a font-b' }))
 vi.mock('@/styles/globals.css', () => ({}))
 
-import AboutPage, { generateMetadata as aboutMeta } from '@/app/about/page'
-import ArtistsPage, { metadata as artistsMeta } from '@/app/artists/page'
-import ArtistPage, { generateMetadata as artistMeta } from '@/app/artists/[slug]/page'
-import ExhibitionsPage, { metadata as exhibitionsMeta } from '@/app/exhibitions/page'
-import ExhibitionPage, { generateMetadata as exhibitionMeta } from '@/app/exhibitions/[slug]/page'
-import ExhibitionNotFound from '@/app/exhibitions/[slug]/not-found'
-import FairsPage, { generateMetadata as fairsMeta } from '@/app/fairs/page'
-import RootLayout, { generateMetadata as layoutMeta } from '@/app/layout'
-import NotFound from '@/app/not-found'
-import NewsPage, { generateMetadata as newsMeta } from '@/app/news/page'
-import HomePage, { generateMetadata as homeMeta } from '@/app/page'
+import AboutPage, { generateMetadata as aboutMeta } from '@/app/(site)/about/page'
+import ArtistsPage, { metadata as artistsMeta } from '@/app/(site)/artists/page'
+import ArtistPage, { generateMetadata as artistMeta } from '@/app/(site)/artists/[slug]/page'
+import ExhibitionsPage, { metadata as exhibitionsMeta } from '@/app/(site)/exhibitions/page'
+import ExhibitionPage, { generateMetadata as exhibitionMeta } from '@/app/(site)/exhibitions/[slug]/page'
+import ExhibitionNotFound from '@/app/(site)/exhibitions/[slug]/not-found'
+import FairsPage, { generateMetadata as fairsMeta } from '@/app/(site)/fairs/page'
+import RootLayout, { metadata as rootMeta } from '@/app/layout'
+import SiteLayout, { generateMetadata as layoutMeta } from '@/app/(site)/layout'
+import SiteNotFound from '@/app/(site)/not-found'
+import RootNotFound from '@/app/not-found'
+import { SiteFrame } from '@/components/site/SiteFrame'
+import NewsPage, { generateMetadata as newsMeta } from '@/app/(site)/news/page'
+import HomePage, { generateMetadata as homeMeta } from '@/app/(site)/page'
 import robots from '@/app/robots'
 import sitemap from '@/app/sitemap'
-import VisitPage, { generateMetadata as visitMeta } from '@/app/visit/page'
+import VisitPage, { generateMetadata as visitMeta } from '@/app/(site)/visit/page'
 import { Footer } from '@/components/site/Footer'
 import { ApiError } from '@/lib/api'
-import { SITE_TAGLINE } from '@/lib/footer-data'
 import { currentYear } from '@/lib/site-clock'
 import {
   about, artistDetail, artistList, exhibition, exhibitionDetail, fair, home, location, news, publicServiceList,
@@ -227,7 +229,7 @@ describe('detail pages', () => {
   })
 
   it('renders the not-found pages', () => {
-    expect(html(<NotFound />)).toContain('Not found')
+    expect(html(<SiteNotFound />)).toContain('Not found')
     expect(html(<ExhibitionNotFound />)).toContain('Exhibition not found')
   })
 })
@@ -265,13 +267,24 @@ describe('shell', () => {
     expect(out).not.toContain('Instagram')
   })
 
-  it('wraps pages in the root layout and builds site metadata', async () => {
-    loadFooterData.mockResolvedValue({ ...footerData, tagline: SITE_TAGLINE })
-    // Header and Footer are async/stateful boundaries; assert on the returned tree rather than serialising it.
+  it('keeps the root layout to html, body and fonts, with app-wide metadata only', () => {
     const root = RootLayout({ children: (<p>page body</p>) as ReactNode })
     expect(root.props.className).toBe('font-a font-b')
     expect(root.props.lang).toBe('en')
+    expect(JSON.stringify(root.props.children)).not.toContain('SiteFrame')
+    expect(String(rootMeta.metadataBase)).toMatch(/^https?:\/\//)
+    expect(rootMeta).not.toHaveProperty('title')
+  })
+
+  it('puts the public header and footer in the (site) layout and builds site metadata', async () => {
+    const layout = SiteLayout({ children: (<p>page body</p>) as ReactNode })
+    // Header and Footer are async boundaries; assert on the returned tree rather than serialising it.
+    expect(layout.type).toBe(SiteFrame)
     expect(await layoutMeta()).toHaveProperty('title.default', 'Art Houz')
+  })
+
+  it('renders the unmatched-URL 404 without the public chrome, which would otherwise ship with every route', () => {
+    expect(html(<RootNotFound />)).toContain('Not found')
   })
 
   it('serves robots.txt and the sitemap', async () => {

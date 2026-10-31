@@ -118,12 +118,10 @@
     background-color: transparent;
     opacity: 1;
   }
-  .admin-root :where(select:is([multiple],
-  .admin-root [size])) optgroup {
+  .admin-root :where(select:is([multiple], [size])) optgroup {
     font-weight: bolder;
   }
-  .admin-root :where(select:is([multiple],
-  .admin-root [size])) optgroup option {
+  .admin-root :where(select:is([multiple], [size])) optgroup option {
     padding-inline-start: 20px;
   }
   .admin-root ::file-selector-button {
@@ -172,9 +170,7 @@
     box-shadow: none;
   }
   .admin-root button,
-  .admin-root input:where([type='button'],
-  .admin-root [type='reset'],
-  .admin-root [type='submit']),
+  .admin-root input:where([type='button'], [type='reset'], [type='submit']),
   .admin-root ::file-selector-button {
     appearance: button;
   }
