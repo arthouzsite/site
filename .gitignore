@@ -13,3 +13,7 @@ test-results/
 mockups/**/*.png
 apps/api/src/generated/
 dist-dev/
+lib/server/generated/
+*.tsbuildinfo
+next-env.d.ts
+playwright-report/
