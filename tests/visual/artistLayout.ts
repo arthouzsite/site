@@ -1,25 +1,8 @@
-import { PrismaPg } from '@prisma/adapter-pg'
-import { PrismaClient } from '@/lib/server/generated/prisma/client'
-import { VISUAL_DATABASE_URL, VISUAL_REVALIDATE_SECRET } from './env'
-import { PORT_URL } from './paths'
-
-const LAYOUT_KEY = 'artistIndexLayout'
-const ARTIST_TAGS = ['artists', 'settings'] as const
+import { putSetting } from './admin-settings'
 
 export type ArtistIndexLayout = 'GROUPED' | 'FLOWING'
 
-/** Upserts the artist index layout setting in the visual database and revalidates the cached artist pages. */
+/** Sets the artist index layout through the CMS API, which revalidates the cached artist pages. */
 export async function setArtistIndexLayout(value: ArtistIndexLayout): Promise<void> {
-  const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: VISUAL_DATABASE_URL }) })
-  try {
-    await prisma.setting.upsert({ where: { key: LAYOUT_KEY }, create: { key: LAYOUT_KEY, value }, update: { value } })
-  } finally {
-    await prisma.$disconnect()
-  }
-  const response = await fetch(`${PORT_URL}/api/revalidate`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-revalidate-secret': VISUAL_REVALIDATE_SECRET },
-    body: JSON.stringify({ tags: ARTIST_TAGS }),
-  })
-  if (!response.ok) throw new Error(`artist layout: revalidate failed with HTTP ${response.status}`)
+  await putSetting('artistIndexLayout', value)
 }

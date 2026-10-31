@@ -6,7 +6,7 @@ import pixelmatch from 'pixelmatch'
 import { PNG } from 'pngjs'
 import { normaliseReference } from './normalise'
 import { decodePng, encodePng } from './png'
-import { API_URL, PORT_URL, RESULTS_DIR, VISUAL_RESULTS_DIR } from './paths'
+import { API_BASE, PORT_URL, RESULTS_DIR, VISUAL_RESULTS_DIR } from './paths'
 
 export type PrototypeRoute = { page: string; param?: string | null; city?: string; status?: string; aq?: string; tab?: string; search?: boolean; q?: string }
 export type PrototypeProps = { heroLayout?: 'Full-bleed' | 'Split'; artistIndex?: 'Grouped A–Z' | 'Flowing' }
@@ -24,7 +24,7 @@ const PROP_DEFAULTS: Record<keyof PrototypeProps, string> = { heroLayout: 'Full-
 let normalised: Promise<string> | undefined
 
 function normalisedReference(): Promise<string> {
-  normalised ??= normaliseReference(API_URL)
+  normalised ??= normaliseReference(API_BASE)
   return normalised
 }
 

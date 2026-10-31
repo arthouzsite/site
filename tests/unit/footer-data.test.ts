@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 const apiGet = vi.fn()
+// apiGet is replaced below; the real data layer (and its database env) must not load.
+vi.mock('@/lib/server/public/public-reads', () => ({ publicReads: {} }))
 vi.mock('@/lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/api')>()),
   apiGet: (...args: unknown[]) => apiGet(...args),

@@ -9,7 +9,7 @@ const ALIAS = { '@': REPO_ROOT }
 const SITE_COVERAGE = ['app/**/*.{ts,tsx}', 'components/**/*.{ts,tsx}', 'hooks/**/*.{ts,tsx}', 'lib/*.{ts,tsx}']
 const SERVER_COVERAGE = ['lib/server/**/*.ts', 'app/api/**/*.ts']
 // Legacy routes still exercised by the site unit tests; they leave this list as they move onto the server project.
-const SITE_OWNED_ROUTES = ['app/api/search/**', 'app/api/revalidate/**']
+const SITE_OWNED_ROUTES = ['app/api/search/**']
 
 /** Names passed with `--project` / `--project=`; empty when the run covers every project. */
 function requestedProjects(argv: readonly string[]): string[] {

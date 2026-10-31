@@ -44,7 +44,7 @@ The seed loads the prototype content (including the five Services: art sales, ga
 
 `.env.example` sets `STORAGE_DRIVER=memory`: uploads succeed but nothing is persisted and image URLs are `memory://...`. The media library accepts images (JPEG, PNG, WebP, AVIF, up to 25 MB) and videos (MP4, WebM, MOV, up to 200 MB); videos are library-only for now and are never offered in image pickers. To upload real files locally, set `STORAGE_DRIVER=r2` and the five `S3_ENDPOINT` / `AWS_*` keys (see `docs/deploy.md`). The seed writes placeholder image URLs (picsum); `media:rehome` downloads each one, uploads original and thumbnail to the bucket under `arthouz/seed/`, rewrites the rows and revalidates the site. It is idempotent and skips rows already served from `AWS_S3_PUBLIC_URL`.
 
-`pnpm dev` starts the site against the API at `API_URL`; content pages are fetched from the API, so start the API first if the site shows an error.
+The site reads its content in-process from the database through `lib/server/public`; there is no separate API server to start.
 
 ## Tests
 

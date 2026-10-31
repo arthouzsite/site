@@ -1,6 +1,6 @@
 import { publicSearchSchema, type PublicSearch } from '@/lib/shared'
 import { z } from 'zod'
-import { ApiError, apiGetUncached } from '@/lib/api'
+import { apiGetUncached } from '@/lib/api'
 
 const MAX_QUERY_LENGTH = 120
 const querySchema = z.string().trim().max(MAX_QUERY_LENGTH)
@@ -11,7 +11,7 @@ function failure(status: number, code: string, message: string): Response {
   return Response.json({ ok: false, data: null, error: { code, message } }, { status, headers: NO_STORE })
 }
 
-/** Same-origin proxy for the search overlay: validates `q`, forwards it to the API and returns `{ groups }`. */
+/** Search for the overlay: validates `q`, runs the public search uncached and returns `{ groups }`. */
 export async function GET(request: Request): Promise<Response> {
   const parsed = querySchema.safeParse(new URL(request.url).searchParams.get('q') ?? '')
   if (!parsed.success) {
@@ -25,7 +25,6 @@ export async function GET(request: Request): Promise<Response> {
   } catch (error) {
     const detail = error instanceof Error ? `${error.name}: ${error.message}` : String(error)
     console.error(`[web] search proxy failed for q=${JSON.stringify(q)}: ${detail}`)
-    const code = error instanceof ApiError && error.code === 'CONFIG' ? 'CONFIG' : 'UPSTREAM_ERROR'
-    return failure(502, code, 'Search is unavailable right now')
+    return failure(502, 'UPSTREAM_ERROR', 'Search is unavailable right now')
   }
 }

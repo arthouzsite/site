@@ -1,4 +1,4 @@
-/** Cache tags; names mirror `tagsFor` in @/lib/shared, which the API posts to /api/revalidate. */
+/** Cache tags; names mirror `tagsFor` in @/lib/shared, which CMS writes expire through `revalidateSite`. */
 export const TAGS = {
   home: 'home',
   search: 'search',

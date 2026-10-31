@@ -1,80 +1,74 @@
+import { unstable_cache } from 'next/cache'
 import { connection } from 'next/server'
 import type { ZodType } from 'zod'
+import { ApiException } from '@/lib/server/http/errors'
+import { ApiError } from './api-error'
+import { resolvePublicPath, type PublicLoader } from './public-paths'
 
-export class ApiError extends Error {
-  readonly code: string
-  readonly status: number
-
-  constructor(code: string, message: string, status: number) {
-    super(message)
-    this.name = 'ApiError'
-    this.code = code
-    this.status = status
-  }
-}
+export { ApiError }
 
 /**
- * Exhibition status is date-derived on the API, so pages need a time-based refresh even without CMS edits;
- * the revalidate webhook still expires tags immediately on edits.
+ * Exhibition status is date-derived, so pages need a time-based refresh even without CMS edits;
+ * CMS writes still expire tags immediately through `revalidateSite`.
  */
 export const REVALIDATE_SECONDS = 3600
 
-type Envelope = { ok?: unknown; data?: unknown; error?: { code?: unknown; message?: unknown } | null }
+const OK_STATUS = 200
+const NOT_FOUND_STATUS = 404
 
-function apiBaseUrl(): string {
-  const url = process.env.API_URL
-  if (!url) throw new ApiError('CONFIG', 'API_URL is not set', 0)
-  return url.replace(/\/$/, '')
-}
-
-async function readEnvelope(response: Response, path: string): Promise<Envelope> {
-  try {
-    return (await response.json()) as Envelope
-  } catch {
-    throw new ApiError('INVALID_RESPONSE', `GET ${path} returned a non-JSON body`, response.status)
-  }
+/**
+ * The loader's result as the matching route would send it. `unstable_cache` stores JSON and hands back the live
+ * value only on a miss, so the round trip makes a hit and a miss indistinguishable to the page.
+ */
+async function asJson(load: PublicLoader): Promise<unknown> {
+  return JSON.parse(JSON.stringify((await load()) ?? null)) as unknown
 }
 
 /**
- * Fetches, turning a network failure into `ApiError('NETWORK')`. `connection()` first defers the render to
- * request time: during `next build` the route is excluded from prerendering instead of failing the build
- * (or caching an error), and at request time it resolves immediately so the error reaches the error boundary.
+ * Maps a failed read onto `ApiError`. A 404 always becomes `NOT_FOUND` so pages can call `notFound()`. Anything
+ * unexpected (database unreachable, a bug) is logged, then `connection()` defers the render to request time: during
+ * `next build` the route is excluded from prerendering instead of failing the build, and at request time it
+ * resolves immediately so the error reaches the error boundary.
  */
-async function request(path: string, init: RequestInit): Promise<Response> {
-  try {
-    return await fetch(`${apiBaseUrl()}${path}`, init)
-  } catch (error) {
-    if (error instanceof ApiError) throw error
-    const detail = error instanceof Error ? error.message : String(error)
-    // Logged before deferring: otherwise a build against an unreachable API silently ships every route dynamic.
-    console.warn(`[web] GET ${path} failed: ${detail}`)
-    await connection()
-    throw new ApiError('NETWORK', `GET ${path} failed: ${detail}`, 0)
+async function toApiError(path: string, error: unknown): Promise<ApiError> {
+  if (error instanceof ApiError) return error
+  if (error instanceof ApiException) {
+    const code = error.status === NOT_FOUND_STATUS ? 'NOT_FOUND' : error.code
+    return new ApiError(code, error.message, error.status)
   }
+  const detail = error instanceof Error ? error.message : String(error)
+  // Logged before deferring: otherwise a build against an unreachable database silently ships every route dynamic.
+  console.warn(`[web] GET ${path} failed: ${detail}`)
+  await connection()
+  return new ApiError('NETWORK', `GET ${path} failed: ${detail}`, 0)
 }
 
-async function unwrap<T>(response: Response, path: string, schema: ZodType<T>): Promise<T> {
-  const body = await readEnvelope(response, path)
-  if (!response.ok || body.ok !== true) {
-    const code = typeof body.error?.code === 'string' ? body.error.code : 'HTTP_ERROR'
-    const message = typeof body.error?.message === 'string' ? body.error.message : `GET ${path} failed with HTTP ${response.status}`
-    throw new ApiError(code, message, response.status)
+async function read<T>(path: string, schema: ZodType<T>, run: () => Promise<unknown>): Promise<T> {
+  let data: unknown
+  try {
+    data = await run()
+  } catch (error) {
+    throw await toApiError(path, error)
   }
-  const parsed = schema.safeParse(body.data)
+  const parsed = schema.safeParse(data)
   if (!parsed.success) {
-    throw new ApiError('INVALID_RESPONSE', `GET ${path} returned data that does not match the contract: ${parsed.error.message}`, response.status)
+    throw new ApiError('INVALID_RESPONSE', `GET ${path} returned data that does not match the contract: ${parsed.error.message}`, OK_STATUS)
   }
   return parsed.data
 }
 
-/** GETs an API path, unwraps the `{ ok, data, error }` envelope and validates `data` with `schema`. */
+/**
+ * Reads a public path (`/public/...`, as the `/api/public/*` routes take it) in-process through Next's data cache,
+ * keyed by `path` and tagged with `tags`, and validates the result with `schema`. Failed reads are never cached.
+ */
 export async function apiGet<T>(path: string, schema: ZodType<T>, tags: string[]): Promise<T> {
-  const response = await request(path, { cache: 'force-cache', next: { tags, revalidate: REVALIDATE_SECONDS } })
-  return unwrap(response, path, schema)
+  const load = resolvePublicPath(path)
+  const cached = unstable_cache(() => asJson(load), [path], { tags, revalidate: REVALIDATE_SECONDS })
+  return read(path, schema, cached)
 }
 
 /** As `apiGet`, but never cached (per-keystroke search). */
 export async function apiGetUncached<T>(path: string, schema: ZodType<T>): Promise<T> {
-  const response = await request(path, { cache: 'no-store' })
-  return unwrap(response, path, schema)
+  const load = resolvePublicPath(path)
+  return read(path, schema, () => asJson(load))
 }

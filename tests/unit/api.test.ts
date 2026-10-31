@@ -1,47 +1,90 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 
-const revalidateTag = vi.fn()
-vi.mock('next/cache', () => ({ revalidateTag: (...args: unknown[]) => revalidateTag(...args) }))
+const getService = vi.fn()
+const getFairs = vi.fn()
+const search = vi.fn()
+vi.mock('@/lib/server/public/public-reads', () => ({
+  publicReads: {
+    getService: (slug: string) => getService(slug),
+    getFairs: () => getFairs(),
+    search: (q: string) => search(q),
+  },
+}))
+// Pass-through cache: records how each read is keyed and tagged, then runs the loader.
+type Loader = () => Promise<unknown>
+const unstableCache = vi.fn<(load: Loader, keyParts: string[], options: object) => Loader>((load) => load)
+vi.mock('next/cache', () => ({
+  unstable_cache: (load: Loader, keyParts: string[], options: object) => unstableCache(load, keyParts, options),
+}))
 const connection = vi.fn(async () => undefined)
 vi.mock('next/server', () => ({ connection: () => connection() }))
 
 import { ApiError, REVALIDATE_SECONDS, apiGet, apiGetUncached } from '@/lib/api'
-import { POST } from '@/app/api/revalidate/route'
+import { ApiException, badRequest, notFound } from '@/lib/server/http/errors'
 
-const API_URL = 'http://api.test'
-const SECRET = 'unit-test-secret'
 const itemSchema = z.object({ slug: z.string(), count: z.number() })
 
-function jsonResponse(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
-}
-
-function revalidateRequest(secret: string, body: unknown): Request {
-  return new Request('http://web.test/api/revalidate', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-revalidate-secret': secret },
-    body: JSON.stringify(body),
-  })
-}
-
 beforeEach(() => {
-  vi.stubEnv('API_URL', API_URL)
-  vi.stubEnv('REVALIDATE_SECRET', SECRET)
-  revalidateTag.mockReset()
+  for (const mock of [getService, getFairs, search, unstableCache, connection]) mock.mockClear()
 })
 
 afterEach(() => {
-  vi.unstubAllEnvs()
-  vi.unstubAllGlobals()
+  vi.restoreAllMocks()
 })
 
 describe('apiGet', () => {
-  it('defers to request time (connection) and throws a NETWORK ApiError when the API is unreachable', async () => {
+  it('reads the matching public loader through the data cache keyed by path with the given tags', async () => {
     // Arrange
-    connection.mockClear()
+    getService.mockResolvedValue({ slug: 'art-sales', count: 3, extra: 'x' })
+
+    // Act
+    const result = await apiGet('/public/services/art-sales', itemSchema, ['services', 'service:art-sales'])
+
+    // Assert
+    expect(result).toEqual({ slug: 'art-sales', count: 3 })
+    expect(getService).toHaveBeenCalledWith('art-sales')
+    expect(unstableCache).toHaveBeenCalledTimes(1)
+    expect(unstableCache.mock.calls[0]?.slice(1)).toEqual([
+      ['/public/services/art-sales'],
+      { tags: ['services', 'service:art-sales'], revalidate: REVALIDATE_SECONDS },
+    ])
+    expect(REVALIDATE_SECONDS).toBe(3600)
+  })
+
+  it('hands pages the JSON a route would send, so a cache miss and a cache hit look the same', async () => {
+    getService.mockResolvedValue({ slug: 'art-sales', count: 1, at: new Date('2026-10-30T00:00:00.000Z'), gone: undefined })
+
+    const result = await apiGet('/public/services/art-sales', z.object({ at: z.string() }).passthrough(), [])
+
+    expect(result).toEqual({ slug: 'art-sales', count: 1, at: '2026-10-30T00:00:00.000Z' })
+  })
+
+  it('maps a 404 ApiException from the loader to a NOT_FOUND ApiError so pages can call notFound()', async () => {
+    // Arrange
+    getService.mockRejectedValue(notFound('No such service'))
+
+    // Act
+    const promise = apiGet('/public/services/missing', itemSchema, ['services'])
+
+    // Assert
+    await expect(promise).rejects.toBeInstanceOf(ApiError)
+    await expect(promise).rejects.toMatchObject({ code: 'NOT_FOUND', message: 'No such service', status: 404 })
+    expect(connection).not.toHaveBeenCalled()
+  })
+
+  it('normalises the code of any 404 ApiException to NOT_FOUND and keeps other statuses and codes', async () => {
+    getService.mockRejectedValueOnce(new ApiException(404, 'GONE', 'Unpublished'))
+    getFairs.mockRejectedValueOnce(badRequest('BAD_QUERY', 'Nope'))
+
+    await expect(apiGet('/public/services/x', itemSchema, [])).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 })
+    await expect(apiGet('/public/fairs', itemSchema, [])).rejects.toMatchObject({ name: 'ApiError', code: 'BAD_QUERY', message: 'Nope', status: 400 })
+  })
+
+  it('defers to request time (connection) and throws a NETWORK ApiError when the loader fails unexpectedly', async () => {
+    // Arrange
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-    vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(new TypeError('fetch failed'))))
+    getFairs.mockRejectedValue(new Error('connect ECONNREFUSED'))
 
     // Act
     const promise = apiGet('/public/fairs', itemSchema, ['fairs'])
@@ -49,80 +92,37 @@ describe('apiGet', () => {
     // Assert: during a build prerender connection() bails the route out to dynamic instead of failing the build
     await expect(promise).rejects.toMatchObject({ name: 'ApiError', code: 'NETWORK', status: 0 })
     expect(connection).toHaveBeenCalledTimes(1)
-    // ...and the failure is logged first, so a build against an unreachable API is not silently all-dynamic
-    expect(warn).toHaveBeenCalledWith('[web] GET /public/fairs failed: fetch failed')
+    // ...and the failure is logged first, so a build against an unreachable database is not silently all-dynamic
+    expect(warn).toHaveBeenCalledWith('[web] GET /public/fairs failed: connect ECONNREFUSED')
     expect(warn.mock.invocationCallOrder[0]).toBeLessThan(connection.mock.invocationCallOrder[0] ?? 0)
-    warn.mockRestore()
   })
 
-  it('apiGet unwraps the envelope and parses with the schema', async () => {
-    // Arrange
-    const fetchMock = vi.fn(async () => jsonResponse({ ok: true, data: { slug: 'tidewater', count: 3, extra: 'x' }, error: null }))
-    vi.stubGlobal('fetch', fetchMock)
+  it('throws INVALID_RESPONSE when the data does not match the schema', async () => {
+    getFairs.mockResolvedValue({ slug: 1 })
 
-    // Act
-    const result = await apiGet('/public/thing', itemSchema, ['home', 'exhibitions'])
-
-    // Assert
-    expect(result).toEqual({ slug: 'tidewater', count: 3 })
-    expect(fetchMock).toHaveBeenCalledWith(`${API_URL}/public/thing`, {
-      cache: 'force-cache',
-      next: { tags: ['home', 'exhibitions'], revalidate: REVALIDATE_SECONDS },
-    })
-    expect(REVALIDATE_SECONDS).toBe(3600)
+    await expect(apiGet('/public/fairs', itemSchema, [])).rejects.toMatchObject({ code: 'INVALID_RESPONSE', status: 200 })
   })
 
-  it('apiGetUncached never caches', async () => {
-    const fetchMock = vi.fn(async () => jsonResponse({ ok: true, data: { slug: 'a', count: 1 }, error: null }))
-    vi.stubGlobal('fetch', fetchMock)
-
-    await apiGetUncached('/public/search?q=a', itemSchema)
-
-    expect(fetchMock).toHaveBeenCalledWith(`${API_URL}/public/search?q=a`, { cache: 'no-store' })
-  })
-
-  it('apiGet throws ApiError with code on ok:false', async () => {
-    // Arrange
-    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({ ok: false, data: null, error: { code: 'NOT_FOUND', message: 'No such exhibition' } }, 404)))
-
-    // Act
-    const promise = apiGet('/public/exhibitions/missing', itemSchema, ['exhibitions'])
-
-    // Assert
-    await expect(promise).rejects.toBeInstanceOf(ApiError)
-    await expect(promise).rejects.toMatchObject({ code: 'NOT_FOUND', message: 'No such exhibition', status: 404 })
-  })
-
-  it('apiGet throws ApiError when the payload does not match the schema', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({ ok: true, data: { slug: 1 }, error: null })))
-
-    await expect(apiGet('/public/thing', itemSchema, [])).rejects.toMatchObject({ code: 'INVALID_RESPONSE', status: 200 })
+  it('rejects an unknown path with NOT_FOUND before touching the cache', async () => {
+    await expect(apiGet('/public/nope', itemSchema, [])).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 })
+    expect(unstableCache).not.toHaveBeenCalled()
   })
 })
 
-describe('POST /api/revalidate', () => {
-  it('revalidate route rejects a bad secret with 401', async () => {
-    // Act
-    const response = await POST(revalidateRequest('wrong-secret', { tags: ['home'] }))
+describe('apiGetUncached', () => {
+  it('runs the loader without the data cache', async () => {
+    search.mockResolvedValue({ slug: 'a', count: 1 })
 
-    // Assert
-    expect(response.status).toBe(401)
-    expect(await response.json()).toMatchObject({ ok: false, error: { code: 'UNAUTHORIZED' } })
-    expect(revalidateTag).not.toHaveBeenCalled()
+    const result = await apiGetUncached('/public/search?q=a', itemSchema)
+
+    expect(result).toEqual({ slug: 'a', count: 1 })
+    expect(search).toHaveBeenCalledWith('a')
+    expect(unstableCache).not.toHaveBeenCalled()
   })
 
-  it('revalidates every tag with a valid secret', async () => {
-    const response = await POST(revalidateRequest(SECRET, { tags: ['home', 'exhibition:tidewater'] }))
+  it('maps loader failures the same way as apiGet', async () => {
+    search.mockRejectedValue(notFound())
 
-    expect(response.status).toBe(200)
-    expect(await response.json()).toEqual({ ok: true, data: { revalidated: ['home', 'exhibition:tidewater'] }, error: null })
-    expect(revalidateTag.mock.calls.map((call) => call[0])).toEqual(['home', 'exhibition:tidewater'])
-  })
-
-  it('rejects a malformed body with 400', async () => {
-    const response = await POST(revalidateRequest(SECRET, { tags: 'home' }))
-
-    expect(response.status).toBe(400)
-    expect(revalidateTag).not.toHaveBeenCalled()
+    await expect(apiGetUncached('/public/search?q=a', itemSchema)).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 })
   })
 })

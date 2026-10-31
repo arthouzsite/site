@@ -1,4 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+const reads = vi.hoisted(() => ({ getSettings: vi.fn(), getExhibitions: vi.fn(), getArtists: vi.fn(), getServices: vi.fn() }))
+vi.mock('@/lib/server/public/public-reads', () => ({ publicReads: reads }))
+vi.mock('next/cache', () => ({ unstable_cache: (load: () => Promise<unknown>) => load }))
 import configForPhase, { assertProductionSiteUrl, buildRemotePatterns } from '@/next.config'
 
 const nextConfig = configForPhase('phase-development-server')
@@ -6,7 +10,6 @@ import { FALLBACK_SITE, detailMetadata, loadSiteMetadata } from '@/lib/site-meta
 import { buildSitemap } from '@/lib/sitemap-entries'
 import { service } from './support/publicFixtures'
 
-const API = 'http://api.test'
 const SITE = 'https://arthouz.test'
 const OG = { url: 'https://img.test/og.jpg', thumbUrl: 'https://img.test/og-t.jpg', width: 1200, height: 630, alt: 'Gallery' }
 
@@ -19,41 +22,37 @@ function settings(ogImage: typeof OG | null) {
   }
 }
 
-function ok(data: unknown): Response {
-  return Response.json({ ok: true, data, error: null })
-}
-
 describe('site metadata, sitemap and redirects', () => {
-  const fetchMock = vi.fn<typeof fetch>()
+  const databaseDown = () => {
+    for (const read of Object.values(reads)) read.mockRejectedValue(new Error('database down'))
+  }
 
   beforeEach(() => {
-    vi.stubEnv('API_URL', API)
     vi.stubEnv('NEXT_PUBLIC_SITE_URL', SITE)
-    vi.stubGlobal('fetch', fetchMock)
-    fetchMock.mockReset()
+    for (const read of Object.values(reads)) read.mockReset()
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined)
   })
 
   afterEach(() => {
     vi.unstubAllEnvs()
-    vi.unstubAllGlobals()
     vi.restoreAllMocks()
   })
 
   it('takes the default title, description and OG image from /public/settings', async () => {
-    fetchMock.mockResolvedValue(ok(settings(OG)))
+    reads.getSettings.mockResolvedValue(settings(OG))
 
     const metadata = await loadSiteMetadata()
 
-    expect(String(fetchMock.mock.calls[0]?.[0])).toBe(`${API}/public/settings`)
+    expect(reads.getSettings).toHaveBeenCalledTimes(1)
     expect(String(metadata.metadataBase)).toBe(`${SITE}/`)
     expect(metadata.title).toEqual({ default: 'Art Houz Gallery', template: '%s · Art Houz Gallery' })
     expect(metadata.description).toBe('Leading gallery.')
     expect(metadata.openGraph).toMatchObject({ siteName: 'Art Houz Gallery', images: [{ url: OG.url, width: 1200, height: 630, alt: 'Gallery' }] })
   })
 
-  it('falls back to the static constants when the API is down', async () => {
-    fetchMock.mockRejectedValue(new TypeError('fetch failed'))
+  it('falls back to the static constants when the database is down', async () => {
+    databaseDown()
 
     const metadata = await loadSiteMetadata()
 
@@ -64,13 +63,9 @@ describe('site metadata, sitemap and redirects', () => {
   })
 
   it('lists static routes plus published exhibition, artist and service slugs', async () => {
-    fetchMock.mockImplementation(async (input) => {
-      const url = String(input)
-      if (url.startsWith(`${API}/public/exhibitions`)) return ok({ items: [{ slug: 'tidewater' }], cities: [] })
-      if (url.startsWith(`${API}/public/artists`)) return ok({ flat: [{ slug: 'vijay-pichumani' }] })
-      if (url.startsWith(`${API}/public/services`)) return ok([service])
-      throw new Error(`unexpected ${url}`)
-    })
+    reads.getExhibitions.mockResolvedValue({ items: [{ slug: 'tidewater' }], cities: [] })
+    reads.getArtists.mockResolvedValue({ flat: [{ slug: 'vijay-pichumani' }] })
+    reads.getServices.mockResolvedValue([service])
 
     const urls = (await buildSitemap()).map((entry) => entry.url)
 
@@ -80,8 +75,8 @@ describe('site metadata, sitemap and redirects', () => {
     ])
   })
 
-  it('still lists the static routes when the API is down', async () => {
-    fetchMock.mockRejectedValue(new TypeError('fetch failed'))
+  it('still lists the static routes when the database is down', async () => {
+    databaseDown()
 
     expect(await buildSitemap()).toHaveLength(8)
   })
@@ -99,7 +94,7 @@ describe('site metadata, sitemap and redirects', () => {
   })
 
   it('detail metadata sets the full open graph object, falling back to the site image', async () => {
-    fetchMock.mockImplementation(async () => ok(settings(OG)))
+    reads.getSettings.mockResolvedValue(settings(OG))
     const cover = { url: 'https://img.test/c.jpg', thumbUrl: 'https://img.test/c-t.jpg', width: 800, height: 600, alt: 'Cover' }
 
     const withCover = await detailMetadata({ title: 'Salt Line', description: 'Blurb', image: cover })
@@ -113,8 +108,8 @@ describe('site metadata, sitemap and redirects', () => {
     expect(withoutCover.openGraph).toMatchObject({ images: [{ url: OG.url }] })
   })
 
-  it('detail metadata still builds when the settings API is down', async () => {
-    fetchMock.mockRejectedValue(new TypeError('fetch failed'))
+  it('detail metadata still builds when the settings read fails', async () => {
+    databaseDown()
 
     const metadata = await detailMetadata({ title: 'Salt Line', description: 'Blurb', image: null })
 
