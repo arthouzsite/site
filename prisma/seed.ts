@@ -1,6 +1,7 @@
 import 'dotenv/config'
-import * as argon2 from 'argon2'
+import { pathToFileURL } from 'node:url'
 import { PrismaPg } from '@prisma/adapter-pg'
+import { hashPassword } from '@/lib/server/auth/password'
 import { slugify } from '@/lib/shared'
 import { PrismaClient } from '../lib/server/generated/prisma/client'
 import {
@@ -39,7 +40,7 @@ function toDate(iso: string): Date {
 async function seedAdmin(prisma: PrismaClient, { adminEmail, adminPassword }: SeedOptions): Promise<void> {
   // Same normalisation as loginSchema, otherwise the seeded admin could never sign in.
   const email = adminEmail.trim().toLowerCase()
-  const passwordHash = await argon2.hash(adminPassword, { type: argon2.argon2id })
+  const passwordHash = await hashPassword(adminPassword)
   await prisma.user.upsert({
     where: { email },
     create: { email, passwordHash, name: ADMIN_NAME, role: 'ADMIN' },
@@ -254,7 +255,8 @@ async function main(): Promise<void> {
   }
 }
 
-if (require.main === module) {
+// Run only as the entry point (`tsx prisma/seed.ts`), not when a test imports runSeed.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((err: unknown) => {
     console.error('seed: failed', err)
     process.exit(1)

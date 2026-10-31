@@ -260,3 +260,10 @@ model Setting {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+/// Failed-login counter per client IP; one row per IP, reset when the 60 s window lapses.
+model LoginAttempt {
+  ip          String   @id
+  count       Int      @default(0)
+  windowStart DateTime @default(now())
+}
