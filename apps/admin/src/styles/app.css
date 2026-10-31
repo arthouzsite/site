@@ -10,6 +10,9 @@
 @layer base {
   *, *::before, *::after { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
+  /* No elastic overscroll: the sticky sidebar is exactly one screen tall and cannot follow the
+     page into the rubber-band zone, which left the dark column looking cut off at the bottom. */
+  html { overscroll-behavior-y: none; }
   body {
     background: var(--color-bg);
     color: var(--color-ink);
