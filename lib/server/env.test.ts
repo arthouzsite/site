@@ -64,6 +64,11 @@ describe('parseEnv', () => {
     }
   })
 
+  it('accepts ALLOW_TEST_OVERRIDES as an optional string', () => {
+    expect(parseEnv(build({ NODE_ENV: 'test' })).ALLOW_TEST_OVERRIDES).toBeUndefined()
+    expect(parseEnv(build({ NODE_ENV: 'test', ALLOW_TEST_OVERRIDES: '1' })).ALLOW_TEST_OVERRIDES).toBe('1')
+  })
+
   it('reports every missing required variable', () => {
     expect(() => parseEnv({ NODE_ENV: 'test' })).toThrow(/DATABASE_URL[\s\S]*SEED_ADMIN_EMAIL/)
   })

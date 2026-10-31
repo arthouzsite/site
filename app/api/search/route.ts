@@ -24,7 +24,7 @@ export async function GET(request: Request): Promise<Response> {
     return Response.json(data, { headers: NO_STORE })
   } catch (error) {
     const detail = error instanceof Error ? `${error.name}: ${error.message}` : String(error)
-    console.error(`[web] search proxy failed for q=${JSON.stringify(q)}: ${detail}`)
+    console.error(`[web] search failed for q=${JSON.stringify(q)}: ${detail}`)
     return failure(502, 'UPSTREAM_ERROR', 'Search is unavailable right now')
   }
 }

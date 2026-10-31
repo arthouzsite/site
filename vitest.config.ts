@@ -4,7 +4,8 @@ import { defineConfig } from 'vitest/config'
 const COVERAGE_THRESHOLD_PERCENT = 80
 const SERVER_TEST_TIMEOUT_MS = 30_000
 const REPO_ROOT = fileURLToPath(new URL('.', import.meta.url))
-const ALIAS = { '@': REPO_ROOT }
+// `server-only` throws outside Next's react-server condition; unit and API specs import server modules directly.
+const ALIAS = { '@': REPO_ROOT, 'server-only': fileURLToPath(new URL('./tests/support/server-only-stub.ts', import.meta.url)) }
 
 const SITE_COVERAGE = ['app/**/*.{ts,tsx}', 'components/**/*.{ts,tsx}', 'hooks/**/*.{ts,tsx}', 'lib/*.{ts,tsx}']
 const ADMIN_COVERAGE = ['admin/**/*.{ts,tsx}']

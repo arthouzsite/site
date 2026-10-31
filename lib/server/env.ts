@@ -1,3 +1,4 @@
+import 'server-only'
 import { z } from 'zod'
 
 const MIN_JWT_SECRET_LENGTH = 32
@@ -21,6 +22,7 @@ const baseSchema = z.object({
   AWS_S3_PUBLIC_URL: optionalString,
   SEED_ADMIN_EMAIL: z.string().email(),
   SEED_ADMIN_PASSWORD: z.string().min(1),
+  ALLOW_TEST_OVERRIDES: optionalString,
   TODAY_OVERRIDE: z.string().regex(ISO_DATE_PATTERN, 'Expected YYYY-MM-DD').optional(),
 })
 

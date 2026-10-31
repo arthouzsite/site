@@ -1,20 +1,18 @@
 import type { NextConfig } from 'next'
 import type { RemotePattern } from 'next/dist/shared/lib/image-config'
+import { allowsTestOverrides } from './lib/test-overrides'
 
 type Env = Readonly<Record<string, string | undefined>>
 
 const BUILD_PHASE = 'phase-production-build'
 const LOCAL_HOST = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i
 
-/** Test harnesses (visual, a11y, admin e2e) build with a localhost origin and opt in with ALLOW_TEST_OVERRIDES=1. */
-const allowsTestOverrides = (env: Env) => env.NODE_ENV !== 'production' || env.ALLOW_TEST_OVERRIDES === '1'
-
 /**
  * NEXT_PUBLIC_SITE_URL is inlined at build time (robots, sitemap and metadataBase are prerendered), so a production
  * build without a real origin would ship localhost URLs to search engines. Fails the build instead.
  */
 export function assertProductionSiteUrl(env: Env, phase: string | undefined = env.NEXT_PHASE): void {
-  if (env.NODE_ENV !== 'production' || phase !== BUILD_PHASE || env.ALLOW_TEST_OVERRIDES === '1') return
+  if (env.NODE_ENV !== 'production' || phase !== BUILD_PHASE || allowsTestOverrides(env)) return
   const siteUrl = env.NEXT_PUBLIC_SITE_URL?.trim() ?? ''
   if (!siteUrl) throw new Error('NEXT_PUBLIC_SITE_URL must be set to the public origin (e.g. https://arthouz.example) before `next build`.')
   if (LOCAL_HOST.test(siteUrl)) {

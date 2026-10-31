@@ -1,3 +1,4 @@
+import 'server-only'
 import { unstable_cache } from 'next/cache'
 import { connection } from 'next/server'
 import type { ZodType } from 'zod'

@@ -1,3 +1,5 @@
+import { allowsTestOverrides } from '@/lib/test-overrides'
+
 const ISO_DATE = /^(\d{4})-\d{2}-\d{2}$/
 
 type ClockEnv = {
@@ -7,13 +9,9 @@ type ClockEnv = {
   readonly ALLOW_TEST_OVERRIDES?: string
 }
 
-function overrideAllowed(env: ClockEnv): boolean {
-  return env.NODE_ENV !== 'production' || env.ALLOW_TEST_OVERRIDES === '1'
-}
-
 /** Current year; honours TODAY_OVERRIDE (YYYY-MM-DD) outside production, as the API does. */
 export function currentYear(now: Date = new Date(), env: ClockEnv = process.env): number {
-  const override = overrideAllowed(env) ? env.TODAY_OVERRIDE : undefined
+  const override = allowsTestOverrides(env) ? env.TODAY_OVERRIDE : undefined
   const match = override ? ISO_DATE.exec(override) : null
   return match ? Number(match[1]) : now.getFullYear()
 }

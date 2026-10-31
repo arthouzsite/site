@@ -1,3 +1,4 @@
+import 'server-only'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '@/lib/server/generated/prisma/client'
 import { env } from './env'
@@ -10,5 +11,6 @@ function createClient(): PrismaClient {
 
 export const prisma: PrismaClient = globalForPrisma.prisma ?? createClient()
 
-// Next dev reloads modules on every edit; reuse one client so connections are not leaked.
-if (env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+// Cached in every environment: route handlers and RSC compile into separate layers (and dev reloads modules on every
+// edit), each of which would otherwise open its own connection pool.
+globalForPrisma.prisma = prisma

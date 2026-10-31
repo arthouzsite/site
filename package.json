@@ -20,7 +20,7 @@
     "test:e2e": "playwright test --config playwright.e2e.config.ts",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
-    "media:rehome": "tsx prisma/rehome-media.ts",
+    "media:rehome": "tsx --conditions=react-server prisma/rehome-media.ts",
     "verify": "pnpm typecheck && pnpm lint && pnpm test:coverage && pnpm test:visual && pnpm test:a11y && pnpm test:e2e"
   },
   "dependencies": {
@@ -38,6 +38,7 @@
     "react-dom": "^19.3.1",
     "react-hook-form": "^7.91.0",
     "react-router": "^7.18.5",
+    "server-only": "^0.0.1",
     "sharp": "^0.35.5",
     "zod": "^4"
   },

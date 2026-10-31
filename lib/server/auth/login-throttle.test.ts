@@ -39,6 +39,22 @@ describe('login throttle (database)', () => {
     expect((await prisma.loginAttempt.findUniqueOrThrow({ where: { ip: IP } })).windowStart).toEqual(before)
   })
 
+  it('prunes attempt rows idle for more than an hour on the next claim and keeps recent ones', async () => {
+    const HOUR_MS = 60 * 60 * 1000
+    await prisma.loginAttempt.createMany({
+      data: [
+        { ip: '192.0.2.1', count: 3, windowStart: new Date(Date.now() - HOUR_MS - 60_000) },
+        { ip: '192.0.2.2', count: 2, windowStart: new Date(Date.now() - 5 * 60_000) },
+      ],
+    })
+
+    await claimLoginAttempt(IP)
+
+    expect(await prisma.loginAttempt.findUnique({ where: { ip: '192.0.2.1' } })).toBeNull()
+    expect(await countFor('192.0.2.2')).toBe(2)
+    expect(await countFor(IP)).toBe(1)
+  })
+
   it('tracks each IP separately', async () => {
     for (let attempt = 0; attempt < LOGIN_THROTTLE.limit; attempt += 1) await claimLoginAttempt(IP)
     await expect(claimLoginAttempt('198.51.100.1')).resolves.toBeUndefined()
