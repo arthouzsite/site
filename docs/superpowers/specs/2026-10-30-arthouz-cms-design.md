@@ -4,6 +4,8 @@ Date: 2026-10-30
 Status: draft for approval
 Source prototype: `Art Houz responsive website.zip` (Design Canvas `.dc.html`, 9 screens, inline mock data)
 
+> **Superseded in structure.** This spec describes the original monorepo (NestJS API, Vite CMS, separate Next site). The repository is now a single Next.js app: the site at `/`, the CMS at `/admin`, the API as route handlers under `/api`, with no separate processes, CORS or revalidate webhook. Product behaviour, data model and API contracts below still apply; for layout, environment and deployment see `2026-10-31-single-nextjs-design.md` and the README.
+
 ## 1. Intent
 
 Art Houz is a contemporary art gallery (Chennai and Bengaluru, founded 2012). A new public website has been designed as a single Design Canvas prototype. Today the prototype's content is hard-coded JavaScript (exhibitions, artists, fairs, news, locations, about copy) and images are picsum placeholders.

@@ -1,89 +1,36 @@
 # Deploying Art Houz
 
-Three processes share one PostgreSQL database (api only) and one object-storage bucket (api writes, browsers read).
+One Next.js process serves the site (`/`), the CMS (`/admin`) and the API (`/api`). It needs one PostgreSQL database and one S3-compatible bucket (the server writes, browsers read). Every environment variable is listed in the README.
 
-## Build and run
+## Build and run (Node host)
 
-| App | Build | Output | Run |
-| --- | --- | --- | --- |
-| `apps/api` | `pnpm build:shared && pnpm --filter @arthouz/api build` (`prisma generate && nest build`) | `apps/api/dist` | `prisma migrate deploy`, then `node dist/main.js` from `apps/api` |
-| `apps/web` | `pnpm build:shared && pnpm --filter @arthouz/web build` (`next build`) | `apps/web/.next` | `next start --port 3100` from `apps/web` |
-| `apps/admin` | `pnpm build:shared && pnpm --filter @arthouz/admin build` (`tsc --noEmit && vite build`) | `apps/admin/dist` (static files) | Serve with any static host; route unknown paths to `index.html` (client-side routing) |
+1. `pnpm install --frozen-lockfile`
+2. `pnpm exec prisma generate`: the Prisma client is generated into `lib/server/generated` and is not committed, so run it on every fresh checkout.
+3. `pnpm db:migrate` (`prisma migrate deploy`) against the production database. It needs the `pg_trgm` extension (created by the first migration; the role needs permission to create it, or create it beforehand). Use `DIRECT_DATABASE_URL` for a non-pooled connection.
+4. `pnpm build` with `NEXT_PUBLIC_SITE_URL` set to the public origin. The build fails if it is unset or a localhost URL. Pages are prerendered from the database, so `DATABASE_URL`, `JWT_SECRET` and `SEED_ADMIN_*` must be set for the build too. Changing `NEXT_PUBLIC_SITE_URL` needs a rebuild.
+5. `pnpm start` (port 3300), under pm2 as a single process: `pm2 start pnpm --name arthouz -- start`.
+6. First deployment only: `pnpm db:seed`, then `pnpm media:rehome` with `STORAGE_DRIVER=r2` to move the placeholder images into the bucket. Restart afterwards to refresh cached pages.
 
-Order matters:
-
-1. Run `pnpm --filter @arthouz/api exec prisma migrate deploy` against the production `DATABASE_URL` before starting a new API version. The database needs the `pg_trgm` extension (created by the first migration; the database role needs permission to create it, or create it beforehand).
-2. Start the API and wait for `GET /health`.
-3. Build the web app after the API is reachable at `API_URL`, with `NEXT_PUBLIC_SITE_URL` set to the public origin: static pages fetch API data during `next build`, and robots, the sitemap and `metadataBase` are prerendered with the site URL. Pages that cannot reach the API at build time are rendered per request instead.
-
-`apps/api` reads `.env` from its working directory (dotenv) and exits at startup with the list of invalid keys if validation fails. `apps/web` reads `API_URL`, `REVALIDATE_SECRET` and `IMAGE_HOST` when it starts or builds and `NEXT_PUBLIC_SITE_URL` is inlined at build time, so it must be set before `next build` (the production build fails if it is unset or a localhost URL, unless `ALLOW_TEST_OVERRIDES=1`); changing it needs a rebuild. The admin build bakes `VITE_*` values into the bundle, so rebuild it when they change.
-
-## Environment
-
-Secrets are marked **secret**; keep them out of the repository and out of the admin bundle. Every key has an example in the app's `.env.example`.
-
-### apps/api
-
-| Key | Required | Notes |
-| --- | --- | --- |
-| `NODE_ENV` | yes in production | Set to `production`: this makes the session cookie `Secure` and disables `TODAY_OVERRIDE` |
-| `PORT` | no | Default 4100 |
-| `DATABASE_URL` | yes | PostgreSQL connection string. **secret** |
-| `JWT_SECRET` | yes | At least 32 characters. Signs the session cookie. **secret** |
-| `ADMIN_ORIGIN` | no (default `http://localhost:5180`) | Exact admin origin: scheme, host and port, no trailing slash. Used for CORS and the `Origin` check on write requests. Set it explicitly in production |
-| `WEB_URL` | no (default `http://localhost:3100`) | Origin of the public site; the API POSTs `{WEB_URL}/api/revalidate` here. Allowed by CORS. Set it explicitly in production |
-| `REVALIDATE_SECRET` | yes | Sent as `x-revalidate-secret`. Must equal the web app's value. **secret** |
-| `TRUST_PROXY` | behind a proxy | Number of reverse-proxy hops in front of the API. Set `TRUST_PROXY=1` behind one proxy so the login throttle sees the client IP; leave unset (0) when the API is exposed directly. Non-negative integer |
-| `STORAGE_DRIVER` | no | `r2` (default outside tests) or `memory`. Use `r2` in production |
-| `S3_ENDPOINT` | with `r2` | S3 API endpoint, e.g. `https://<account-id>.r2.cloudflarestorage.com` |
-| `AWS_ACCESS_KEY_ID` | with `r2` | **secret** |
-| `AWS_SECRET_ACCESS_KEY` | with `r2` | **secret** |
-| `AWS_S3_BUCKET_NAME` | with `r2` | |
-| `AWS_S3_PUBLIC_URL` | with `r2` | Public base URL of the bucket. Image URLs stored in the database are `{AWS_S3_PUBLIC_URL}/{key}` |
-| `SEED_ADMIN_EMAIL` | yes | Validated at API startup as well as by the seed script. Seed-only in practice |
-| `SEED_ADMIN_PASSWORD` | yes | Same. **secret** |
-| `SEED_FORCE` | seed script only | Set to `1` to reload the prototype content over a database that already has content. Without it `db:seed` only upserts the admin user when content exists, so a re-run cannot overwrite edits |
-| `TODAY_OVERRIDE` | never in production | `YYYY-MM-DD`; test-only |
-| `DATABASE_URL_TEST` | never in production | API e2e tests only |
-
-`SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` are required by the API's environment schema, so the API will not start without them. Run `db:seed` once for a new database; it creates the admin user and loads the prototype content. Then run `pnpm --filter @arthouz/api media:rehome` with the production R2 keys so every seeded image is served from the bucket instead of the placeholder host.
-
-### apps/web
-
-| Key | Required | Notes |
-| --- | --- | --- |
-| `API_URL` | yes | Base URL of the API, reachable from the web server |
-| `REVALIDATE_SECRET` | yes | Must equal the API's value. **secret** |
-| `NEXT_PUBLIC_SITE_URL` | yes in production | Public origin of the site (canonical URLs, sitemap, robots). Default is `http://localhost:3100` |
-| `IMAGE_HOST` | recommended | Hostname of `AWS_S3_PUBLIC_URL`; added to the `next/image` allow-list. Without it, bucket images are rejected by the optimiser |
-| `TODAY_OVERRIDE`, `NEXT_IMAGE_UNOPTIMIZED`, `ALLOW_TEST_OVERRIDES` | never in production | Visual-harness switches |
-
-### apps/admin (build time)
-
-| Key | Notes |
-| --- | --- |
-| `VITE_API_URL` | Base URL of the API. Default `http://localhost:4100` |
-| `VITE_WEB_URL` | Public site origin; builds "view on site" links in the exhibition screens. Default `http://localhost:3100` |
-| `VITE_PUBLIC_SITE_URL` | Target of the sidebar's public-site link. Default `/` |
-
-## Never set in production
-
-`TODAY_OVERRIDE`, `ALLOW_TEST_OVERRIDES`, `NEXT_IMAGE_UNOPTIMIZED` (and `DATABASE_URL_TEST`, `VISUAL_*`). They freeze dates or disable image optimisation. The API ignores `TODAY_OVERRIDE` when `NODE_ENV=production`; the web app ignores both `TODAY_OVERRIDE` and `NEXT_IMAGE_UNOPTIMIZED` unless `ALLOW_TEST_OVERRIDES=1`, which is why it must also be unset.
-
-## Object storage (R2)
-
-- Uploads are proxied through the API: the admin POSTs a multipart file to the API (images: JPEG, PNG, WebP or AVIF up to 25 MB; videos: MP4, WebM or MOV up to 200 MB). Images are stored as the original plus a 480 px WebP thumbnail with `PutObject`; videos are stored as a single object with no poster frame (the admin renders the video itself, and width/height are stored as 0). There are no presigned uploads, so the bucket needs no CORS rule for the admin origin.
-- The bucket must be publicly readable at `AWS_S3_PUBLIC_URL` (R2 public bucket or custom domain): the site and admin load images directly from that URL. Objects are written with `Cache-Control: public, max-age=31536000, immutable`.
-- Set `IMAGE_HOST` on the web app to the hostname of `AWS_S3_PUBLIC_URL`.
-- The access key only needs read/write/delete on this bucket.
+`lib/server/env.ts` exits at startup with the list of invalid keys if validation fails.
 
 ## Reverse proxy and cookies
 
-- Admin session: the API sets an `ah_session` cookie (`HttpOnly`, `SameSite=Lax`, `Path=/`, `Secure` when `NODE_ENV=production`, 7 days, no `Domain`, so it is host-only for the API host). The admin calls the API with `credentials: 'include'`.
-- `SameSite=Lax` means the admin and the API must be same-site, for example `admin.example.com` and `api.example.com`, or `/api` proxied under the admin origin. Different registrable domains will not send the cookie. Serve everything over HTTPS in production, because the cookie is `Secure`.
-- `ADMIN_ORIGIN` must match the browser's `Origin` header for the admin exactly (`https://admin.example.com`, no trailing slash). Write requests (POST, PUT, PATCH, DELETE) carrying any other `Origin` get `403 BAD_ORIGIN`. CORS allows `ADMIN_ORIGIN` and `WEB_URL` with credentials.
-- Revalidation: after content changes the API POSTs `{WEB_URL}/api/revalidate` with header `x-revalidate-secret: $REVALIDATE_SECRET` and body `{ "tags": [...] }`. `WEB_URL` must be reachable from the API host, and `REVALIDATE_SECRET` must be identical in the API and web environments. Failures are logged as warnings and do not fail the admin request, so a wrong secret shows up as stale site content, not as an error.
-- Rate limits: only `POST /auth/login` is throttled (5 per minute). `/public/search` (API) and `/api/search` (web proxy route) have no rate limit; throttle both at the proxy before launch. `/api/search` rejects queries over 120 characters.
-- Upload size: the reverse proxy must allow request bodies of at least 200 MB on `POST /media` (for nginx, `client_max_body_size 200m;`), with request and read timeouts long enough for slow uploads. The API itself enforces 200 MB for videos and 25 MB for images; a proxy limit below 200 MB surfaces in the admin as a 413 on videos.
-- Upload concurrency and timeout: uploads are buffered in memory, so the API allows at most 2 concurrent `POST /media` requests and answers the rest with 429 `TOO_MANY_UPLOADS` (the admin also uploads its queue one file at a time). Back this up at the proxy with a per-IP or per-server connection limit on `POST /media` (for nginx, `limit_conn` in the `/media` location) and a request timeout of at least 600 s so a 200 MB upload on a slow link is not cut off (`client_body_timeout 600s; proxy_read_timeout 600s; proxy_send_timeout 600s;`). The API sets its own `requestTimeout` to 600 s in `apps/api/src/main.ts`.
-- Proxy headers: set `TRUST_PROXY=1` (hop count) when the API sits behind one reverse proxy; otherwise the per-IP login throttle sees the proxy's address for every client. The proxy must overwrite `X-Forwarded-For` rather than pass a client-supplied value through.
+- Terminate HTTPS at the proxy and forward everything to port 3300. The `ah_session` cookie is `HttpOnly`, `SameSite=Lax`, `Path=/`, `Secure` in production, 7 days, host-only.
+- The CMS and API are same-origin, so there is no CORS setup. Write requests (POST, PUT, PATCH, DELETE) with an `Origin` header that differs from the request origin get `403 BAD_ORIGIN`.
+- Set `TRUST_PROXY=1` (hop count) behind one proxy, otherwise the per-IP login limit (5 attempts per minute, stored in Postgres) sees the proxy's address for every client. The proxy must overwrite `X-Forwarded-For`, never pass a client value through.
+- Uploads: allow bodies of at least 200 MB on `POST /api/media` (nginx: `client_max_body_size 200m;`) and timeouts of 600 s (`client_body_timeout 600s; proxy_read_timeout 600s; proxy_send_timeout 600s;`). The route allows 600 s. Uploads are buffered in memory, so the server answers more than two concurrent uploads with 429 `TOO_MANY_UPLOADS`; add a per-server connection limit on `/api/media` at the proxy as well.
+- `/api/search` has no rate limit of its own and rejects queries over 120 characters; throttle it at the proxy.
+
+## Object storage (R2)
+
+- Uploads go through the server: images (JPEG, PNG, WebP, AVIF, up to 25 MB) are stored as the original plus a 480 px WebP thumbnail; videos (MP4, WebM, MOV, up to 200 MB) as a single object. No presigned uploads yet, so the bucket needs no CORS rule today.
+- The bucket must be publicly readable at `AWS_S3_PUBLIC_URL`. Objects are written with `Cache-Control: public, max-age=31536000, immutable`. Set `IMAGE_HOST` to that URL's hostname.
+- The access key only needs read, write and delete on this bucket.
+
+## Never set in production
+
+`TODAY_OVERRIDE`, `ALLOW_TEST_OVERRIDES`, `NEXT_IMAGE_UNOPTIMIZED`, `DATABASE_URL_TEST` and the `VISUAL_*` / `E2E_*` variables. They freeze dates, disable image optimisation or point at test databases.
+
+## Vercel
+
+Works for the site, CMS and API. Media uploads above 4.5 MB fail because of Vercel's request body limit until presigned browser-to-bucket uploads are built; that also needs a CORS rule on the R2 bucket. Run `prisma migrate deploy` and `prisma generate` in the build step.
