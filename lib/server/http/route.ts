@@ -33,7 +33,7 @@ function resolveUser(request: Request, auth: Auth): Promise<PublicUser | null> {
  * Wraps a route handler with the cross-cutting rules every API endpoint shares: same-origin check for
  * mutating methods, session lookup and role gate, the `{ ok, data, error }` envelope and error mapping.
  */
-export function route<P extends Record<string, string> = Record<string, never>>(
+export function route<P extends Record<string, string | string[]> = Record<string, never>>(
   auth: Auth,
   handler: (ctx: RouteContext<P>) => unknown | Promise<unknown>,
   options: RouteOptions = {},

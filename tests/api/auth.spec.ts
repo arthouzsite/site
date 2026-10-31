@@ -117,6 +117,21 @@ describe('auth', () => {
     expect(res.body.error.code).toBe('RATE_LIMITED')
   })
 
+  it('a burst of parallel wrong-password logins gets at most five through to the password check', async () => {
+    const burst = await Promise.all(
+      Array.from({ length: 8 }, () => login({ email: 'admin@example.test', password: 'wrong-wrong-wrong' })),
+    )
+    const statuses = burst.map((res) => res.status)
+    expect(statuses.filter((status) => status === 401)).toHaveLength(5)
+    expect(statuses.filter((status) => status === 429)).toHaveLength(3)
+    expect(burst.filter((res) => res.status === 429).every((res) => res.body.error.code === 'RATE_LIMITED')).toBe(true)
+  })
+
+  it('malformed login bodies do not use up throttle slots', async () => {
+    for (let i = 0; i < 8; i += 1) expect((await login({ email: 'bad' })).status).toBe(400)
+    expect((await login({ email: 'admin@example.test', password: TEST_PASSWORD })).status).toBe(200)
+  })
+
   it('rejects the sixth attempt before checking the password, even a correct one', async () => {
     for (let i = 0; i < 5; i += 1) await login({ email: 'admin@example.test', password: 'wrong-wrong-wrong' })
     const res = await login({ email: 'admin@example.test', password: TEST_PASSWORD })

@@ -1,4 +1,4 @@
-import { ApiException, unauthorized } from '@/lib/server/http/errors'
+import { unauthorized, type ApiException } from '@/lib/server/http/errors'
 import { prisma } from '@/lib/server/prisma'
 import { hashPassword, verifyPassword } from './password'
 import type { PublicUser } from './public-user'
@@ -17,9 +17,6 @@ function getDummyHash(): Promise<string> {
 }
 
 export const invalidCredentials = (): ApiException => unauthorized(INVALID_CREDENTIALS_MESSAGE, INVALID_CREDENTIALS_CODE)
-
-export const isInvalidCredentials = (error: unknown): boolean =>
-  error instanceof ApiException && error.code === INVALID_CREDENTIALS_CODE
 
 export async function login(email: string, password: string): Promise<{ token: string; user: PublicUser }> {
   const found = await prisma.user.findUnique({ where: { email } })

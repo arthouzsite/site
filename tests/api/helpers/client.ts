@@ -18,9 +18,6 @@ export type CallResult = {
   headers: Headers
 }
 
-const NOT_FOUND_BODY = { ok: false, data: null, error: { code: 'NOT_FOUND', message: 'Route not found' } }
-const METHOD_NOT_ALLOWED_BODY = { ok: false, data: null, error: { code: 'METHOD_NOT_ALLOWED', message: 'Method not allowed' } }
-
 function buildRequest(method: string, path: string, init: CallInit): Request {
   const headers = new Headers(init.headers)
   if (init.cookie) headers.set('cookie', init.cookie)
@@ -44,15 +41,13 @@ async function readBody(response: Response): Promise<unknown> {
   }
 }
 
-function jsonResult(status: number, body: unknown): CallResult {
-  return { status, body, headers: new Headers({ 'content-type': 'application/json' }) }
-}
-
 /** Calls the route handler for (method, path) in-process, the way Next would, and returns the parsed response. */
 export async function call(method: string, path: string, init: CallInit = {}): Promise<CallResult> {
   const resolved = await resolveRoute(method, new URL(`http://localhost${path}`).pathname)
-  if (!resolved) return jsonResult(404, NOT_FOUND_BODY)
-  if (!resolved.handler) return jsonResult(405, METHOD_NOT_ALLOWED_BODY)
+  // Unknown paths under /api reach app/api/[...path]; only a path outside /api can fail to resolve.
+  if (!resolved) throw new Error(`call: ${path} is not under /api`)
+  // Like Next: a known path without an export for the method is a bare 405.
+  if (!resolved.handler) return { status: 405, body: null, headers: new Headers() }
   const response = await resolved.handler(buildRequest(method, path, init), { params: Promise.resolve(resolved.params) })
   return { status: response.status, body: await readBody(response), headers: response.headers }
 }

@@ -15,3 +15,4 @@ env.SEED_ADMIN_PASSWORD ??= 'test-password-123'
 // Tests use the built-in clock unless a spec sets it; a developer's .env must not leak in.
 delete env.TODAY_OVERRIDE
 delete env.TRUST_PROXY
+delete env.NEXT_PUBLIC_SITE_URL

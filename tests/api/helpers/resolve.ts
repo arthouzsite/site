@@ -5,10 +5,12 @@ import { pathToFileURL } from 'node:url'
 const API_ROOT = join(process.cwd(), 'app', 'api')
 const ROUTE_FILE = 'route.ts'
 const PARAM_SEGMENT = /^\[([^\].]+)\]$/
+const CATCH_ALL_SEGMENT = /^\[\.\.\.([^\]]+)\]$/
 
 type RouteEntry = { segments: readonly string[]; file: string }
-export type RouteHandler = (request: Request, context: { params: Promise<Record<string, string>> }) => Promise<Response>
-export type ResolvedRoute = { handler: RouteHandler | undefined; params: Record<string, string> }
+type ParamValue = string | string[]
+export type RouteHandler = (request: Request, context: { params: Promise<Record<string, ParamValue>> }) => Promise<Response>
+export type ResolvedRoute = { handler: RouteHandler | undefined; params: Record<string, ParamValue> }
 
 function collectRoutes(directory: string, segments: readonly string[]): RouteEntry[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -17,12 +19,16 @@ function collectRoutes(directory: string, segments: readonly string[]): RouteEnt
   })
 }
 
-const isParam = (segment: string | undefined): boolean => segment !== undefined && PARAM_SEGMENT.test(segment)
+/** Match precedence: a literal segment beats [param], which beats a [...rest] catch-all. */
+function rank(segment: string | undefined): number {
+  if (segment === undefined) return 0
+  if (CATCH_ALL_SEGMENT.test(segment)) return 2
+  return PARAM_SEGMENT.test(segment) ? 1 : 0
+}
 
-/** Literal segments sort before [param] segments, left to right, so `/media/stats` beats `/media/[id]`. */
-function byLiteralFirst(a: RouteEntry, b: RouteEntry): number {
+function byPrecedence(a: RouteEntry, b: RouteEntry): number {
   for (let i = 0; i < Math.min(a.segments.length, b.segments.length); i += 1) {
-    const diff = Number(isParam(a.segments[i])) - Number(isParam(b.segments[i]))
+    const diff = rank(a.segments[i]) - rank(b.segments[i])
     if (diff !== 0) return diff
   }
   return 0
@@ -31,21 +37,28 @@ function byLiteralFirst(a: RouteEntry, b: RouteEntry): number {
 let routeTable: readonly RouteEntry[] | undefined
 
 function routes(): readonly RouteEntry[] {
-  routeTable ??= collectRoutes(API_ROOT, []).sort(byLiteralFirst)
+  routeTable ??= collectRoutes(API_ROOT, []).sort(byPrecedence)
   return routeTable
 }
 
-function matchParams(route: RouteEntry, parts: readonly string[]): Record<string, string> | null {
-  if (route.segments.length !== parts.length) return null
-  const params: Record<string, string> = {}
-  for (let i = 0; i < parts.length; i += 1) {
+function matchParams(route: RouteEntry, parts: readonly string[]): Record<string, ParamValue> | null {
+  const params: Record<string, ParamValue> = {}
+  for (let i = 0; i < route.segments.length; i += 1) {
     const segment = route.segments[i] ?? ''
-    const part = parts[i] ?? ''
+    const catchAll = CATCH_ALL_SEGMENT.exec(segment)?.[1]
+    if (catchAll) {
+      // A catch-all is last and needs at least one segment, as in Next.
+      if (parts.length <= i) return null
+      params[catchAll] = parts.slice(i).map(decodeURIComponent)
+      return params
+    }
+    const part = parts[i]
+    if (part === undefined) return null
     const name = PARAM_SEGMENT.exec(segment)?.[1]
     if (name) params[name] = decodeURIComponent(part)
     else if (segment !== part) return null
   }
-  return params
+  return route.segments.length === parts.length ? params : null
 }
 
 /** Maps a request path (without query string) to the route module under app/api and its params; undefined when no route matches. */
