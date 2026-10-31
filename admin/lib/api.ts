@@ -1,7 +1,8 @@
 import type { ApiEnvelope, ApiError as ApiErrorBody } from '@/lib/shared'
 
 export const SESSION_EXPIRED_EVENT = 'session-expired'
-const API_URL = (import.meta.env.VITE_API_URL ?? 'http://localhost:4100').replace(/\/$/, '')
+/** The API is a sibling route tree of the same Next.js app, so every call is same-origin and the session cookie rides along. */
+const API_URL = '/api'
 
 export class ApiError extends Error {
   readonly status: number

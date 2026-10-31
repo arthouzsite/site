@@ -33,9 +33,9 @@ vi.mock('@/lib/api', async (importOriginal) => ({
   },
 }))
 
-import ServicesPage, { generateMetadata as servicesMeta } from '@/app/services/page'
-import ServicePage, { generateMetadata as serviceMeta } from '@/app/services/[slug]/page'
-import ServiceNotFound from '@/app/services/[slug]/not-found'
+import ServicesPage, { generateMetadata as servicesMeta } from '@/app/(site)/services/page'
+import ServicePage, { generateMetadata as serviceMeta } from '@/app/(site)/services/[slug]/page'
+import ServiceNotFound from '@/app/(site)/services/[slug]/not-found'
 import sitemap from '@/app/sitemap'
 import { Header } from '@/components/site/Header'
 import { ApiError } from '@/lib/api'

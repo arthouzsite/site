@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, type KeyboardEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { portalRoot } from '../../lib/portalRoot'
 import { cx } from './cx'
 
 type Props = {
@@ -72,6 +73,6 @@ export function Dialog({ open, title, onClose, children, footer, role = 'dialog'
         {footer && <div className="flex justify-end gap-2">{footer}</div>}
       </div>
     </div>,
-    document.body,
+    portalRoot(),
   )
 }

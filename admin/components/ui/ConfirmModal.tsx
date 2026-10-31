@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { portalRoot } from '../../lib/portalRoot'
 import { Button } from './Button'
 
 type Props = {
@@ -71,6 +72,6 @@ export function ConfirmModal({ open, title, body, confirmLabel, cancelLabel = 'C
         </div>
       </div>
     </div>,
-    document.body,
+    portalRoot(),
   )
 }

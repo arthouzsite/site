@@ -1,24 +1,19 @@
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
-import { Footer } from '@/components/site/Footer'
-import { Header } from '@/components/site/Header'
 import { APP_ROOT_ID } from '@/lib/dom'
-import { loadSiteMetadata } from '@/lib/site-metadata'
+import { siteUrl } from '@/lib/site-url'
 import { fontVariables } from './fonts'
 import '@/styles/globals.css'
 
-export function generateMetadata(): Promise<Metadata> {
-  return loadSiteMetadata()
-}
+/** App-wide metadata only; the site's title, description and Open Graph come from app/(site)/layout.tsx. */
+export const metadata: Metadata = { metadataBase: new URL(`${siteUrl()}/`) }
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={fontVariables}>
       <body>
         <div id={APP_ROOT_ID} className="min-h-screen bg-paper font-ui text-ink">
-          <Header />
           {children}
-          <Footer />
         </div>
       </body>
     </html>

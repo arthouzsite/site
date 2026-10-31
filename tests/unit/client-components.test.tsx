@@ -10,7 +10,7 @@ vi.mock('next/navigation', () => ({
 vi.mock('@/app/fonts', () => ({ fontVariables: 'font-a' }))
 vi.mock('@/styles/globals.css', () => ({}))
 
-import ErrorPage from '@/app/error'
+import ErrorPage from '@/app/(site)/error'
 import GlobalError from '@/app/global-error'
 import { LetterStrip } from '@/components/artists/LetterStrip'
 import { CityChips } from '@/components/exhibitions/CityChips'

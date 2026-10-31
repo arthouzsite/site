@@ -106,7 +106,7 @@ describe('ServiceEditor', () => {
     )
     renderRoutes(routes, '/services/s1')
     const title = await screen.findByLabelText(/Title/)
-    expect(screen.getByRole('link', { name: 'View on site' })).toHaveAttribute('href', 'http://localhost:3100/services/art-sales')
+    expect(screen.getByRole('link', { name: 'View on site' })).toHaveAttribute('href', '/services/art-sales')
     expect(screen.getByRole('region', { name: 'Sales contact' })).toBeInTheDocument()
     const publishSwitch = screen.getByRole('switch', { name: 'Published' })
     expect(publishSwitch).toBeEnabled()

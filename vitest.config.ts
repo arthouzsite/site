@@ -7,6 +7,7 @@ const REPO_ROOT = fileURLToPath(new URL('.', import.meta.url))
 const ALIAS = { '@': REPO_ROOT }
 
 const SITE_COVERAGE = ['app/**/*.{ts,tsx}', 'components/**/*.{ts,tsx}', 'hooks/**/*.{ts,tsx}', 'lib/*.{ts,tsx}']
+const ADMIN_COVERAGE = ['admin/**/*.{ts,tsx}']
 const SERVER_COVERAGE = ['lib/server/**/*.ts', 'app/api/**/*.ts']
 // Legacy routes still exercised by the site unit tests; they leave this list as they move onto the server project.
 const SITE_OWNED_ROUTES = ['app/api/search/**']
@@ -28,11 +29,16 @@ export default defineConfig({
   test: {
     coverage: {
       provider: 'v8',
-      include: [...(isRunning('site') ? SITE_COVERAGE : []), ...(isRunning('server') ? SERVER_COVERAGE : [])],
+      include: [
+        ...(isRunning('site') ? SITE_COVERAGE : []),
+        ...(isRunning('server') ? SERVER_COVERAGE : []),
+        ...(isRunning('admin') ? ADMIN_COVERAGE : []),
+      ],
       exclude: [
         'lib/shared/**',
         'lib/server/generated/**',
-        'admin/**',
+        'admin/test/**',
+        'admin/AdminApp.tsx',
         'tests/**',
         '**/*.test.{ts,tsx}',
         '**/*.d.ts',
@@ -52,6 +58,19 @@ export default defineConfig({
           name: 'site',
           environment: 'node',
           include: ['tests/unit/**/*.test.{ts,tsx}'],
+        },
+      },
+      {
+        resolve: { alias: ALIAS },
+        // The CMS is a React Router client app: its page URL is the origin MSW handlers are written against.
+        test: {
+          name: 'admin',
+          environment: 'jsdom',
+          environmentOptions: { jsdom: { url: 'http://localhost/' } },
+          include: ['admin/**/*.test.{ts,tsx}'],
+          setupFiles: ['./admin/test/setup.ts'],
+          globals: true,
+          css: false,
         },
       },
       {

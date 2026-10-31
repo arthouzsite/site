@@ -6,14 +6,8 @@ import { NAV_ITEMS } from './navItems'
 
 type Props = { user: SessionUser; counts?: Record<string, number> }
 
-type SiteEnv = { VITE_PUBLIC_SITE_URL?: string; VITE_WEB_URL?: string }
-
-/** Target of the sidebar link; `/` (this admin's own origin) is the last resort. */
-export function publicSiteUrl(env: SiteEnv): string {
-  return env.VITE_PUBLIC_SITE_URL || env.VITE_WEB_URL || '/'
-}
-
-const PUBLIC_SITE_URL = publicSiteUrl(import.meta.env)
+/** Target of the sidebar link: the public site, served from the same origin. */
+const PUBLIC_SITE_URL = '/'
 
 export function Sidebar({ user, counts = {} }: Props) {
   const items = NAV_ITEMS.filter((i) => !i.adminOnly || user.role === 'ADMIN')

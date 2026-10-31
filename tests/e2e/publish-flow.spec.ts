@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { HERO_ALT, HERO_FILE_NAME, WEB_URL, makeHeroJpeg, signIn } from './fixtures'
+import { ADMIN_URL, API_URL, HERO_ALT, HERO_FILE_NAME, SEED_ADMIN, WEB_URL, makeHeroJpeg, signIn } from './fixtures'
 
 const TITLE = 'Salt Line'
 const SLUG = 'salt-line'
@@ -12,7 +12,7 @@ const POLL_ATTEMPT_TIMEOUT_MS = 1_000
 test('editor publishes an exhibition and the public site lists it with its hero image within 5 s', async ({ page }) => {
   await signIn(page)
 
-  await page.goto('/exhibitions/new')
+  await page.goto(`${ADMIN_URL}/exhibitions/new`)
   await page.getByLabel(/^Title/).fill(TITLE)
   await page.getByLabel('Subtitle').fill('New work on paper')
   await page.getByLabel('Type').selectOption('SOLO')
@@ -44,7 +44,7 @@ test('editor publishes an exhibition and the public site lists it with its hero 
   await page.getByRole('button', { name: `Add ${ARTIST}` }).click()
 
   await page.getByRole('button', { name: 'Save', exact: true }).click()
-  await page.waitForURL(/\/exhibitions\/[0-9a-f-]{36}$/)
+  await page.waitForURL(/\/admin\/exhibitions\/[0-9a-f-]{36}$/)
 
   // The switch is controlled by the saved record, so it flips only once the publish request resolves.
   const publishedSwitch = page.getByRole('switch', { name: 'Published' })
@@ -65,6 +65,28 @@ test('editor publishes an exhibition and the public site lists it with its hero 
   await page.goto(`${WEB_URL}/exhibitions/${SLUG}`)
   await expect(page.getByRole('heading', { name: TITLE })).toBeVisible()
   await expect(page.getByText(ARTIST).first()).toBeVisible()
+})
+
+test('a signed-out deep link returns to the editor after login', async ({ page }) => {
+  await signIn(page)
+  const listed = await page.request.get(`${API_URL}/exhibitions`)
+  const [exhibition] = ((await listed.json()) as { data: Array<{ id: string; title: string }> }).data
+  expect(exhibition).toBeDefined()
+  await page.context().clearCookies()
+
+  const deepLink = `${ADMIN_URL}/exhibitions/${exhibition!.id}`
+  await page.goto(deepLink)
+  await expect(page).toHaveURL(`${ADMIN_URL}/login?next=%2Fexhibitions%2F${exhibition!.id}`)
+
+  await page.getByLabel('Email').fill(SEED_ADMIN.email)
+  await page.getByRole('textbox', { name: 'Password' }).fill(SEED_ADMIN.password)
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  await expect(page).toHaveURL(deepLink)
+  await expect(page.getByRole('heading', { level: 1, name: exhibition!.title })).toBeVisible()
+
+  // A reload of the deep link is served by the catch-all page, not a 404.
+  await page.reload()
+  await expect(page.getByRole('heading', { level: 1, name: exhibition!.title })).toBeVisible()
 })
 
 function escapeRegExp(value: string): string {

@@ -1,0 +1,96 @@
+/*
+ * CMS base rules, scoped under .admin-root (the wrapper in app/admin/layout.tsx and the portal target of its dialogs)
+ * so the public site's own base rules in globals.css are untouched. Tokens live in tokens.css (@theme).
+ */
+@layer theme, base, components, utilities;
+@import './admin-preflight.css';
+
+.admin-root {
+  /* The CMS fallback stacks; the site's tokens differ only in these. */
+  --font-ui: 'Space Grotesk', 'Noto Sans Tamil', system-ui, sans-serif;
+  --font-display: 'EB Garamond', 'Noto Serif Tamil', Georgia, serif;
+  /* Timing for every transition utility inside the CMS (kept off :root so the site's transitions are unchanged). */
+  --default-transition-duration: 180ms;
+  --default-transition-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --sidebar-w: 236px;
+  --gutter: 32px;
+}
+
+@media (max-width: 1024px) {
+  .admin-root { --sidebar-w: 72px; --gutter: 20px; }
+}
+
+/* Form controls default to full width here (components layer) so a width utility
+   passed by a caller (w-44, w-auto, ...) always wins over it. */
+@layer components {
+  .control-w { width: 100%; }
+}
+
+@layer base {
+  .admin-root {
+    min-height: 100vh;
+    background: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-ui);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    tab-size: 4;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .admin-root button { cursor: pointer; }
+  .admin-root button:disabled { cursor: not-allowed; }
+  .admin-root a:hover { color: inherit; }
+  .admin-root :focus-visible { outline: none; box-shadow: var(--shadow-focus); }
+  .admin-root ::selection { background: var(--color-amber); color: var(--color-ink); }
+  .admin-root [hidden] { display: none !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-root *, .admin-root *::before, .admin-root *::after {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.admin-root .brand-mark {
+  display: block; width: 14px; height: 18px; margin-bottom: 1px;
+  background: var(--color-amber); clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+.admin-root .checkbox {
+  width: 18px; height: 18px; appearance: none; display: inline-grid; place-items: center; vertical-align: middle;
+  border: 1px solid var(--color-line-strong); background: var(--color-surface-2); cursor: pointer;
+}
+.admin-root .checkbox:checked { background: var(--color-ink); border-color: var(--color-ink); }
+.admin-root .checkbox:checked::after {
+  content: ''; width: 5px; height: 9px; border: solid var(--color-paper); border-width: 0 2px 2px 0;
+  transform: translateY(-1px) rotate(45deg);
+}
+
+.admin-root .hit-area { display: inline-grid; place-items: center; min-width: 44px; min-height: 44px; cursor: pointer; }
+
+.admin-root .switch-input {
+  position: relative; width: 36px; height: 20px; appearance: none; border-radius: 999px; cursor: pointer;
+  background: var(--color-line-strong); transition: background var(--default-transition-duration);
+}
+.admin-root .switch-input::after {
+  content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--color-white); transition: transform var(--default-transition-duration);
+}
+.admin-root .switch-input:checked { background: var(--color-success); }
+.admin-root .switch-input:checked::after { transform: translateX(16px); }
+
+.admin-root .select-chevron {
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235E5A54' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");
+  background-repeat: no-repeat; background-position: right 12px center;
+}
+
+/* Shell layout: grid columns follow the sidebar width token; bottom bar under 640px. */
+.admin-root .app-shell { display: grid; grid-template-columns: var(--sidebar-w) 1fr; min-height: 100vh; }
+@media (max-width: 640px) {
+  .admin-root .app-shell { grid-template-columns: 1fr; }
+}

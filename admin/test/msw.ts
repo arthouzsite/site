@@ -1,7 +1,7 @@
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
 
-export const API_URL = 'http://localhost:4100'
+export const API_URL = 'http://localhost/api'
 
 export const envelope = <T,>(data: T) => ({ ok: true, data, error: null })
 export const errorEnvelope = (code: string, message: string, fields?: Record<string, string>) => ({
