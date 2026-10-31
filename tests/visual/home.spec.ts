@@ -1,8 +1,7 @@
-import { createRequire } from 'node:module'
-import path from 'node:path'
 import { test } from '@playwright/test'
+import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '@/lib/server/generated/prisma/client'
-import { API_DIR, VISUAL_DATABASE_URL, VISUAL_REVALIDATE_SECRET } from './env'
+import { VISUAL_DATABASE_URL, VISUAL_REVALIDATE_SECRET } from './env'
 import { expectVisualMatch, renderPort, renderPrototype } from './harness'
 import { PORT_URL } from './paths'
 
@@ -12,11 +11,6 @@ const HERO_LAYOUT_KEY = 'heroLayout'
 const HOME_TAGS = ['home', 'settings'] as const
 
 type HeroLayout = 'FULL_BLEED' | 'SPLIT'
-type DriverAdapter = NonNullable<NonNullable<ConstructorParameters<typeof PrismaClient>[0]>['adapter']>
-type PgAdapterModule = { PrismaPg: new (config: { connectionString: string }) => DriverAdapter }
-
-// The pg driver adapter is an apps/api dependency, so resolve it from there rather than adding it to apps/web.
-const { PrismaPg } = createRequire(path.join(API_DIR, 'package.json'))('@prisma/adapter-pg') as PgAdapterModule
 
 /** Writes the hero layout straight into the visual database, then expires the site's cached home page. */
 async function setHeroLayout(value: HeroLayout): Promise<void> {

@@ -1,18 +1,12 @@
-import { createRequire } from 'node:module'
-import path from 'node:path'
+import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '@/lib/server/generated/prisma/client'
-import { API_DIR, VISUAL_DATABASE_URL, VISUAL_REVALIDATE_SECRET } from './env'
+import { VISUAL_DATABASE_URL, VISUAL_REVALIDATE_SECRET } from './env'
 import { PORT_URL } from './paths'
 
 const LAYOUT_KEY = 'artistIndexLayout'
 const ARTIST_TAGS = ['artists', 'settings'] as const
 
 export type ArtistIndexLayout = 'GROUPED' | 'FLOWING'
-type DriverAdapter = NonNullable<NonNullable<ConstructorParameters<typeof PrismaClient>[0]>['adapter']>
-type PgAdapterModule = { PrismaPg: new (config: { connectionString: string }) => DriverAdapter }
-
-// The pg driver adapter is an apps/api dependency, so resolve it from there rather than adding it to apps/web.
-const { PrismaPg } = createRequire(path.join(API_DIR, 'package.json'))('@prisma/adapter-pg') as PgAdapterModule
 
 /** Upserts the artist index layout setting in the visual database and revalidates the cached artist pages. */
 export async function setArtistIndexLayout(value: ArtistIndexLayout): Promise<void> {
