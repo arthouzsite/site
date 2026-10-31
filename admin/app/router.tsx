@@ -46,4 +46,7 @@ export const routes: RouteObject[] = [
   },
 ]
 
-export const createAppRouter = () => createBrowserRouter(routes)
+/** Where the Next.js app mounts the CMS; React Router strips it, so route paths and `?next=` stay basename-relative. */
+export const ADMIN_BASENAME = '/admin'
+
+export const createAppRouter = (basename: string = ADMIN_BASENAME) => createBrowserRouter(routes, { basename })

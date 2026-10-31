@@ -62,5 +62,6 @@ export type NewsLink = {
 
 export const STATUS_TO_CHIP = { CURRENT: 'current', UPCOMING: 'upcoming', PAST: 'past' } as const
 
-export const WEB_URL = (import.meta.env.VITE_WEB_URL ?? 'http://localhost:3100').replace(/\/$/, '')
+/** The public site is the same origin as the CMS, so its links are root-relative. */
+export const WEB_URL = ''
 export const exhibitionUrl = (slug: string) => `${WEB_URL}/exhibitions/${slug}`

@@ -1,0 +1,188 @@
+/*
+ * Tailwind's preflight (node_modules/tailwindcss/preflight.css) scoped under .admin-root. The CMS was written against
+ * the full Tailwind reset; the public site deliberately renders without it, so the reset must not leak site-wide.
+ * html/:host rules are dropped: .admin-root sets its own line-height and font in admin.css.
+ */
+@layer theme, base, components, utilities;
+
+@layer base {
+  .admin-root *,
+  .admin-root ::after,
+  .admin-root ::before,
+  .admin-root ::backdrop,
+  .admin-root ::file-selector-button {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 0 solid;
+  }
+  .admin-root hr {
+    height: 0;
+    color: inherit;
+    border-top-width: 1px;
+  }
+  .admin-root abbr:where([title]) {
+    -webkit-text-decoration: underline dotted;
+    text-decoration: underline dotted;
+  }
+  .admin-root h1,
+  .admin-root h2,
+  .admin-root h3,
+  .admin-root h4,
+  .admin-root h5,
+  .admin-root h6 {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+  .admin-root a {
+    color: inherit;
+    -webkit-text-decoration: inherit;
+    text-decoration: inherit;
+  }
+  .admin-root b,
+  .admin-root strong {
+    font-weight: bolder;
+  }
+  .admin-root code,
+  .admin-root kbd,
+  .admin-root samp,
+  .admin-root pre {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    font-feature-settings: normal;
+    font-variation-settings: normal;
+    font-size: 1em;
+  }
+  .admin-root small {
+    font-size: 80%;
+  }
+  .admin-root sub,
+  .admin-root sup {
+    font-size: 75%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+  }
+  .admin-root sub {
+    bottom: -0.25em;
+  }
+  .admin-root sup {
+    top: -0.5em;
+  }
+  .admin-root table {
+    text-indent: 0;
+    border-color: inherit;
+    border-collapse: collapse;
+  }
+  .admin-root :-moz-focusring:where(:not(iframe)) {
+    outline: auto;
+  }
+  .admin-root progress {
+    vertical-align: baseline;
+  }
+  .admin-root summary {
+    display: list-item;
+  }
+  .admin-root ol,
+  .admin-root ul,
+  .admin-root menu {
+    list-style: none;
+  }
+  .admin-root img,
+  .admin-root svg,
+  .admin-root video,
+  .admin-root canvas,
+  .admin-root audio,
+  .admin-root iframe,
+  .admin-root embed,
+  .admin-root object {
+    display: block;
+    vertical-align: middle;
+  }
+  .admin-root img,
+  .admin-root video {
+    max-width: 100%;
+    height: auto;
+  }
+  .admin-root button,
+  .admin-root input,
+  .admin-root select,
+  .admin-root optgroup,
+  .admin-root textarea,
+  .admin-root ::file-selector-button {
+    font: inherit;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    border-radius: 0;
+    background-color: transparent;
+    opacity: 1;
+  }
+  .admin-root :where(select:is([multiple],
+  .admin-root [size])) optgroup {
+    font-weight: bolder;
+  }
+  .admin-root :where(select:is([multiple],
+  .admin-root [size])) optgroup option {
+    padding-inline-start: 20px;
+  }
+  .admin-root ::file-selector-button {
+    margin-inline-end: 4px;
+  }
+  .admin-root ::placeholder {
+    opacity: 1;
+  }
+  @supports (not (-webkit-appearance: -apple-pay-button))  or
+    (contain-intrinsic-size: 1px) {
+    .admin-root ::placeholder {
+      color: color-mix(in oklab, currentcolor 50%, transparent);
+    }
+  }
+  .admin-root textarea {
+    resize: vertical;
+  }
+  .admin-root ::-webkit-search-decoration {
+    -webkit-appearance: none;
+  }
+  .admin-root ::-webkit-date-and-time-value {
+    min-height: 1lh;
+    text-align: inherit;
+  }
+  .admin-root ::-webkit-datetime-edit {
+    display: inline-flex;
+  }
+  .admin-root ::-webkit-datetime-edit-fields-wrapper {
+    padding: 0;
+  }
+  .admin-root ::-webkit-datetime-edit,
+  .admin-root ::-webkit-datetime-edit-year-field,
+  .admin-root ::-webkit-datetime-edit-month-field,
+  .admin-root ::-webkit-datetime-edit-day-field,
+  .admin-root ::-webkit-datetime-edit-hour-field,
+  .admin-root ::-webkit-datetime-edit-minute-field,
+  .admin-root ::-webkit-datetime-edit-second-field,
+  .admin-root ::-webkit-datetime-edit-millisecond-field,
+  .admin-root ::-webkit-datetime-edit-meridiem-field {
+    padding-block: 0;
+  }
+  .admin-root ::-webkit-calendar-picker-indicator {
+    line-height: 1;
+  }
+  .admin-root :-moz-ui-invalid {
+    box-shadow: none;
+  }
+  .admin-root button,
+  .admin-root input:where([type='button'],
+  .admin-root [type='reset'],
+  .admin-root [type='submit']),
+  .admin-root ::file-selector-button {
+    appearance: button;
+  }
+  .admin-root ::-webkit-inner-spin-button,
+  .admin-root ::-webkit-outer-spin-button {
+    height: auto;
+  }
+  .admin-root [hidden]:where(:not([hidden='until-found'])) {
+    display: none !important;
+  }
+}

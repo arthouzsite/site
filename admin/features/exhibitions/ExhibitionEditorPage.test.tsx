@@ -115,7 +115,7 @@ describe('ExhibitionEditorPage', () => {
     await waitFor(() => expect(body).toEqual({ isPublished: true }))
     await user.type(screen.getByLabelText(/^Subtitle/), '!')
     expect(screen.getByRole('switch', { name: 'Published' })).toBeDisabled()
-    expect(screen.getByRole('link', { name: 'View on site' })).toHaveAttribute('href', 'http://localhost:3100/exhibitions/tidewater')
+    expect(screen.getByRole('link', { name: 'View on site' })).toHaveAttribute('href', '/exhibitions/tidewater')
   })
 
   it('deletes after confirmation and returns to the list', async () => {
