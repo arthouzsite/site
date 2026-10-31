@@ -54,6 +54,7 @@ import RootLayout, { metadata as rootMeta } from '@/app/layout'
 import SiteLayout, { generateMetadata as layoutMeta } from '@/app/(site)/layout'
 import SiteNotFound from '@/app/(site)/not-found'
 import RootNotFound from '@/app/not-found'
+import UnmatchedPage from '@/app/(site)/[...notFound]/page'
 import { SiteFrame } from '@/components/site/SiteFrame'
 import NewsPage, { generateMetadata as newsMeta } from '@/app/(site)/news/page'
 import HomePage, { generateMetadata as homeMeta } from '@/app/(site)/page'
@@ -283,7 +284,11 @@ describe('shell', () => {
     expect(await layoutMeta()).toHaveProperty('title.default', 'Art Houz')
   })
 
-  it('renders the unmatched-URL 404 without the public chrome, which would otherwise ship with every route', () => {
+  it('resolves any unmatched URL to notFound() so the 404 renders inside the site layout', () => {
+    expect(() => UnmatchedPage()).toThrow('NEXT_NOT_FOUND')
+  })
+
+  it('renders the root 404 (outside the site group) without the public chrome, which would otherwise ship with every route', () => {
     expect(html(<RootNotFound />)).toContain('Not found')
   })
 

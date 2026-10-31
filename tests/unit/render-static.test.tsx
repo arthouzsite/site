@@ -181,6 +181,8 @@ describe('site chrome', () => {
     expect(html(<Container className="x">kid</Container>)).toContain('kid')
     expect(html(<Eyebrow dot tone="amber">Label</Eyebrow>)).toContain('Label')
     expect(html(<Eyebrow tone="muted">Muted</Eyebrow>)).toContain('Muted')
+    // A plain anchor is the point here (any href renders); /x now matches the (site) catch-all page for the lint rule.
+    // eslint-disable-next-line @next/next/no-html-link-for-pages
     expect(html(<SectionRule title="Title" action={<a href="/x">All</a>} as="h3" />)).toContain('<h3')
     expect(html(<Wordmark />)).toContain('ART HOUZ')
   })
