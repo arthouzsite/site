@@ -7,9 +7,11 @@ One Next.js process serves the site (`/`), the CMS (`/admin`) and the API (`/api
 1. `pnpm install --frozen-lockfile`
 2. `pnpm exec prisma generate`: the Prisma client is generated into `lib/server/generated` and is not committed, so run it on every fresh checkout.
 3. `pnpm db:migrate` (`prisma migrate deploy`) against the production database. It needs the `pg_trgm` extension (created by the first migration; the role needs permission to create it, or create it beforehand). Use `DIRECT_DATABASE_URL` for a non-pooled connection.
-4. `pnpm build` with `NEXT_PUBLIC_SITE_URL` set to the public origin. The build fails if it is unset or a localhost URL. Pages are prerendered from the database, so `DATABASE_URL`, `JWT_SECRET` and `SEED_ADMIN_*` must be set for the build too. Changing `NEXT_PUBLIC_SITE_URL` needs a rebuild.
+4. `pnpm build` with `NEXT_PUBLIC_SITE_URL` set to the public origin. The build fails if it is unset or a localhost URL. Pages are prerendered from the database, so `DATABASE_URL`, `JWT_SECRET` and `SEED_ADMIN_*` must be set for the build too, and so must `STORAGE_DRIVER` (or the five R2 variables, since production defaults to `r2`): the environment is parsed when `next build` imports the server modules. Changing `NEXT_PUBLIC_SITE_URL` needs a rebuild.
 5. `pnpm start` (port 3300), under pm2 as a single process: `pm2 start pnpm --name arthouz -- start`.
 6. First deployment only: `pnpm db:seed`, then `pnpm media:rehome` with `STORAGE_DRIVER=r2` to move the placeholder images into the bucket. Restart afterwards to refresh cached pages.
+
+Build and deploy need devDependencies installed (`prisma`, `tsx`, `typescript`, `@tailwindcss/postcss`); do not install with `--prod`.
 
 `lib/server/env.ts` exits at startup with the list of invalid keys if validation fails.
 
@@ -34,3 +36,7 @@ One Next.js process serves the site (`/`), the CMS (`/admin`) and the API (`/api
 ## Vercel
 
 Works for the site, CMS and API. Media uploads above 4.5 MB fail because of Vercel's request body limit until presigned browser-to-bucket uploads are built; that also needs a CORS rule on the R2 bucket. Run `prisma migrate deploy` and `prisma generate` in the build step.
+
+- Set `TRUST_PROXY=1`: Vercel sits behind one proxy, and without it every client shares one login-throttle bucket.
+- `app/api/media/route.ts` sets `maxDuration = 600`, which exceeds the Hobby plan's function limit. Use a plan that allows it or lower the value.
+- The build step needs the same environment as a Node host build, including `STORAGE_DRIVER` or the R2 variables, and devDependencies installed.

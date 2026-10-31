@@ -40,7 +40,7 @@ Configuration is read from the process environment; locally from `.env` at the r
 | --- | --- | --- | --- |
 | `DATABASE_URL` | yes | PostgreSQL connection string used by the app | `postgresql://USER:PASSWORD@HOST:5432/DBNAME` |
 | `DIRECT_DATABASE_URL` | no | Non-pooled connection for `prisma migrate`; falls back to `DATABASE_URL` (with Neon, drop the `-pooler` host suffix) | `postgresql://USER:PASSWORD@HOST:5432/DBNAME` |
-| `DATABASE_URL_TEST` | tests | Database for `tests/api`; every table is truncated, so never point it at real data | `postgresql://USER@localhost:5432/arthouz_next_test` |
+| `DATABASE_URL_TEST` | tests | Database for `tests/api`; must be local and named `*_test` or `*_test_t<N>` (the guard refuses anything else); every table is truncated | `postgresql://USER@localhost:5432/arthouz_next_test` |
 | `JWT_SECRET` | yes | Signs the `ah_session` cookie; at least 32 characters | `<random string, 32+ characters>` |
 | `SEED_ADMIN_EMAIL` | yes | Email of the admin user created by the seed | `admin@example.com` |
 | `SEED_ADMIN_PASSWORD` | yes | Password of the seeded admin | `<choose a password>` |
@@ -123,9 +123,10 @@ Details in `docs/deploy.md`. In short:
 - Node host: `pnpm install --frozen-lockfile`, `pnpm exec prisma generate` (the client is not committed, so run it on every fresh checkout), `pnpm db:migrate`, `pnpm build`, `pnpm start`. Run one process under pm2 behind a reverse proxy that terminates HTTPS and forwards to port 3300.
 - Set `TRUST_PROXY=1` behind one proxy, otherwise every client shares the proxy's address in the login rate limit. The proxy must overwrite `X-Forwarded-For`.
 - Cookies and API are same-origin, so there is no CORS configuration. Write requests whose `Origin` differs from the request origin get `403 BAD_ORIGIN`.
-- Set `NEXT_PUBLIC_SITE_URL` before `pnpm build`; changing it needs a rebuild. The build reads the database while prerendering, so `DATABASE_URL`, `JWT_SECRET` and `SEED_ADMIN_*` must be set for the build too.
+- Set `NEXT_PUBLIC_SITE_URL` before `pnpm build`; changing it needs a rebuild. The build reads the database while prerendering, so `DATABASE_URL`, `JWT_SECRET` and `SEED_ADMIN_*` must be set for the build too, and so must `STORAGE_DRIVER` (or the five R2 variables, since production defaults to `r2`): the environment is parsed when the server modules are imported, which `next build` does.
+- The build and deploy steps need devDependencies installed (`prisma`, `tsx`, `typescript`, `@tailwindcss/postcss`), so do not install with `--prod`.
 - Allow request bodies of 200 MB and read timeouts of 600 s on `POST /api/media` at the proxy.
-- Vercel works for everything except media uploads above 4.5 MB (its request body limit) until presigned uploads land (below). That work also needs a CORS rule on the R2 bucket.
+- Vercel works for everything except media uploads above 4.5 MB (its request body limit) until presigned uploads land (below). That work also needs a CORS rule on the R2 bucket. On Vercel set `TRUST_PROXY=1`, otherwise all clients share one login-throttle bucket. The upload route sets `maxDuration = 600`, which exceeds the Hobby plan's function limit; deploy on a plan that allows it or lower the value.
 
 ## Known follow-ups
 

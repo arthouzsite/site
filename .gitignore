@@ -11,9 +11,10 @@ test-results/
 *.log
 .DS_Store
 mockups/**/*.png
-apps/api/src/generated/
 dist-dev/
 lib/server/generated/
 *.tsbuildinfo
 next-env.d.ts
 playwright-report/
+# Next regenerates this on every run
+AGENTS.md
