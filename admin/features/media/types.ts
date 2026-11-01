@@ -31,6 +31,15 @@ export type Media = {
   updatedAt: string
 }
 
+/** Response of `POST /media/uploads`: where and how the browser PUTs the file. */
+export type UploadTarget = {
+  key: string
+  method: 'PUT'
+  url: string
+  headers: Record<string, string>
+  expiresAt: string
+}
+
 export type MediaUsage = { type: string; id: string; title: string }
 export type MediaDetail = Media & { usedBy: MediaUsage[] }
 

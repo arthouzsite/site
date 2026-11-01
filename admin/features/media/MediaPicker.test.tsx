@@ -4,7 +4,8 @@ import { describe, expect, it, vi } from 'vitest'
 import { API_URL, HttpResponse, envelope, http, server } from '../../test/msw'
 import { ImageField } from './ImageField'
 import { MediaPicker } from './MediaPicker'
-import { api, ApiError } from '../../lib/api'
+import { ApiError } from '../../lib/api'
+import { mockUploadFlow } from '../../test/uploadMocks'
 import { makeMedia, renderWithProviders } from './testUtils'
 import { toMediaRef } from './types'
 
@@ -87,7 +88,7 @@ describe('MediaPicker upload tab', () => {
   })
 
   it('refuses to select an uploaded video and explains why', async () => {
-    vi.spyOn(api, 'upload').mockResolvedValue(makeMedia({ id: 'v1', kind: 'VIDEO', mime: 'video/mp4', key: 'media/v1.mp4', alt: 'Tour' }))
+    mockUploadFlow({ complete: () => makeMedia({ id: 'v1', kind: 'VIDEO', mime: 'video/mp4', key: 'media/v1.mp4', alt: 'Tour' }) })
     const { user, onSelect } = await openUpload()
     await user.upload(screen.getByLabelText(/choose files/i), new File(['x'], 'tour.mp4', { type: 'video/mp4' }))
     await user.type(screen.getByLabelText('Alt text for tour.mp4'), 'Tour')
@@ -99,11 +100,10 @@ describe('MediaPicker upload tab', () => {
 
   it('stays on the upload tab until the last file is done, then selects it in the library', async () => {
     const releases: Array<() => void> = []
-    vi.spyOn(api, 'upload').mockImplementation(async (_p, form) => {
-      const name = ((form as FormData).get('file') as File).name
+    mockUploadFlow({ complete: async ({ filename: name }) => {
       await new Promise<void>((resolve) => { releases.push(resolve) })
       return makeMedia({ id: name, alt: 'Alt', key: `media/${name}` })
-    })
+    } })
     const { user, onSelect } = await openUpload()
     await user.upload(screen.getByLabelText(/choose files/i), [new File(['x'], 'one.jpg', { type: 'image/jpeg' }), new File(['x'], 'two.jpg', { type: 'image/jpeg' })])
     await user.type(screen.getByLabelText('Alt text for one.jpg'), 'Alt')
@@ -120,11 +120,10 @@ describe('MediaPicker upload tab', () => {
   })
 
   it('stays on the upload tab when a file failed so the error stays visible', async () => {
-    vi.spyOn(api, 'upload').mockImplementation(async (_p, form) => {
-      const name = ((form as FormData).get('file') as File).name
+    mockUploadFlow({ complete: ({ filename: name }) => {
       if (name === 'bad.jpg') throw new ApiError(400, { code: 'INVALID_IMAGE', message: 'raw' })
       return makeMedia({ id: name, alt: 'Alt' })
-    })
+    } })
     const { user } = await openUpload()
     await user.upload(screen.getByLabelText(/choose files/i), [new File(['x'], 'good.jpg', { type: 'image/jpeg' }), new File(['x'], 'bad.jpg', { type: 'image/jpeg' })])
     await user.type(screen.getByLabelText('Alt text for good.jpg'), 'Alt')
@@ -137,7 +136,7 @@ describe('MediaPicker upload tab', () => {
   })
 
   it('selects an uploaded image and returns to the library', async () => {
-    vi.spyOn(api, 'upload').mockResolvedValue(makeMedia({ id: 'new', alt: 'Fresh' }))
+    mockUploadFlow({ complete: () => makeMedia({ id: 'new', alt: 'Fresh' }) })
     const { user, onSelect } = await openUpload()
     await user.upload(screen.getByLabelText(/choose files/i), new File(['x'], 'fresh.jpg', { type: 'image/jpeg' }))
     await user.type(screen.getByLabelText('Alt text for fresh.jpg'), 'Fresh')
