@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/media.js": {
+      "maxDuration": 300
+    }
+  }
+}
