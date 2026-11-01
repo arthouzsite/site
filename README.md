@@ -76,7 +76,7 @@ pnpm dev                        # next dev on http://localhost:3300
 
 The seed loads the prototype content, including the five services (published with placeholder copy to replace in the CMS), and writes picsum placeholder image URLs. It skips a database that already has content unless `SEED_FORCE=1`. `STORAGE_DRIVER=memory` accepts uploads but persists nothing; use `r2` with the four bucket variables for real files. The bucket stays private: the app serves every image and video itself at `GET /media/<key>` (streamed from the bucket, byte ranges honoured for video, cached for a year). The media library takes images (JPEG, PNG, WebP, AVIF, up to 25 MB) and videos (MP4, WebM, MOV, up to 200 MB); videos are library-only and never offered in image pickers.
 
-Content is cached with tags and refreshed when the CMS publishes. To move the seed's placeholder images into the bucket run `pnpm media:rehome` (with `STORAGE_DRIVER=r2`); it is idempotent and skips rows whose object already exists in the bucket. It runs outside the server, so it cannot refresh the cache: restart or redeploy afterwards to refresh cached pages.
+Content is cached with tags and refreshed when the CMS publishes. To move the seed's placeholder images into the bucket run `pnpm media:rehome` (with `STORAGE_DRIVER=r2`); it is idempotent and skips rows whose object already exists in the bucket. It runs outside the server, so it cannot refresh the cache: call `POST /api/revalidate` afterwards (see Expiring the site cache).
 
 ### Scripts
 
@@ -121,6 +121,7 @@ Details in `docs/deploy.md`. In short:
 
 - Node host: `pnpm install --frozen-lockfile`, `pnpm exec prisma generate` (the client is not committed, so run it on every fresh checkout), `pnpm db:migrate`, `pnpm build`, `pnpm start`. Run one process under pm2 behind a reverse proxy that terminates HTTPS and forwards to port 3300.
 - Set `TRUST_PROXY=1` behind one proxy, otherwise every client shares the proxy's address in the login rate limit. The proxy must overwrite `X-Forwarded-For`.
+- After out-of-band database changes or the media scripts, expire the cache with `POST /api/revalidate` as an admin (see Expiring the site cache); CMS publishing never needs it.
 - Cookies and API are same-origin, so there is no CORS configuration. Write requests whose `Origin` differs from the request origin get `403 BAD_ORIGIN`.
 - Set `NEXT_PUBLIC_SITE_URL` before `pnpm build`; changing it needs a rebuild. The build reads the database while prerendering, so `DATABASE_URL`, `JWT_SECRET` and `SEED_ADMIN_*` must be set for the build too, and so must `STORAGE_DRIVER` (or the five R2 variables, since production defaults to `r2`): the environment is parsed when the server modules are imported, which `next build` does.
 - The build and deploy steps need devDependencies installed (`prisma`, `tsx`, `typescript`, `@tailwindcss/postcss`), so do not install with `--prod`.
@@ -149,10 +150,23 @@ The bucket needs this CORS rule (Cloudflare dashboard) or browsers refuse the `P
    "MaxAgeSeconds": 3600 }]
 ```
 
+### Expiring the site cache
+
+Public pages read data through `unstable_cache` with tags and refresh for up to an hour on their own. Publishing from the CMS expires the affected tags immediately and never needs the call below. After anything that changes the database from outside the app (`pnpm media:relink`, `pnpm media:rehome`, a manual SQL edit, a restore) expire the whole cache with an admin session:
+
+```sh
+curl -c cookies.txt -H 'Content-Type: application/json' \
+  -d '{"email":"admin@example.com","password":"<password>"}' \
+  https://your-site.example/api/auth/login
+curl -b cookies.txt -X POST https://your-site.example/api/revalidate   # -> {"ok":true,"data":{"revalidated":<count>}}
+```
+
+`POST /api/revalidate` is admin-only (editors get 403, anonymous callers 401) and expires every tag, including the per-slug exhibition, artist and service tags. To expire only some, send `{"tags":["home","exhibitions"]}` (1 to 200 non-empty strings of at most 200 characters). The scripts run under `tsx`, where `revalidateTag` cannot run, so they only print a reminder.
+
 ## Known follow-ups
 
 - Uploads are parsed in memory on a Node host, so concurrent uploads are capped (`TOO_MANY_UPLOADS`); the proxy limits above are the second line of defence.
-- `media:rehome` cannot refresh the page cache from outside the server.
+- `media:rehome` and `media:relink` cannot refresh the page cache from outside the server; call `POST /api/revalidate` afterwards.
 - Search endpoint (`/api/search`) has no rate limit of its own; throttle it at the proxy.
 - The visual gate compares layout and text; images are neutral placeholders by design.
 
