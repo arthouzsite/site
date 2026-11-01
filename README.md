@@ -126,11 +126,32 @@ Details in `docs/deploy.md`. In short:
 - Set `NEXT_PUBLIC_SITE_URL` before `pnpm build`; changing it needs a rebuild. The build reads the database while prerendering, so `DATABASE_URL`, `JWT_SECRET` and `SEED_ADMIN_*` must be set for the build too, and so must `STORAGE_DRIVER` (or the five R2 variables, since production defaults to `r2`): the environment is parsed when the server modules are imported, which `next build` does.
 - The build and deploy steps need devDependencies installed (`prisma`, `tsx`, `typescript`, `@tailwindcss/postcss`), so do not install with `--prod`.
 - Allow request bodies of 200 MB and read timeouts of 600 s on `POST /api/media` at the proxy.
-- Vercel works for everything except media uploads above 4.5 MB (its request body limit) until presigned uploads land (below). That work also needs a CORS rule on the R2 bucket. On Vercel set `TRUST_PROXY=1`, otherwise all clients share one login-throttle bucket. The upload route sets `maxDuration = 600`, which exceeds the Hobby plan's function limit; deploy on a plan that allows it or lower the value.
+- Vercel's 4.5 MB request body limit blocks `POST /api/media` for larger files, so the CMS uploads straight to the bucket (see Uploads below), which needs a CORS rule on the R2 bucket. On Vercel set `TRUST_PROXY=1`, otherwise all clients share one login-throttle bucket. The upload route sets `maxDuration = 600`, which exceeds the Hobby plan's function limit; deploy on a plan that allows it or lower the value.
+
+### Uploads
+
+Media reaches the bucket in three steps, so the file bytes never pass through the app server (Vercel rejects request bodies over 4.5 MB):
+
+1. `POST /api/media/uploads` with `{ filename, mime, bytes, alt }` checks the type (images: jpeg, png, webp, avif, up to 25 MB; videos: mp4, webm, mov, up to 200 MB) and answers `201 { key, method: 'PUT', url, headers, expiresAt }`. With the `r2` driver `url` is a presigned `PutObject` URL valid for 15 minutes with the content type signed.
+2. The browser `PUT`s the file to `url` with the returned `headers`.
+3. `POST /api/media/uploads/complete` with `{ key, alt }` checks the stored object (size, type, image decodes or video signature), stores the thumbnail and answers `201` with the `Media` row. A file that fails the checks is deleted from storage. A key can be completed once (`409 UPLOAD_ALREADY_COMPLETED`); a key with nothing stored is `400 UPLOAD_NOT_FOUND`.
+
+The presigned URL also signs `cache-control` and the declared `content-length`, so a PUT with different bytes is refused by R2 (the browser sets the length itself; the client forwards only the returned `headers`). Uploads that are never completed stay in the bucket: periodically prune objects under `arthouz/<year>/` that have no `Media` row (a script is a follow-up).
+
+With the `memory` driver (tests, local runs without R2) `url` is the same-origin `PUT /api/media/uploads/<key>`, which holds the body to the declared size and stores it in memory; with `r2` that route answers 404. `POST /api/media` (multipart) remains as the server-side alternative for API callers and small files.
+
+The bucket needs this CORS rule (Cloudflare dashboard) or browsers refuse the `PUT`:
+
+```json
+[{ "AllowedOrigins": ["https://site-arthouz.vercel.app", "http://localhost:3300"],
+   "AllowedMethods": ["PUT", "GET", "HEAD"],
+   "AllowedHeaders": ["content-type", "cache-control"],
+   "ExposeHeaders": ["etag"],
+   "MaxAgeSeconds": 3600 }]
+```
 
 ## Known follow-ups
 
-- Presigned browser-to-bucket media uploads (create upload, PUT to R2, complete). Required for large uploads on Vercel; needs bucket CORS configured first.
 - Uploads are parsed in memory on a Node host, so concurrent uploads are capped (`TOO_MANY_UPLOADS`); the proxy limits above are the second line of defence.
 - `media:rehome` cannot refresh the page cache from outside the server.
 - Search endpoint (`/api/search`) has no rate limit of its own; throttle it at the proxy.

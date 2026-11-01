@@ -1,11 +1,11 @@
 import { randomUUID } from 'node:crypto'
 import type { MediaPatch } from '@/lib/shared'
-import type { Media, MediaKind, Prisma } from '@/lib/server/generated/prisma/client'
+import { Prisma, type Media, type MediaKind } from '@/lib/server/generated/prisma/client'
 import { badRequest, conflict, notFound } from '@/lib/server/http/errors'
 import { logError } from '@/lib/server/log'
 import { prisma } from '@/lib/server/prisma'
 import { revalidateSite } from '@/lib/server/revalidate'
-import { processImage } from './image.service'
+import { processImage, type ProcessedImage } from './image.service'
 import { KEY_PREFIX, VIDEO_EXT_BY_MIME, type VideoMime } from './media.constants'
 import { findMediaUsage, type MediaUsage } from './media.usage'
 import { getStorage } from './storage/storage.provider'
@@ -13,24 +13,85 @@ import { mediaUsageTags } from '@/lib/server/revalidate/related-tags'
 import { hasVideoSignature, isVideoMime } from './video-signature'
 
 export type MediaListQuery = { q?: string; missingAlt?: boolean; kind?: MediaKind; page: number; limit: number; skip: number }
+const PRISMA_UNIQUE_VIOLATION = 'P2002'
+
 /** The bytes and declared type of an upload, already checked for type and size by the route. */
 export type UploadedFile = { buffer: Buffer; mimetype: string }
 
-function buildKeys(ext: string, now: Date): { key: string; thumbKey: string } {
+function buildKeys(ext: string, now: Date): { key: string } {
   const yyyy = String(now.getUTCFullYear())
   const mm = String(now.getUTCMonth() + 1).padStart(2, '0')
-  const base = `${KEY_PREFIX}/${yyyy}/${mm}/${randomUUID()}`
-  return { key: `${base}.${ext}`, thumbKey: `${base}-thumb.webp` }
+  return { key: `${KEY_PREFIX}/${yyyy}/${mm}/${randomUUID()}.${ext}` }
 }
 
-function thumbKeyOf(key: string): string {
+export function thumbKeyOf(key: string): string {
   return key.replace(/\.[^./]+$/, '-thumb.webp')
 }
 
-async function cleanup(keys: string[]): Promise<void> {
+export async function cleanup(keys: string[]): Promise<void> {
   const storage = getStorage()
   await Promise.all(
     keys.map((k) => storage.delete(k).catch((e: unknown) => logError(`cleanup failed for ${k}`, String(e)))),
+  )
+}
+
+/** An original already in storage: its key and public URL. */
+export type StoredOriginal = { key: string; url: string }
+
+const isDuplicateKey = (error: unknown): boolean =>
+  error instanceof Prisma.PrismaClientKnownRequestError && error.code === PRISMA_UNIQUE_VIOLATION
+
+// The row insert is the last step of every upload: if it fails the stored objects are orphans and are removed,
+// unless the key already has a row, in which case those objects belong to it.
+async function createRow(data: Prisma.MediaUncheckedCreateInput, orphanKeys: string[]): Promise<Media> {
+  try {
+    return await prisma.media.create({ data })
+  } catch (error) {
+    if (isDuplicateKey(error)) throw conflict('UPLOAD_ALREADY_COMPLETED', 'This upload has already been completed')
+    await cleanup(orphanKeys)
+    throw error
+  }
+}
+
+/** Records a video whose bytes are already stored. Videos get no thumbnail: the admin grid renders the video itself. */
+export function recordVideo(original: StoredOriginal, mime: string, bytes: number, alt: string, userId: string | null): Promise<Media> {
+  return createRow(
+    { key: original.key, url: original.url, thumbUrl: original.url, width: 0, height: 0, mime, kind: 'VIDEO', bytes, alt, uploadedById: userId },
+    [original.key],
+  )
+}
+
+/** Stores the thumbnail next to an image whose original is already stored, then records it. */
+export async function recordImage(
+  original: StoredOriginal,
+  processed: ProcessedImage,
+  bytes: number,
+  alt: string,
+  userId: string | null,
+): Promise<Media> {
+  const thumbKey = thumbKeyOf(original.key)
+  const orphans = [original.key, thumbKey]
+  let thumb: { url: string }
+  try {
+    thumb = await getStorage().put(thumbKey, processed.thumb, 'image/webp')
+  } catch (error) {
+    await cleanup(orphans)
+    throw error
+  }
+  return createRow(
+    {
+      key: original.key,
+      url: original.url,
+      thumbUrl: thumb.url,
+      width: processed.width,
+      height: processed.height,
+      mime: processed.mime,
+      kind: 'IMAGE',
+      bytes,
+      alt,
+      uploadedById: userId,
+    },
+    orphans,
   )
 }
 
@@ -38,53 +99,14 @@ async function uploadVideo(file: UploadedFile, mime: VideoMime, alt: string, use
   if (!hasVideoSignature(file.buffer, mime)) throw badRequest('INVALID_VIDEO', 'File is not a valid video')
   const { key } = buildKeys(VIDEO_EXT_BY_MIME[mime], new Date())
   const stored = await getStorage().put(key, file.buffer, file.mimetype)
-  try {
-    return await prisma.media.create({
-      data: {
-        key,
-        url: stored.url,
-        // No poster frames: the admin grid renders the video itself.
-        thumbUrl: stored.url,
-        width: 0,
-        height: 0,
-        mime: file.mimetype,
-        kind: 'VIDEO',
-        bytes: file.buffer.length,
-        alt,
-        uploadedById: userId,
-      },
-    })
-  } catch (error) {
-    await cleanup([key])
-    throw error
-  }
+  return recordVideo({ key, url: stored.url }, file.mimetype, file.buffer.length, alt, userId)
 }
 
 async function uploadImage(file: UploadedFile, alt: string, userId: string | null): Promise<Media> {
   const processed = await processImage(file.buffer)
-  const { key, thumbKey } = buildKeys(processed.ext, new Date())
-  const storage = getStorage()
-  const original = await storage.put(key, file.buffer, processed.mime)
-  try {
-    const thumb = await storage.put(thumbKey, processed.thumb, 'image/webp')
-    return await prisma.media.create({
-      data: {
-        key,
-        url: original.url,
-        thumbUrl: thumb.url,
-        width: processed.width,
-        height: processed.height,
-        mime: processed.mime,
-        kind: 'IMAGE',
-        bytes: file.buffer.length,
-        alt,
-        uploadedById: userId,
-      },
-    })
-  } catch (error) {
-    await cleanup([key, thumbKey])
-    throw error
-  }
+  const { key } = buildKeys(processed.ext, new Date())
+  const original = await getStorage().put(key, file.buffer, processed.mime)
+  return recordImage({ key, url: original.url }, processed, file.buffer.length, alt, userId)
 }
 
 export function upload(file: UploadedFile, alt: string, userId: string | null): Promise<Media> {

@@ -67,7 +67,7 @@ export function UploadQueue({ onUploaded, onRunComplete, accept = MEDIA_ACCEPT, 
     }
   }
 
-  // One at a time: each file is buffered in memory on the API, so a parallel batch of videos can exhaust it.
+  // One at a time: the browser streams each file straight to storage, but the server decodes images (up to 25 MB) during `complete` inside its concurrency slot, so a parallel batch would hit TOO_MANY_UPLOADS.
   // `send` handles its own errors, so a failed file stays in the queue and the rest still upload.
   const startAll = async () => {
     setIsRunning(true)

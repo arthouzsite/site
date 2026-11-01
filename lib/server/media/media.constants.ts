@@ -17,3 +17,7 @@ export const KEY_PREFIX = 'arthouz'
 export const MAX_CONCURRENT_UPLOADS = 2
 // Multipart framing (boundaries, the alt field) adds a little to the file itself; this slack keeps a maximal video legal.
 export const MULTIPART_OVERHEAD_BYTES = 1024 * 1024
+// How long a presigned upload target stays valid.
+export const UPLOAD_URL_TTL_SECONDS = 900
+// The complete step reads this many leading bytes of a video to check its container signature.
+export const VIDEO_SIGNATURE_BYTES = 64 * 1024

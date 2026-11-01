@@ -54,7 +54,7 @@ The bucket needs a CORS rule or browsers refuse the PUT:
 ```json
 [{ "AllowedOrigins": ["https://site-arthouz.vercel.app", "http://localhost:3300"],
    "AllowedMethods": ["PUT", "GET", "HEAD"],
-   "AllowedHeaders": ["content-type"],
+   "AllowedHeaders": ["content-type", "cache-control"],
    "ExposeHeaders": ["etag"],
    "MaxAgeSeconds": 3600 }]
 ```

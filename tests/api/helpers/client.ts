@@ -5,6 +5,8 @@ export const SESSION_COOKIE_NAME = 'ah_session'
 export type CallInit = {
   body?: unknown
   form?: FormData
+  /** A raw request body (bytes), sent as given; the caller sets the content-type header. */
+  raw?: BodyInit
   /** The raw Cookie request header, e.g. `ah_session=<token>`. */
   cookie?: string
   headers?: Record<string, string>
@@ -24,6 +26,8 @@ function buildRequest(method: string, path: string, init: CallInit): Request {
   let body: BodyInit | undefined
   if (init.form) {
     body = init.form
+  } else if (init.raw !== undefined) {
+    body = init.raw
   } else if (init.body !== undefined) {
     body = JSON.stringify(init.body)
     if (!headers.has('content-type')) headers.set('content-type', 'application/json')

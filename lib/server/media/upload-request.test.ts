@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { MAX_IMAGE_UPLOAD_BYTES, MAX_VIDEO_UPLOAD_BYTES } from './media.constants'
-import { assertUploadAllowed, readUploadForm } from './upload-request'
+import { assertUploadAllowed, completeUploadSchema, createUploadSchema, readBoundedBody, readUploadForm } from './upload-request'
 
 const MB = 1024 * 1024
 
@@ -91,5 +91,46 @@ describe('readUploadForm', () => {
   it('rejects a request with no body as 400 BAD_REQUEST', async () => {
     const request = new Request('http://localhost/api/media', { method: 'POST' })
     await expect(readUploadForm(request)).rejects.toMatchObject({ status: 400, code: 'BAD_REQUEST' })
+  })
+})
+
+describe('readBoundedBody', () => {
+  const putRequest = (body: BodyInit | null, headers: Record<string, string> = {}) =>
+    new Request('http://localhost/x', { method: 'PUT', body, headers, duplex: 'half' } as RequestInit)
+
+  it('returns the bytes of a body within the limit', async () => {
+    await expect(readBoundedBody(putRequest('hello'), 5)).resolves.toEqual(Buffer.from('hello'))
+  })
+
+  it('returns an empty buffer for a request with no body', async () => {
+    await expect(readBoundedBody(new Request('http://localhost/x', { method: 'PUT' }), 5)).resolves.toEqual(Buffer.alloc(0))
+  })
+
+  it('rejects a body over the limit with 413, counting the stream when no length is declared', async () => {
+    const stream = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        controller.enqueue(new Uint8Array(4))
+      },
+    })
+    await expect(readBoundedBody(putRequest(stream), 10)).rejects.toMatchObject({ status: 413, code: 'PAYLOAD_TOO_LARGE' })
+  })
+
+  it('rejects early on a declared content-length over the limit', async () => {
+    await expect(readBoundedBody(putRequest('x', { 'content-length': '999' }), 10)).rejects.toMatchObject({ status: 413 })
+  })
+})
+
+describe('upload body schemas', () => {
+  const key = 'arthouz/2026/12345678-1234-1234-1234-123456789012.png'
+
+  it('trims alt and requires it on both bodies', () => {
+    expect(createUploadSchema.parse({ filename: ' a.png ', mime: 'image/png', bytes: 3, alt: ' hi ' })).toMatchObject({ filename: 'a.png', alt: 'hi' })
+    expect(completeUploadSchema.parse({ key, alt: ' hi ' }).alt).toBe('hi')
+    expect(() => completeUploadSchema.parse({ key, alt: '' })).toThrow()
+    expect(() => completeUploadSchema.parse({ key, alt: 'x'.repeat(501) })).toThrow()
+  })
+
+  it('rejects a complete body whose key is not an upload key', () => {
+    expect(() => completeUploadSchema.parse({ key: 'arthouz/2026/10/x.png', alt: 'a' })).toThrow()
   })
 })
