@@ -6,7 +6,7 @@ import { THUMB_QUALITY, THUMB_WIDTH } from './media.constants'
 export type ImageExt = 'jpg' | 'png' | 'webp' | 'avif'
 export type ProcessedImage = { width: number; height: number; thumb: Buffer; ext: ImageExt; mime: string }
 
-const MIME_BY_EXT: Readonly<Record<ImageExt, string>> = {
+export const MIME_BY_EXT: Readonly<Record<ImageExt, string>> = {
   jpg: 'image/jpeg',
   png: 'image/png',
   webp: 'image/webp',
