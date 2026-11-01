@@ -122,10 +122,25 @@ describe('api.putRaw', () => {
     server.use(http.put(`${STORAGE}/p`, () => new HttpResponse(null, { status: 200 })))
     const fractions: number[] = []
     await api.putRaw(`${STORAGE}/p`, blob(), {}, (f) => fractions.push(f))
-    fractions.forEach((f) => {
-      expect(f).toBeGreaterThanOrEqual(0)
-      expect(f).toBeLessThanOrEqual(1)
-    })
+    // MSW's XHR emits a final progress event with everything sent; the 0.9 scaling is proved in UploadQueue.test.tsx.
+    expect(fractions.length).toBeGreaterThan(0)
+    expect(fractions.at(-1)).toBe(1)
+  })
+
+  it.each([
+    ['a protocol-relative URL', '//bucket.example/x'],
+    ['a host that merely starts with our origin', `${window.location.origin}.evil.com/x`],
+  ])('sends no credentials to %s', async (_label, url) => {
+    const target = new URL(url, window.location.origin).href
+    const credentials: string[] = []
+    server.use(
+      http.put(target, ({ request }) => {
+        credentials.push(request.credentials)
+        return new HttpResponse(null, { status: 200 })
+      }),
+    )
+    await api.putRaw(url, blob(), {})
+    expect(credentials).toEqual(['same-origin'])
   })
 
   it('rejects with UPLOAD_BLOCKED naming the storage origin when the request fails', async () => {

@@ -70,24 +70,27 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   return (await send<T>(method, path, body)).data
 }
 
-function isSameOrigin(url: string): boolean {
-  return url.startsWith('/') || url.startsWith(window.location.origin)
+function resolveUrl(url: string): URL | null {
+  try {
+    return new URL(url, window.location.origin)
+  } catch {
+    return null
+  }
 }
 
-function originOf(url: string): string {
-  try {
-    return new URL(url, window.location.origin).origin
-  } catch {
-    return url
-  }
+/** Compares parsed origins, so `//host/x` and `https://our.origin.evil.com/x` never count as ours. */
+function isSameOrigin(resolved: URL | null): boolean {
+  return resolved?.origin === window.location.origin
 }
 
 /** PUTs the raw bytes to a presigned storage URL. Cookies only go to our own origin, never to the bucket. */
 function putRaw(url: string, body: Blob, headers: Record<string, string>, onProgress?: (fraction: number) => void): Promise<void> {
   return new Promise<void>((resolve, reject) => {
+    const resolved = resolveUrl(url)
+    const isOwnOrigin = isSameOrigin(resolved)
     const xhr = new XMLHttpRequest()
     xhr.open('PUT', url)
-    xhr.withCredentials = isSameOrigin(url)
+    xhr.withCredentials = isOwnOrigin
     for (const [name, value] of Object.entries(headers)) xhr.setRequestHeader(name, value)
     xhr.upload.onprogress = (e) => {
       if (onProgress && e.lengthComputable) onProgress(e.loaded / e.total)
@@ -96,7 +99,7 @@ function putRaw(url: string, body: Blob, headers: Record<string, string>, onProg
       reject(
         new ApiError(0, {
           code: 'UPLOAD_BLOCKED',
-          message: `The storage at ${originOf(url)} refused the upload. Check the bucket CORS rule.`,
+          message: `The storage at ${resolved?.origin ?? url} refused the upload. Check the bucket CORS rule.`,
         }),
       )
     xhr.onload = () => {
@@ -104,7 +107,7 @@ function putRaw(url: string, body: Blob, headers: Record<string, string>, onProg
         resolve()
         return
       }
-      if (xhr.status === 401 && isSameOrigin(url)) notifySessionExpired(401, url)
+      if (xhr.status === 401 && resolved && isOwnOrigin) notifySessionExpired(401, resolved.pathname)
       reject(new ApiError(xhr.status, { code: 'UPLOAD_FAILED', message: `Storage returned ${xhr.status}` }))
     }
     xhr.send(body)

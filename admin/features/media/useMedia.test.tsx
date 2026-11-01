@@ -35,9 +35,8 @@ describe('useUploadMedia', () => {
     expect(calls.authorised).toEqual([{ filename: 'hero.jpg', mime: 'image/jpeg', bytes: 6, alt: 'A hero' }])
     expect(calls.puts).toEqual([{ key: 'arthouz/2026/hero.jpg', contentType: 'image/jpeg', bytes: 6 }])
     expect(calls.completed).toEqual([{ key: 'arthouz/2026/hero.jpg', alt: 'A hero' }])
-    expect(progress.at(-1)).toBe(1)
-    expect(progress.slice(0, -1).every((f) => f >= 0 && f <= 0.9)).toBe(true)
-    expect(progress).toEqual([...progress].sort((a, b) => a - b))
+    // MSW reports the PUT as fully sent, which the hook scales to 0.9 before the final 1 after `complete`.
+    expect(progress).toEqual([0.9, 1])
     expect(invalidated).toContainEqual({ queryKey: ['media'] })
   })
 
