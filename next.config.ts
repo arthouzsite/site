@@ -20,15 +20,11 @@ export function assertProductionSiteUrl(env: Env, phase: string | undefined = en
   }
 }
 
-/** Seed images come from picsum, which production must not allow; IMAGE_HOST is the real bucket/CDN host. */
+/** Uploaded media is same-origin (`/media/...`), so only the seed's picsum placeholders need a remote pattern, and production must not allow them. */
 export function buildRemotePatterns(env: Env): RemotePattern[] {
-  const imageHost = env.IMAGE_HOST?.trim() ?? ''
-  return [
-    ...(allowsTestOverrides(env)
-      ? [{ protocol: 'https' as const, hostname: 'picsum.photos' }, { protocol: 'https' as const, hostname: 'fastly.picsum.photos' }]
-      : []),
-    ...(imageHost ? [{ protocol: 'https' as const, hostname: imageHost }] : []),
-  ]
+  return allowsTestOverrides(env)
+    ? [{ protocol: 'https', hostname: 'picsum.photos' }, { protocol: 'https', hostname: 'fastly.picsum.photos' }]
+    : []
 }
 
 /** Section-level redirects from the old site's URL scheme; old detail slugs do not map one to one. */

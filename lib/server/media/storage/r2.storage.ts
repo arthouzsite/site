@@ -3,11 +3,30 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import type { Env } from '@/lib/server/env'
 import { logError } from '@/lib/server/log'
 import { CACHE_CONTROL, UPLOAD_URL_TTL_SECONDS } from '../media.constants'
-import type { Storage, StoredObjectInfo, UploadTarget } from './storage.interface'
+import { mediaUrlFor } from '../media-keys'
+import type { RangeRequest } from '../media-range'
+import { RangeNotSatisfiableError, type Storage, type StoredObjectInfo, type StoredStream, type UploadTarget } from './storage.interface'
 
 const HTTP_NOT_FOUND = 404
+const HTTP_RANGE_NOT_SATISFIABLE = 416
+const CONTENT_RANGE_PATTERN = /^bytes (\d+)-(\d+)\/(\d+)$/
 const MS_PER_SECOND = 1000
 const SIGNED_UPLOAD_HEADERS = new Set(['content-type', 'cache-control', 'content-length'])
+
+function isUnsatisfiableRange(error: unknown): boolean {
+  const { name, $metadata } = (error ?? {}) as { name?: string; $metadata?: { httpStatusCode?: number } }
+  return name === 'InvalidRange' || $metadata?.httpStatusCode === HTTP_RANGE_NOT_SATISFIABLE
+}
+
+function rangeHeader(range: RangeRequest): string {
+  if ('suffix' in range) return `bytes=-${range.suffix}`
+  return `bytes=${range.start}-${range.end ?? ''}`
+}
+
+function servedRange(contentRange: string | undefined): StoredStream['range'] {
+  const match = contentRange ? CONTENT_RANGE_PATTERN.exec(contentRange) : null
+  return match ? { start: Number(match[1]), end: Number(match[2]), total: Number(match[3]) } : undefined
+}
 
 function isMissingObject(error: unknown): boolean {
   const { name, $metadata } = (error ?? {}) as { name?: string; $metadata?: { httpStatusCode?: number } }
@@ -19,7 +38,8 @@ export type R2Config = {
   accessKeyId: string
   secretAccessKey: string
   bucket: string
-  publicUrl: string
+  /** Prefix of the URLs recorded for objects: `/media` (served by this app) or an absolute CDN origin. */
+  mediaUrlBase: string
 }
 
 export class R2Storage implements Storage {
@@ -36,10 +56,10 @@ export class R2Storage implements Storage {
   }
 
   static fromEnv(source: Env): R2Storage {
-    const { S3_ENDPOINT, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET_NAME, AWS_S3_PUBLIC_URL } = source
-    if (!S3_ENDPOINT || !AWS_ACCESS_KEY_ID || !AWS_SECRET_ACCESS_KEY || !AWS_S3_BUCKET_NAME || !AWS_S3_PUBLIC_URL) {
+    const { S3_ENDPOINT, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET_NAME, MEDIA_URL_BASE } = source
+    if (!S3_ENDPOINT || !AWS_ACCESS_KEY_ID || !AWS_SECRET_ACCESS_KEY || !AWS_S3_BUCKET_NAME) {
       throw new Error(
-        'R2 storage requires S3_ENDPOINT, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET_NAME, AWS_S3_PUBLIC_URL',
+        'R2 storage requires S3_ENDPOINT, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET_NAME',
       )
     }
     return new R2Storage({
@@ -47,7 +67,7 @@ export class R2Storage implements Storage {
       accessKeyId: AWS_ACCESS_KEY_ID,
       secretAccessKey: AWS_SECRET_ACCESS_KEY,
       bucket: AWS_S3_BUCKET_NAME,
-      publicUrl: AWS_S3_PUBLIC_URL.replace(/\/+$/, ''),
+      mediaUrlBase: MEDIA_URL_BASE,
     })
   }
 
@@ -64,7 +84,7 @@ export class R2Storage implements Storage {
   }
 
   urlFor(key: string): string {
-    return `${this.config.publicUrl}/${key}`
+    return mediaUrlFor(this.config.mediaUrlBase, key)
   }
 
   async delete(key: string): Promise<void> {
@@ -98,7 +118,7 @@ export class R2Storage implements Storage {
   async head(key: string): Promise<StoredObjectInfo | null> {
     try {
       const result = await this.client.send(new HeadObjectCommand({ Bucket: this.config.bucket, Key: key }))
-      return { bytes: result.ContentLength ?? 0, contentType: result.ContentType ?? '' }
+      return { bytes: result.ContentLength ?? 0, contentType: result.ContentType ?? '', etag: result.ETag }
     } catch (error) {
       if (isMissingObject(error)) return null
       logError(`R2 head failed for ${key}`, error instanceof Error ? error.stack : String(error))
@@ -112,6 +132,27 @@ export class R2Storage implements Storage {
 
   getRange(key: string, start: number, endInclusive: number): Promise<Buffer> {
     return this.read(key, `bytes=${start}-${endInclusive}`)
+  }
+
+  async getStream(key: string, range?: RangeRequest): Promise<StoredStream | null> {
+    try {
+      const result = await this.client.send(
+        new GetObjectCommand({ Bucket: this.config.bucket, Key: key, Range: range ? rangeHeader(range) : undefined }),
+      )
+      if (!result.Body) throw new Error(`R2 returned no body for ${key}`)
+      return {
+        body: result.Body.transformToWebStream() as ReadableStream<Uint8Array>,
+        contentType: result.ContentType ?? 'application/octet-stream',
+        contentLength: result.ContentLength,
+        etag: result.ETag,
+        range: servedRange(result.ContentRange),
+      }
+    } catch (error) {
+      if (isMissingObject(error)) return null
+      if (isUnsatisfiableRange(error)) throw new RangeNotSatisfiableError((await this.head(key))?.bytes)
+      logError(`R2 stream failed for ${key}`, error instanceof Error ? error.stack : String(error))
+      throw error
+    }
   }
 
   private async read(key: string, range?: string): Promise<Buffer> {

@@ -54,7 +54,7 @@ describe('media', () => {
     expect(res.body.ok).toBe(true)
     expect(res.body.data).toMatchObject({ width: 1600, height: 1200, alt: 'A calm sea', mime: 'image/jpeg', uploadedById: userId })
     expect(res.body.data.key).toMatch(/^arthouz\/\d{4}\/\d{2}\/[0-9a-f-]{36}\.jpg$/)
-    expect(res.body.data.url).toBe(`memory://${res.body.data.key}`)
+    expect(res.body.data.url).toBe(`/media/${res.body.data.key}`)
     expect(res.body.data.thumbUrl).toMatch(/-thumb\.webp$/)
   })
 

@@ -2,14 +2,14 @@ import 'dotenv/config'
 import { env } from '@/lib/server/env'
 import type { PrismaClient } from '@/lib/server/generated/prisma/client'
 import { processImage } from '@/lib/server/media/image.service'
-import { rehomedKey, selectCandidates, thumbKeyFor } from '@/lib/server/media/rehome'
+import { rehomedKey, selectCandidates, thumbKeyFor, withoutBucketObject } from '@/lib/server/media/rehome'
 import { R2Storage } from '@/lib/server/media/storage/r2.storage'
 import { prisma } from '@/lib/server/prisma'
 
 /**
  * Moves every image row whose file is hosted outside the bucket (the seed's picsum placeholders)
  * into R2: downloads the original, re-encodes the thumbnail, uploads both and rewrites the row.
- * Idempotent: rows already served from AWS_S3_PUBLIC_URL are skipped. Run with `pnpm media:rehome`.
+ * Idempotent: rows whose key already exists in the bucket are skipped. Run with `pnpm media:rehome`.
  */
 
 const FETCH_TIMEOUT_MS = 30_000
@@ -55,13 +55,13 @@ async function rehomeOne(
 }
 
 async function main(): Promise<void> {
-  if (env.STORAGE_DRIVER !== 'r2' || !env.AWS_S3_PUBLIC_URL) {
+  if (env.STORAGE_DRIVER !== 'r2') {
     throw new Error('rehome: STORAGE_DRIVER must be r2 with the S3_*/AWS_* keys set')
   }
   const storage = R2Storage.fromEnv(env)
   try {
     const rows = await prisma.media.findMany({ select: { id: true, key: true, url: true, kind: true } })
-    const candidates = selectCandidates(rows, env.AWS_S3_PUBLIC_URL)
+    const candidates = await withoutBucketObject(selectCandidates(rows), storage)
     console.log(`rehome: ${candidates.length} of ${rows.length} media rows are hosted outside the bucket`)
     const outcomes: Outcome[] = []
     for (const row of candidates) {

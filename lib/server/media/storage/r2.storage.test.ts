@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } fr
 import { env } from '@/lib/server/env'
 import { logError } from '@/lib/server/log'
 import { R2Storage } from './r2.storage'
+import { RangeNotSatisfiableError } from './storage.interface'
 
 vi.mock('@/lib/server/log', () => ({ logError: vi.fn() }))
 
@@ -12,7 +13,7 @@ describe('R2Storage', () => {
     accessKeyId: 'key',
     secretAccessKey: 'secret',
     bucket: 'arthouz-bucket',
-    publicUrl: 'https://cdn.example.test',
+    mediaUrlBase: '/media',
   }
   let send: MockInstance
 
@@ -22,7 +23,7 @@ describe('R2Storage', () => {
   })
   afterEach(() => vi.restoreAllMocks())
 
-  it('put sends PutObjectCommand with Bucket from config and returns public url', async () => {
+  it('put sends PutObjectCommand with Bucket from config and returns the same-origin media url', async () => {
     const storage = new R2Storage(config)
     const result = await storage.put('arthouz/2026/10/a.jpg', Buffer.from('x'), 'image/jpeg')
     const command = send.mock.calls[0]![0] as PutObjectCommand
@@ -33,7 +34,7 @@ describe('R2Storage', () => {
       ContentType: 'image/jpeg',
       CacheControl: 'public, max-age=31536000, immutable',
     })
-    expect(result).toEqual({ url: 'https://cdn.example.test/arthouz/2026/10/a.jpg' })
+    expect(result).toEqual({ url: '/media/arthouz/2026/10/a.jpg' })
   })
 
   it('delete sends DeleteObjectCommand', async () => {
@@ -73,13 +74,14 @@ describe('R2Storage', () => {
   })
 
   describe('reading objects', () => {
-    it('urlFor joins the public url and key', () => {
-      expect(new R2Storage(config).urlFor('a/b.jpg')).toBe('https://cdn.example.test/a/b.jpg')
+    it('urlFor joins the media url base and key', () => {
+      expect(new R2Storage(config).urlFor('a/b.jpg')).toBe('/media/a/b.jpg')
+      expect(new R2Storage({ ...config, mediaUrlBase: 'https://cdn.example.test/' }).urlFor('a/b.jpg')).toBe('https://cdn.example.test/a/b.jpg')
     })
 
-    it('head returns size and content type', async () => {
-      send.mockResolvedValue({ ContentLength: 42, ContentType: 'image/png' })
-      await expect(new R2Storage(config).head('k.png')).resolves.toEqual({ bytes: 42, contentType: 'image/png' })
+    it('head returns size, content type and etag', async () => {
+      send.mockResolvedValue({ ContentLength: 42, ContentType: 'image/png', ETag: '"abc"' })
+      await expect(new R2Storage(config).head('k.png')).resolves.toEqual({ bytes: 42, contentType: 'image/png', etag: '"abc"' })
       const command = send.mock.calls[0]![0] as HeadObjectCommand
       expect(command).toBeInstanceOf(HeadObjectCommand)
       expect(command.input).toEqual({ Bucket: 'arthouz-bucket', Key: 'k.png' })
@@ -111,6 +113,54 @@ describe('R2Storage', () => {
       expect((send.mock.calls[0]![0] as GetObjectCommand).input.Range).toBe('bytes=0-65535')
     })
 
+    describe('getStream', () => {
+      const webStream = () => new ReadableStream<Uint8Array>()
+      const bodyOf = (stream: ReadableStream<Uint8Array>) => ({ transformToWebStream: () => stream })
+
+      it('streams the whole object with its type, length and etag', async () => {
+        const stream = webStream()
+        send.mockResolvedValue({ Body: bodyOf(stream), ContentType: 'image/png', ContentLength: 42, ETag: '"abc"' })
+        const result = await new R2Storage(config).getStream('k.png')
+        expect(result).toEqual({ body: stream, contentType: 'image/png', contentLength: 42, etag: '"abc"', range: undefined })
+        const command = send.mock.calls[0]![0] as GetObjectCommand
+        expect(command.input).toEqual({ Bucket: 'arthouz-bucket', Key: 'k.png', Range: undefined })
+      })
+
+      it('asks for a closed, open-ended and suffix range and reports the served one', async () => {
+        send.mockResolvedValue({ Body: bodyOf(webStream()), ContentType: 'video/mp4', ContentLength: 11, ContentRange: 'bytes 10-20/100' })
+        const storage = new R2Storage(config)
+        const result = await storage.getStream('k.mp4', { start: 10, end: 20 })
+        expect(result?.range).toEqual({ start: 10, end: 20, total: 100 })
+        expect(result?.contentLength).toBe(11)
+        await storage.getStream('k.mp4', { start: 10 })
+        await storage.getStream('k.mp4', { suffix: 5 })
+        expect(send.mock.calls.map(([command]) => (command as GetObjectCommand).input.Range)).toEqual(['bytes=10-20', 'bytes=10-', 'bytes=-5'])
+      })
+
+      it('is null for a missing object without logging', async () => {
+        send.mockRejectedValue(Object.assign(new Error('nope'), { name: 'NoSuchKey', $metadata: { httpStatusCode: 404 } }))
+        await expect(new R2Storage(config).getStream('k.png')).resolves.toBeNull()
+        expect(logError).not.toHaveBeenCalled()
+      })
+
+      it('throws RangeNotSatisfiableError with the object size when the range is past the end', async () => {
+        send.mockImplementation(async (command: unknown) => {
+          if (command instanceof HeadObjectCommand) return { ContentLength: 100, ContentType: 'video/mp4' }
+          throw Object.assign(new Error('bad range'), { name: 'InvalidRange', $metadata: { httpStatusCode: 416 } })
+        })
+        await expect(new R2Storage(config).getStream('k.mp4', { start: 500 })).rejects.toEqual(new RangeNotSatisfiableError(100))
+        expect(logError).not.toHaveBeenCalled()
+      })
+
+      it('propagates and logs other failures and a missing body', async () => {
+        send.mockRejectedValueOnce(new Error('denied'))
+        await expect(new R2Storage(config).getStream('k.png')).rejects.toThrow('denied')
+        send.mockResolvedValueOnce({})
+        await expect(new R2Storage(config).getStream('k.png')).rejects.toThrow(/no body/i)
+        expect(logError).toHaveBeenCalledTimes(2)
+      })
+    })
+
     it('get fails and logs when the response has no body', async () => {
       send.mockResolvedValue({})
       await expect(new R2Storage(config).get('k.png')).rejects.toThrow(/no body/i)
@@ -123,15 +173,15 @@ describe('R2Storage', () => {
     expect(() => R2Storage.fromEnv({ ...env, AWS_S3_BUCKET_NAME: undefined })).toThrow(/AWS_S3_BUCKET_NAME/)
   })
 
-  it('fromEnv builds a storage whose public url has no trailing slash', async () => {
-    const storage = R2Storage.fromEnv({
+  it('fromEnv builds a storage whose urls use MEDIA_URL_BASE and need no public bucket url', async () => {
+    const source = {
       ...env,
       S3_ENDPOINT: config.endpoint,
       AWS_ACCESS_KEY_ID: 'key',
       AWS_SECRET_ACCESS_KEY: 'secret',
       AWS_S3_BUCKET_NAME: config.bucket,
-      AWS_S3_PUBLIC_URL: `${config.publicUrl}//`,
-    })
-    await expect(storage.put('a.jpg', Buffer.from('x'), 'image/jpeg')).resolves.toEqual({ url: 'https://cdn.example.test/a.jpg' })
+    }
+    await expect(R2Storage.fromEnv({ ...source, MEDIA_URL_BASE: '/media' }).put('a.jpg', Buffer.from('x'), 'image/jpeg')).resolves.toEqual({ url: '/media/a.jpg' })
+    expect(R2Storage.fromEnv({ ...source, MEDIA_URL_BASE: 'https://cdn.example.test//' }).urlFor('a.jpg')).toBe('https://cdn.example.test/a.jpg')
   })
 })

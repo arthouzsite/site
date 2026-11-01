@@ -93,7 +93,7 @@ describe('completeUpload', () => {
     await completeUpload({ key, alt: 'x' }, 'u1')
     expect(getSpy).not.toHaveBeenCalled()
     expect(rangeSpy).toHaveBeenCalledWith(key, 0, 65535)
-    expect(fake.media.create.mock.calls[0]![0].data).toMatchObject({ key, kind: 'VIDEO', uploadedById: 'u1', url: `memory://${key}` })
+    expect(fake.media.create.mock.calls[0]![0].data).toMatchObject({ key, kind: 'VIDEO', uploadedById: 'u1', url: `/media/${key}` })
   })
 
   it('deletes the object when the bytes read exceed the image limit although head reported a small size', async () => {
