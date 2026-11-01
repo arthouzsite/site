@@ -11,6 +11,8 @@ const HTTP_NOT_FOUND = 404
 const HTTP_RANGE_NOT_SATISFIABLE = 416
 const CONTENT_RANGE_PATTERN = /^bytes (\d+)-(\d+)\/(\d+)$/
 const MS_PER_SECOND = 1000
+const MS_PER_HOUR = 3_600_000
+const MAX_MEMOISED_URLS = 5000
 const SIGNED_UPLOAD_HEADERS = new Set(['content-type', 'cache-control', 'content-length'])
 
 function isUnsatisfiableRange(error: unknown): boolean {
@@ -40,10 +42,14 @@ export type R2Config = {
   bucket: string
   /** Prefix of the URLs recorded for objects: `/media` (served by this app) or an absolute CDN origin. */
   mediaUrlBase: string
+  /** How long a signed read URL stays valid, counted from the start of the hour it was signed in. */
+  urlTtlSeconds: number
 }
 
 export class R2Storage implements Storage {
   private readonly client: S3Client
+  private signedUrls = new Map<string, string>()
+  private signedHour = -1
 
   constructor(private readonly config: R2Config) {
     this.client = new S3Client({
@@ -56,7 +62,7 @@ export class R2Storage implements Storage {
   }
 
   static fromEnv(source: Env): R2Storage {
-    const { S3_ENDPOINT, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET_NAME, MEDIA_URL_BASE } = source
+    const { S3_ENDPOINT, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET_NAME, MEDIA_URL_BASE, MEDIA_URL_TTL_SECONDS } = source
     if (!S3_ENDPOINT || !AWS_ACCESS_KEY_ID || !AWS_SECRET_ACCESS_KEY || !AWS_S3_BUCKET_NAME) {
       throw new Error(
         'R2 storage requires S3_ENDPOINT, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET_NAME',
@@ -68,6 +74,7 @@ export class R2Storage implements Storage {
       secretAccessKey: AWS_SECRET_ACCESS_KEY,
       bucket: AWS_S3_BUCKET_NAME,
       mediaUrlBase: MEDIA_URL_BASE,
+      urlTtlSeconds: MEDIA_URL_TTL_SECONDS,
     })
   }
 
@@ -85,6 +92,27 @@ export class R2Storage implements Storage {
 
   urlFor(key: string): string {
     return mediaUrlFor(this.config.mediaUrlBase, key)
+  }
+
+  /**
+   * A presigned GET URL for the private object. Signed at the start of the current hour, so every call within the
+   * hour returns the identical string (browser and CDN caches hit); the URL stays valid for `urlTtlSeconds` from then.
+   */
+  async publicUrlFor(key: string): Promise<string> {
+    const hour = Math.floor(Date.now() / MS_PER_HOUR)
+    if (hour !== this.signedHour) {
+      this.signedUrls = new Map()
+      this.signedHour = hour
+    }
+    const known = this.signedUrls.get(key)
+    if (known) return known
+    const url = await getSignedUrl(this.client, new GetObjectCommand({ Bucket: this.config.bucket, Key: key }), {
+      expiresIn: this.config.urlTtlSeconds,
+      signingDate: new Date(hour * MS_PER_HOUR),
+    })
+    if (this.signedUrls.size >= MAX_MEMOISED_URLS) this.signedUrls = new Map()
+    this.signedUrls.set(key, url)
+    return url
   }
 
   async delete(key: string): Promise<void> {

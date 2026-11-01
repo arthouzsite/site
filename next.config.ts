@@ -20,11 +20,29 @@ export function assertProductionSiteUrl(env: Env, phase: string | undefined = en
   }
 }
 
-/** Uploaded media is same-origin (`/media/...`), so only the seed's picsum placeholders need a remote pattern, and production must not allow them. */
+/**
+ * Media links are presigned URLs on the R2 endpoint (virtual-hosted `<bucket>.<endpoint host>` or path-style
+ * `<endpoint host>`), so `next/image` must accept them. `search` is left out on purpose: that allows any query, and
+ * the signature (`X-Amz-*`) is one.
+ */
+function r2Patterns(env: Env): RemotePattern[] {
+  const { S3_ENDPOINT: endpoint, AWS_S3_BUCKET_NAME: bucket } = env
+  if (!endpoint || !bucket) return []
+  let endpointHost: string
+  try {
+    endpointHost = new URL(endpoint).hostname
+  } catch {
+    return []
+  }
+  return [`${bucket}.${endpointHost}`, endpointHost].map((hostname) => ({ protocol: 'https', hostname, pathname: '/**' }))
+}
+
+/** The R2 hosts signed media is served from, plus the seed's picsum placeholders, which production must not allow. */
 export function buildRemotePatterns(env: Env): RemotePattern[] {
-  return allowsTestOverrides(env)
+  const placeholders: RemotePattern[] = allowsTestOverrides(env)
     ? [{ protocol: 'https', hostname: 'picsum.photos' }, { protocol: 'https', hostname: 'fastly.picsum.photos' }]
     : []
+  return [...placeholders, ...r2Patterns(env)]
 }
 
 /** Section-level redirects from the old site's URL scheme; old detail slugs do not map one to one. */

@@ -43,6 +43,15 @@ describe('parseEnv', () => {
     expect(env.STORAGE_DRIVER).toBe('r2')
   })
 
+  it('defaults MEDIA_URL_TTL_SECONDS to seven days and bounds it to 60..604800', () => {
+    expect(parseEnv(build({ NODE_ENV: 'test' })).MEDIA_URL_TTL_SECONDS).toBe(604800)
+    expect(parseEnv(build({ NODE_ENV: 'test', MEDIA_URL_TTL_SECONDS: '' })).MEDIA_URL_TTL_SECONDS).toBe(604800)
+    expect(parseEnv(build({ NODE_ENV: 'test', MEDIA_URL_TTL_SECONDS: '3600' })).MEDIA_URL_TTL_SECONDS).toBe(3600)
+    for (const bad of ['59', '604801', '1.5', 'soon']) {
+      expect(() => parseEnv(build({ NODE_ENV: 'test', MEDIA_URL_TTL_SECONDS: bad }))).toThrow(/MEDIA_URL_TTL_SECONDS/)
+    }
+  })
+
   it('defaults MEDIA_URL_BASE to /media, trims trailing slashes and accepts an absolute origin', () => {
     expect(parseEnv(build({ NODE_ENV: 'test' })).MEDIA_URL_BASE).toBe('/media')
     expect(parseEnv(build({ NODE_ENV: 'test', MEDIA_URL_BASE: '' })).MEDIA_URL_BASE).toBe('/media')

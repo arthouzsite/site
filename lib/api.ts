@@ -3,6 +3,7 @@ import { unstable_cache } from 'next/cache'
 import { connection } from 'next/server'
 import type { ZodType } from 'zod'
 import { ApiException } from '@/lib/server/http/errors'
+import { presentMediaUrls } from '@/lib/server/media/present-urls'
 import { ApiError } from './api-error'
 import { resolvePublicPath, type PublicLoader } from './public-paths'
 
@@ -47,7 +48,7 @@ async function toApiError(path: string, error: unknown): Promise<ApiError> {
 async function read<T>(path: string, schema: ZodType<T>, run: () => Promise<unknown>): Promise<T> {
   let data: unknown
   try {
-    data = await run()
+    data = await presentMediaUrls(await run())
   } catch (error) {
     throw await toApiError(path, error)
   }

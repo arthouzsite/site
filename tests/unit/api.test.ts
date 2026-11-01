@@ -22,6 +22,8 @@ vi.mock('next/server', () => ({ connection: () => connection() }))
 
 import { ApiError, REVALIDATE_SECONDS, apiGet, apiGetUncached } from '@/lib/api'
 import { ApiException, badRequest, notFound } from '@/lib/server/http/errors'
+import { MemoryStorage } from '@/lib/server/media/storage/memory.storage'
+import { setStorageForTests } from '@/lib/server/media/storage/storage.provider'
 
 const itemSchema = z.object({ slug: z.string(), count: z.number() })
 
@@ -31,6 +33,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks()
+  setStorageForTests(undefined)
 })
 
 describe('apiGet', () => {
@@ -58,6 +61,21 @@ describe('apiGet', () => {
     const result = await apiGet('/public/services/art-sales', z.object({ at: z.string() }).passthrough(), [])
 
     expect(result).toEqual({ slug: 'art-sales', count: 1, at: '2026-10-30T00:00:00.000Z' })
+  })
+
+  it('presents stored media urls through the storage driver before validating, cached and uncached', async () => {
+    class SigningStorage extends MemoryStorage {
+      override async publicUrlFor(key: string): Promise<string> {
+        return `https://signed.test/${key}?sig=1`
+      }
+    }
+    setStorageForTests(new SigningStorage())
+    const key = 'arthouz/2026/10/0a1b2c3d-0a1b-4c3d-8e9f-0a1b2c3d4e5f.jpg'
+    getService.mockResolvedValue({ image: { url: `/media/${key}` } })
+    const schema = z.object({ image: z.object({ url: z.string().startsWith('https://signed.test/') }) })
+
+    await expect(apiGet('/public/services/art-sales', schema, [])).resolves.toEqual({ image: { url: `https://signed.test/${key}?sig=1` } })
+    await expect(apiGetUncached('/public/services/art-sales', schema)).resolves.toEqual({ image: { url: `https://signed.test/${key}?sig=1` } })
   })
 
   it('maps a 404 ApiException from the loader to a NOT_FOUND ApiError so pages can call notFound()', async () => {

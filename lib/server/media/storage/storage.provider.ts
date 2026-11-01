@@ -7,10 +7,17 @@ import type { Storage } from './storage.interface'
 export const memoryStorage = new MemoryStorage(env.MEDIA_URL_BASE)
 
 let r2Storage: R2Storage | undefined
+let testStorage: Storage | undefined
 
 /** Picks the driver from STORAGE_DRIVER on first use, so a missing R2 setting fails the upload, not the import. */
 export function getStorage(): Storage {
+  if (testStorage) return testStorage
   if (env.STORAGE_DRIVER !== 'r2') return memoryStorage
   r2Storage ??= R2Storage.fromEnv(env)
   return r2Storage
+}
+
+/** Test-only: routes `getStorage()` to `storage` (e.g. a signing double) until called again with `undefined`. */
+export function setStorageForTests(storage: Storage | undefined): void {
+  testStorage = storage
 }

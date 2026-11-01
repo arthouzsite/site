@@ -3,6 +3,7 @@ import { assertSameOrigin } from '@/lib/server/auth/origin'
 import { MUTATING_METHODS } from '@/lib/server/auth/constants'
 import { currentUser, requireUser } from '@/lib/server/auth/current-user'
 import type { PublicUser } from '@/lib/server/auth/public-user'
+import { presentMediaUrls } from '@/lib/server/media/present-urls'
 import { mapError } from './errors'
 
 export type Auth = 'public' | 'user' | 'admin'
@@ -46,7 +47,9 @@ export function route<P extends Record<string, string | string[]> = Record<strin
       const result = await handler({ request, url: new URL(request.url), params, user })
       if (result instanceof Response) return result
       const status = options.status ?? 200
-      const body = isMetaResult(result) ? ok(result.data, result.meta) : ok(result ?? null)
+      const body = isMetaResult(result)
+        ? ok(await presentMediaUrls(result.data), result.meta)
+        : ok(await presentMediaUrls(result ?? null))
       return Response.json(body, { status })
     } catch (error) {
       const { status, body } = mapError(error)

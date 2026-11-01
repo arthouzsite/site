@@ -14,6 +14,7 @@ describe('R2Storage', () => {
     secretAccessKey: 'secret',
     bucket: 'arthouz-bucket',
     mediaUrlBase: '/media',
+    urlTtlSeconds: 604800,
   }
   let send: MockInstance
 
@@ -35,6 +36,47 @@ describe('R2Storage', () => {
       CacheControl: 'public, max-age=31536000, immutable',
     })
     expect(result).toEqual({ url: '/media/arthouz/2026/10/a.jpg' })
+  })
+
+  describe('publicUrlFor', () => {
+    const KEY = 'arthouz/2026/10/a.jpg'
+    afterEach(() => vi.useRealTimers())
+
+    it('signs a GET url for the bucket and key with the configured lifetime, without any network call', async () => {
+      const url = new URL(await new R2Storage(config).publicUrlFor(KEY))
+      expect(url.hostname).toBe('arthouz-bucket.acct.r2.cloudflarestorage.com')
+      expect(url.pathname).toBe(`/${KEY}`)
+      expect(url.searchParams.get('X-Amz-Expires')).toBe('604800')
+      expect(url.searchParams.get('X-Amz-Signature')).toBeTruthy()
+      expect(send).not.toHaveBeenCalled()
+    })
+
+    it('honours a custom lifetime', async () => {
+      const url = new URL(await new R2Storage({ ...config, urlTtlSeconds: 3600 }).publicUrlFor(KEY))
+      expect(url.searchParams.get('X-Amz-Expires')).toBe('3600')
+    })
+
+    it('signs at the start of the hour, so calls within the hour return the identical url', async () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-11-01T10:05:30Z'))
+      const first = await new R2Storage(config).publicUrlFor(KEY)
+      vi.setSystemTime(new Date('2026-11-01T10:59:59Z'))
+      expect(await new R2Storage(config).publicUrlFor(KEY)).toBe(first)
+      expect(new URL(first).searchParams.get('X-Amz-Date')).toBe('20261101T100000Z')
+    })
+
+    it('memoises per key and returns a different url in the next hour', async () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-11-01T10:05:00Z'))
+      const storage = new R2Storage(config)
+      const first = await storage.publicUrlFor(KEY)
+      expect(await storage.publicUrlFor(KEY)).toBe(first)
+      expect(await storage.publicUrlFor('arthouz/2026/10/b.jpg')).not.toBe(first)
+      vi.setSystemTime(new Date('2026-11-01T11:00:01Z'))
+      const next = await storage.publicUrlFor(KEY)
+      expect(next).not.toBe(first)
+      expect(new URL(next).searchParams.get('X-Amz-Date')).toBe('20261101T110000Z')
+    })
   })
 
   it('delete sends DeleteObjectCommand', async () => {

@@ -26,6 +26,10 @@ export class MemoryStorage implements Storage {
     return mediaUrlFor(this.mediaUrlBase, key)
   }
 
+  async publicUrlFor(key: string): Promise<string> {
+    return this.urlFor(key)
+  }
+
   /** The target is the same-origin PUT route, which stores the bytes in this map. */
   async createUploadTarget(key: string, contentType: string, bytes: number): Promise<UploadTarget> {
     this.declaredBytes.set(key, bytes)

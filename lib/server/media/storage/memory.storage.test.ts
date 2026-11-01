@@ -11,6 +11,10 @@ describe('MemoryStorage', () => {
     expect(new Date(target.expiresAt).getTime()).toBeGreaterThan(Date.now())
   })
 
+  it('publicUrlFor is the same-origin media url', async () => {
+    await expect(new MemoryStorage().publicUrlFor('arthouz/2026/a.png')).resolves.toBe('/media/arthouz/2026/a.png')
+  })
+
   it('remembers the declared size per key', async () => {
     const storage = new MemoryStorage()
     await storage.createUploadTarget('a.png', 'image/png', 10)

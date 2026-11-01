@@ -7,6 +7,14 @@ const REPO_ROOT = fileURLToPath(new URL('.', import.meta.url))
 // `server-only` throws outside Next's react-server condition; unit and API specs import server modules directly.
 const ALIAS = { '@': REPO_ROOT, 'server-only': fileURLToPath(new URL('./tests/support/server-only-stub.ts', import.meta.url)) }
 
+const SITE_TEST_ENV = {
+  STORAGE_DRIVER: 'memory',
+  DATABASE_URL: 'postgresql://localhost/unused',
+  JWT_SECRET: 'site-test-jwt-secret-site-test-jwt-secret',
+  SEED_ADMIN_EMAIL: 'admin@example.test',
+  SEED_ADMIN_PASSWORD: 'unused',
+}
+
 const SITE_COVERAGE = ['app/**/*.{ts,tsx}', 'components/**/*.{ts,tsx}', 'hooks/**/*.{ts,tsx}', 'lib/*.{ts,tsx}']
 const ADMIN_COVERAGE = ['admin/**/*.{ts,tsx}']
 const SERVER_COVERAGE = ['lib/server/**/*.ts', 'app/api/**/*.ts']
@@ -58,6 +66,8 @@ export default defineConfig({
         test: {
           name: 'site',
           environment: 'node',
+          // `lib/api.ts` presents media URLs through the storage driver, which parses the server environment on import.
+          env: SITE_TEST_ENV,
           include: ['tests/unit/**/*.test.{ts,tsx}'],
         },
       },
