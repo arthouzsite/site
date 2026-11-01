@@ -34,6 +34,8 @@ export interface Storage {
   delete(key: string): Promise<void>
   /** Same-origin (or CDN) URL the app serves the object at; the bucket itself is private. */
   urlFor(key: string): string
+  /** URL the browser loads the object from: a presigned bucket URL (stable within the hour) for R2, `urlFor(key)` for the memory driver. */
+  publicUrlFor(key: string): Promise<string>
   /** Where the browser sends the bytes for `key`; `bytes` is the declared size. */
   createUploadTarget(key: string, contentType: string, bytes: number): Promise<UploadTarget>
   /** Size and content type of a stored object, or null when nothing is stored under `key`. */

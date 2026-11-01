@@ -46,6 +46,7 @@ Configuration is read from the process environment; locally from `.env` at the r
 | `SEED_ADMIN_PASSWORD` | yes | Password of the seeded admin | `<choose a password>` |
 | `NEXT_PUBLIC_SITE_URL` | build | Public origin, no trailing slash. Inlined at build time (canonical URLs, sitemap, robots). A production build fails if it is unset or a localhost URL | `https://www.example.com` |
 | `MEDIA_URL_BASE` | no | Prefix of the media URLs stored in the database; default `/media` (served by this app from the private bucket). Set an absolute origin only when a CDN fronts the route | `/media` |
+| `MEDIA_URL_TTL_SECONDS` | no | Lifetime of the signed media URLs, 3600 to 604800 seconds; default `604800` (7 days) | `604800` |
 | `STORAGE_DRIVER` | no | `r2` (S3-compatible bucket, default) or `memory` (nothing persisted, still served at `/media/...`) | `r2` |
 | `S3_ENDPOINT` | with `r2` | S3 API endpoint of the bucket | `https://ACCOUNT_ID.r2.cloudflarestorage.com` |
 | `AWS_ACCESS_KEY_ID` | with `r2` | Bucket access key id | `<access key id>` |
@@ -74,7 +75,7 @@ pnpm dev                        # next dev on http://localhost:3300
 - CMS: http://localhost:3300/admin (sign in with `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`)
 - API: http://localhost:3300/api (`GET /api/health`)
 
-The seed loads the prototype content, including the five services (published with placeholder copy to replace in the CMS), and writes picsum placeholder image URLs. It skips a database that already has content unless `SEED_FORCE=1`. `STORAGE_DRIVER=memory` accepts uploads but persists nothing; use `r2` with the four bucket variables for real files. The bucket stays private: the app serves every image and video itself at `GET /media/<key>` (streamed from the bucket, byte ranges honoured for video, cached for a year). The media library takes images (JPEG, PNG, WebP, AVIF, up to 25 MB) and videos (MP4, WebM, MOV, up to 200 MB); videos are library-only and never offered in image pickers.
+The seed loads the prototype content, including the five services (published with placeholder copy to replace in the CMS), and writes picsum placeholder image URLs. It skips a database that already has content unless `SEED_FORCE=1`. `STORAGE_DRIVER=memory` accepts uploads but persists nothing; use `r2` with the four bucket variables for real files. The bucket stays private (see Media URLs); `GET /media/<key>` streams an object through the app as the fallback (byte ranges honoured for video, cached for a year). The media library takes images (JPEG, PNG, WebP, AVIF, up to 25 MB) and videos (MP4, WebM, MOV, up to 200 MB); videos are library-only and never offered in image pickers.
 
 Content is cached with tags and refreshed when the CMS publishes. To move the seed's placeholder images into the bucket run `pnpm media:rehome` (with `STORAGE_DRIVER=r2`); it is idempotent and skips rows whose object already exists in the bucket. It runs outside the server, so it cannot refresh the cache: call `POST /api/revalidate` afterwards (see Expiring the site cache).
 
@@ -127,6 +128,12 @@ Details in `docs/deploy.md`. In short:
 - The build and deploy steps need devDependencies installed (`prisma`, `tsx`, `typescript`, `@tailwindcss/postcss`), so do not install with `--prod`.
 - Allow request bodies of 200 MB and read timeouts of 600 s on `POST /api/media` at the proxy.
 - Vercel's 4.5 MB request body limit blocks `POST /api/media` for larger files, so the CMS uploads straight to the bucket (see Uploads below), which needs a CORS rule on the R2 bucket. On Vercel set `TRUST_PROXY=1`, otherwise all clients share one login-throttle bucket. The upload route sets `maxDuration = 600`, which exceeds the Hobby plan's function limit; deploy on a plan that allows it or lower the value.
+
+### Media URLs
+
+Every media link the app emits (API responses and site pages) is a presigned `GET` URL on the R2 endpoint, so browsers load images and video straight from R2 while the bucket has no public hostname and needs no public access. Stored values stay `/media/<key>`; the URLs are produced when a response is built. URLs are signed at the start of each hour, so a given image URL is identical within an hour (browser caches hit) and changes in the next. Each stays valid for `MEDIA_URL_TTL_SECONDS` (7 days by default) from the moment it is served: the signing hour is added to the lifetime, capped at the 7-day SigV4 maximum, so with the default a URL served late in an hour has up to an hour less. A saved link stops working after that. `next/image` accepts the R2 hosts derived from `S3_ENDPOINT` and `AWS_S3_BUCKET_NAME`. Under the memory driver (tests, local runs without R2) links stay `/media/<key>`, served by the `/media` route, which also remains available as a fallback.
+
+Staleness: a rendered page or Open Graph tag can carry a URL up to one revalidation window (an hour) plus idle time old, which is safe within the 7-day default. Because the URL changes every hour, `next/image` re-optimises each image once an hour. If signing fails for a key, the response keeps `/media/<key>` (the fallback route still serves it) and the failure is logged once per key per hour. Presentation applies only while `MEDIA_URL_BASE` is `/media`; an absolute CDN base is left as stored.
 
 ### Uploads
 

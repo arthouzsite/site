@@ -2,6 +2,9 @@ import 'server-only'
 import { z } from 'zod'
 
 const MIN_JWT_SECRET_LENGTH = 32
+// URLs are signed at the hour mark (and given an extra hour), so shorter lifetimes are meaningless; SigV4 caps at seven days.
+const MIN_MEDIA_URL_TTL_SECONDS = 3600
+const MAX_MEDIA_URL_TTL_SECONDS = 604800
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 const R2_SETTINGS = ['S3_ENDPOINT', 'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_S3_BUCKET_NAME'] as const
 
@@ -26,6 +29,7 @@ const baseSchema = z.object({
   AWS_ACCESS_KEY_ID: optionalString,
   AWS_SECRET_ACCESS_KEY: optionalString,
   AWS_S3_BUCKET_NAME: optionalString,
+  MEDIA_URL_TTL_SECONDS: z.preprocess(blankToUndefined, z.coerce.number().int().min(MIN_MEDIA_URL_TTL_SECONDS).max(MAX_MEDIA_URL_TTL_SECONDS).default(MAX_MEDIA_URL_TTL_SECONDS)),
   MEDIA_URL_BASE: z.preprocess(blankToUndefined, mediaUrlBase.default(DEFAULT_MEDIA_URL_BASE)),
   SEED_ADMIN_EMAIL: z.string().email(),
   SEED_ADMIN_PASSWORD: z.string().min(1),

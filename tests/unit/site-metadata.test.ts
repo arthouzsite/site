@@ -144,4 +144,23 @@ describe('next config guards', () => {
     expect(hosts({ NODE_ENV: 'production' })).toEqual([])
     expect(hosts({ NODE_ENV: 'production', ALLOW_TEST_OVERRIDES: '1' })).toEqual(['picsum.photos', 'fastly.picsum.photos'])
   })
+
+  it('allows the R2 hosts (virtual-hosted and path-style, any query) when the endpoint and bucket are set', () => {
+    const r2 = { S3_ENDPOINT: 'https://acct.r2.cloudflarestorage.com', AWS_S3_BUCKET_NAME: 'arthouz' }
+
+    expect(buildRemotePatterns({ NODE_ENV: 'production', ...r2 })).toEqual([
+      { protocol: 'https', hostname: 'arthouz.acct.r2.cloudflarestorage.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'acct.r2.cloudflarestorage.com', pathname: '/**' },
+    ])
+    expect(buildRemotePatterns({ NODE_ENV: 'development', ...r2 }).map((pattern) => pattern.hostname)).toEqual([
+      'picsum.photos', 'fastly.picsum.photos', 'arthouz.acct.r2.cloudflarestorage.com', 'acct.r2.cloudflarestorage.com',
+    ])
+    for (const pattern of buildRemotePatterns({ NODE_ENV: 'production', ...r2 })) expect(pattern).not.toHaveProperty('search')
+  })
+
+  it('adds no R2 host when either variable is missing or the endpoint is not a URL', () => {
+    expect(buildRemotePatterns({ NODE_ENV: 'production', S3_ENDPOINT: 'https://acct.r2.cloudflarestorage.com' })).toEqual([])
+    expect(buildRemotePatterns({ NODE_ENV: 'production', AWS_S3_BUCKET_NAME: 'arthouz' })).toEqual([])
+    expect(buildRemotePatterns({ NODE_ENV: 'production', S3_ENDPOINT: 'nonsense', AWS_S3_BUCKET_NAME: 'arthouz' })).toEqual([])
+  })
 })
