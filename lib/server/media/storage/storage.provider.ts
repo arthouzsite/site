@@ -17,7 +17,7 @@ export function getStorage(): Storage {
   return r2Storage
 }
 
-/** Test-only: routes `getStorage()` to `storage` (e.g. a signing double) until called again with `undefined`. */
+/** TEST-ONLY: not for production code. Routes `getStorage()` to `storage` (e.g. a signing double) until called again with `undefined`. */
 export function setStorageForTests(storage: Storage | undefined): void {
   testStorage = storage
 }

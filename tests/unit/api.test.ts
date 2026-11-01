@@ -78,6 +78,27 @@ describe('apiGet', () => {
     await expect(apiGetUncached('/public/services/art-sales', schema)).resolves.toEqual({ image: { url: `https://signed.test/${key}?sig=1` } })
   })
 
+  it('presents outside the data cache: the cache stores unsigned urls, the page gets signed ones', async () => {
+    class SigningStorage extends MemoryStorage {
+      override async publicUrlFor(key: string): Promise<string> {
+        return `https://signed.test/${key}?sig=1`
+      }
+    }
+    setStorageForTests(new SigningStorage())
+    const key = 'arthouz/2026/10/0a1b2c3d-0a1b-4c3d-8e9f-0a1b2c3d4e5f.jpg'
+    let stored: unknown
+    unstableCache.mockImplementationOnce((load) => async () => {
+      stored = await load()
+      return stored
+    })
+    getService.mockResolvedValue({ image: { url: `/media/${key}` } })
+
+    const result = await apiGet('/public/services/art-sales', z.object({ image: z.object({ url: z.string() }) }), [])
+
+    expect(stored).toEqual({ image: { url: `/media/${key}` } })
+    expect(result).toEqual({ image: { url: `https://signed.test/${key}?sig=1` } })
+  })
+
   it('maps a 404 ApiException from the loader to a NOT_FOUND ApiError so pages can call notFound()', async () => {
     // Arrange
     getService.mockRejectedValue(notFound('No such service'))

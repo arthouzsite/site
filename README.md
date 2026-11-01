@@ -46,7 +46,7 @@ Configuration is read from the process environment; locally from `.env` at the r
 | `SEED_ADMIN_PASSWORD` | yes | Password of the seeded admin | `<choose a password>` |
 | `NEXT_PUBLIC_SITE_URL` | build | Public origin, no trailing slash. Inlined at build time (canonical URLs, sitemap, robots). A production build fails if it is unset or a localhost URL | `https://www.example.com` |
 | `MEDIA_URL_BASE` | no | Prefix of the media URLs stored in the database; default `/media` (served by this app from the private bucket). Set an absolute origin only when a CDN fronts the route | `/media` |
-| `MEDIA_URL_TTL_SECONDS` | no | Lifetime of the signed media URLs, 60 to 604800 seconds; default `604800` (7 days) | `604800` |
+| `MEDIA_URL_TTL_SECONDS` | no | Lifetime of the signed media URLs, 3600 to 604800 seconds; default `604800` (7 days) | `604800` |
 | `STORAGE_DRIVER` | no | `r2` (S3-compatible bucket, default) or `memory` (nothing persisted, still served at `/media/...`) | `r2` |
 | `S3_ENDPOINT` | with `r2` | S3 API endpoint of the bucket | `https://ACCOUNT_ID.r2.cloudflarestorage.com` |
 | `AWS_ACCESS_KEY_ID` | with `r2` | Bucket access key id | `<access key id>` |
@@ -131,7 +131,9 @@ Details in `docs/deploy.md`. In short:
 
 ### Media URLs
 
-Every media link the app emits (API responses and site pages) is a presigned `GET` URL on the R2 endpoint, so browsers load images and video straight from R2 while the bucket has no public hostname and needs no public access. Stored values stay `/media/<key>`; the URLs are produced when a response is built. They are valid for `MEDIA_URL_TTL_SECONDS` (7 days by default) and are re-signed hourly: a given image URL is identical within an hour (so browser caches hit) and changes in the next, and a saved link stops working after the TTL. `next/image` accepts the R2 hosts derived from `S3_ENDPOINT` and `AWS_S3_BUCKET_NAME`. Under the memory driver (tests, local runs without R2) links stay `/media/<key>`, served by the `/media` route, which also remains available as a fallback.
+Every media link the app emits (API responses and site pages) is a presigned `GET` URL on the R2 endpoint, so browsers load images and video straight from R2 while the bucket has no public hostname and needs no public access. Stored values stay `/media/<key>`; the URLs are produced when a response is built. URLs are signed at the start of each hour, so a given image URL is identical within an hour (browser caches hit) and changes in the next. Each stays valid for `MEDIA_URL_TTL_SECONDS` (7 days by default) from the moment it is served: the signing hour is added to the lifetime, capped at the 7-day SigV4 maximum, so with the default a URL served late in an hour has up to an hour less. A saved link stops working after that. `next/image` accepts the R2 hosts derived from `S3_ENDPOINT` and `AWS_S3_BUCKET_NAME`. Under the memory driver (tests, local runs without R2) links stay `/media/<key>`, served by the `/media` route, which also remains available as a fallback.
+
+Staleness: a rendered page or Open Graph tag can carry a URL up to one revalidation window (an hour) plus idle time old, which is safe within the 7-day default. Because the URL changes every hour, `next/image` re-optimises each image once an hour. If signing fails for a key, the response keeps `/media/<key>` (the fallback route still serves it) and the failure is logged once per key per hour. Presentation applies only while `MEDIA_URL_BASE` is `/media`; an absolute CDN base is left as stored.
 
 ### Uploads
 

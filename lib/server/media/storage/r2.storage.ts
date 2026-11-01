@@ -12,6 +12,8 @@ const HTTP_RANGE_NOT_SATISFIABLE = 416
 const CONTENT_RANGE_PATTERN = /^bytes (\d+)-(\d+)\/(\d+)$/
 const MS_PER_SECOND = 1000
 const MS_PER_HOUR = 3_600_000
+const SECONDS_PER_HOUR = 3600
+const MAX_PRESIGN_SECONDS = 604800
 const MAX_MEMOISED_URLS = 5000
 const SIGNED_UPLOAD_HEADERS = new Set(['content-type', 'cache-control', 'content-length'])
 
@@ -96,7 +98,8 @@ export class R2Storage implements Storage {
 
   /**
    * A presigned GET URL for the private object. Signed at the start of the current hour, so every call within the
-   * hour returns the identical string (browser and CDN caches hit); the URL stays valid for `urlTtlSeconds` from then.
+   * hour returns the identical string (browser and CDN caches hit); a URL served at any minute of the hour still has
+   * `urlTtlSeconds` ahead of it (the hour is added to the lifetime, capped at the SigV4 maximum).
    */
   async publicUrlFor(key: string): Promise<string> {
     const hour = Math.floor(Date.now() / MS_PER_HOUR)
@@ -107,7 +110,7 @@ export class R2Storage implements Storage {
     const known = this.signedUrls.get(key)
     if (known) return known
     const url = await getSignedUrl(this.client, new GetObjectCommand({ Bucket: this.config.bucket, Key: key }), {
-      expiresIn: this.config.urlTtlSeconds,
+      expiresIn: Math.min(this.config.urlTtlSeconds + SECONDS_PER_HOUR, MAX_PRESIGN_SECONDS),
       signingDate: new Date(hour * MS_PER_HOUR),
     })
     if (this.signedUrls.size >= MAX_MEMOISED_URLS) this.signedUrls = new Map()

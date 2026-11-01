@@ -2,8 +2,8 @@ import 'server-only'
 import { z } from 'zod'
 
 const MIN_JWT_SECRET_LENGTH = 32
-// SigV4 presigned URLs live at most seven days.
-const MIN_MEDIA_URL_TTL_SECONDS = 60
+// URLs are signed at the hour mark (and given an extra hour), so shorter lifetimes are meaningless; SigV4 caps at seven days.
+const MIN_MEDIA_URL_TTL_SECONDS = 3600
 const MAX_MEDIA_URL_TTL_SECONDS = 604800
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 const R2_SETTINGS = ['S3_ENDPOINT', 'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_S3_BUCKET_NAME'] as const
