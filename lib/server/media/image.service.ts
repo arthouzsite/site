@@ -1,17 +1,11 @@
 import sharp, { type Metadata } from 'sharp'
 import { badRequest } from '@/lib/server/http/errors'
 import { logError } from '@/lib/server/log'
-import { THUMB_QUALITY, THUMB_WIDTH } from './media.constants'
+import { MIME_BY_EXT, THUMB_QUALITY, THUMB_WIDTH, type ImageExt } from './media.constants'
 
-export type ImageExt = 'jpg' | 'png' | 'webp' | 'avif'
+export { MIME_BY_EXT, type ImageExt }
 export type ProcessedImage = { width: number; height: number; thumb: Buffer; ext: ImageExt; mime: string }
 
-export const MIME_BY_EXT: Readonly<Record<ImageExt, string>> = {
-  jpg: 'image/jpeg',
-  png: 'image/png',
-  webp: 'image/webp',
-  avif: 'image/avif',
-}
 const SWAPPED_ORIENTATION_MIN = 5
 const EXT_BY_FORMAT: Readonly<Record<string, ImageExt>> = { jpeg: 'jpg', png: 'png', webp: 'webp', heif: 'avif' }
 const AVIF_COMPRESSION = 'av1'

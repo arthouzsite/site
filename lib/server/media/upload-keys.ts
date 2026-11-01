@@ -1,6 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { MIME_BY_EXT } from './image.service'
-import { KEY_PREFIX, VIDEO_EXT_BY_MIME } from './media.constants'
+import { KEY_PREFIX, MIME_BY_EXT, VIDEO_EXT_BY_MIME } from './media.constants'
 
 const EXT_BY_MIME: Readonly<Record<string, string>> = {
   ...Object.fromEntries(Object.entries(MIME_BY_EXT).map(([ext, mime]) => [mime, ext])),

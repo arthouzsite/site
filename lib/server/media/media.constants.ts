@@ -21,3 +21,12 @@ export const MULTIPART_OVERHEAD_BYTES = 1024 * 1024
 export const UPLOAD_URL_TTL_SECONDS = 900
 // The complete step reads this many leading bytes of a video to check its container signature.
 export const VIDEO_SIGNATURE_BYTES = 64 * 1024
+
+export type ImageExt = 'jpg' | 'png' | 'webp' | 'avif'
+/** Kept here (a leaf module) so key allocation and image processing can both import it without a cycle. */
+export const MIME_BY_EXT: Readonly<Record<ImageExt, string>> = {
+  jpg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+  avif: 'image/avif',
+}
