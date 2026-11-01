@@ -82,4 +82,61 @@ describe('useUploadMedia', () => {
     expect(calls.puts).toEqual([])
     expect(calls.completed).toEqual([])
   })
+
+  describe('when the presigned target has expired', () => {
+    const keyFor = (filename: string, attempt: number) => `arthouz/2026/${attempt}-${filename}`
+
+    it('asks for a fresh target after a 403 and completes with the new key', async () => {
+      const calls = mockUploadFlow({ keyFor, putStatus: (key) => (key.includes('/1-') ? 403 : 200) })
+      const { result } = setup()
+      const progress: number[] = []
+      await act(async () => {
+        await result.current.mutateAsync({ file: jpeg(), alt: 'A hero', onProgress: (f) => progress.push(f) })
+      })
+      expect(calls.authorised).toHaveLength(2)
+      expect(calls.authorised[1]).toEqual(calls.authorised[0])
+      expect(calls.puts.map((p) => p.key)).toEqual(['arthouz/2026/1-hero.jpg', 'arthouz/2026/2-hero.jpg'])
+      expect(calls.completed).toEqual([{ key: 'arthouz/2026/2-hero.jpg', alt: 'A hero' }])
+      expect(progress).toContain(0)
+      expect(progress.at(-1)).toBe(1)
+    })
+
+    it('surfaces the second 403 without retrying again or completing', async () => {
+      const calls = mockUploadFlow({ keyFor, putStatus: () => 403 })
+      const { result } = setup()
+      await act(async () => {
+        await expect(result.current.mutateAsync({ file: jpeg(), alt: 'A hero' })).rejects.toMatchObject({
+          status: 403,
+          code: 'UPLOAD_FAILED',
+          message: 'Storage returned 403',
+        })
+      })
+      expect(calls.authorised).toHaveLength(2)
+      expect(calls.puts).toHaveLength(2)
+      expect(calls.completed).toEqual([])
+    })
+
+    it('does not retry other storage failures', async () => {
+      const calls = mockUploadFlow({ putStatus: () => 500 })
+      const { result } = setup()
+      await act(async () => {
+        await expect(result.current.mutateAsync({ file: jpeg(), alt: 'A hero' })).rejects.toMatchObject({ status: 500, code: 'UPLOAD_FAILED' })
+      })
+      expect(calls.authorised).toHaveLength(1)
+    })
+
+    it('fetches a fresh target before the PUT when expiresAt is already in the past', async () => {
+      const calls = mockUploadFlow({
+        keyFor,
+        expiresAt: (attempt) => new Date(Date.now() + (attempt === 1 ? -1000 : 900_000)).toISOString(),
+      })
+      const { result } = setup()
+      await act(async () => {
+        await result.current.mutateAsync({ file: jpeg(), alt: 'A hero' })
+      })
+      expect(calls.authorised).toHaveLength(2)
+      expect(calls.puts.map((p) => p.key)).toEqual(['arthouz/2026/2-hero.jpg'])
+      expect(calls.completed).toEqual([{ key: 'arthouz/2026/2-hero.jpg', alt: 'A hero' }])
+    })
+  })
 })

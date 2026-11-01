@@ -12,7 +12,15 @@ type Options = {
   authorise?: (info: UploadInfo) => void
   /** Overrides the target URL, e.g. an absolute R2 URL. */
   targetUrl?: (key: string) => string
+  /** Object key for the nth (1-based) authorisation; defaults to one key per filename. */
+  keyFor?: (filename: string, attempt: number) => string
+  /** `expiresAt` for the nth (1-based) authorisation; defaults to 15 minutes from now. */
+  expiresAt?: (attempt: number) => string
+  /** Status of the same-origin PUT for a key; defaults to 200. */
+  putStatus?: (key: string) => number
 }
+
+const TARGET_TTL_MS = 15 * 60 * 1000
 
 export type UploadCalls = {
   authorised: UploadInfo[]
@@ -28,6 +36,8 @@ export function mockUploadFlow(options: Options = {}): UploadCalls {
   const calls: UploadCalls = { authorised: [], puts: [], completed: [] }
   const infoByKey = new Map<string, UploadInfo>()
   const complete = options.complete ?? ((info: UploadInfo) => makeMedia({ alt: info.alt }))
+  const keyFor = options.keyFor ?? ((filename: string) => `arthouz/2026/${filename}`)
+  const expiresAt = options.expiresAt ?? (() => new Date(Date.now() + TARGET_TTL_MS).toISOString())
   const targetUrl = options.targetUrl ?? ((key: string) => `/api/media/uploads/${key}`)
 
   server.use(
@@ -40,7 +50,7 @@ export function mockUploadFlow(options: Options = {}): UploadCalls {
         throw err
       }
       calls.authorised.push(info)
-      const key = `arthouz/2026/${info.filename}`
+      const key = keyFor(info.filename, calls.authorised.length)
       infoByKey.set(key, info)
       return HttpResponse.json(
         envelope({
@@ -48,7 +58,7 @@ export function mockUploadFlow(options: Options = {}): UploadCalls {
           method: 'PUT',
           url: targetUrl(key),
           headers: { 'content-type': info.mime },
-          expiresAt: '2026-11-01T12:15:00.000Z',
+          expiresAt: expiresAt(calls.authorised.length),
         }),
         { status: 201 },
       )
@@ -56,7 +66,7 @@ export function mockUploadFlow(options: Options = {}): UploadCalls {
     http.put(`${API_URL}/media/uploads/*`, async ({ request, params }) => {
       const key = [params['0']].flat().join('/')
       calls.puts.push({ key, contentType: request.headers.get('content-type'), bytes: (await request.arrayBuffer()).byteLength })
-      return new HttpResponse(null, { status: 200 })
+      return new HttpResponse(null, { status: options.putStatus?.(key) ?? 200 })
     }),
     http.post(`${API_URL}/media/uploads/complete`, async ({ request }) => {
       const body = (await request.json()) as { key: string; alt: string }
