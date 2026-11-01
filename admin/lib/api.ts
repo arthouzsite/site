@@ -49,10 +49,6 @@ function settleResult<T>(status: number, path: string, text: string): ApiResult<
   throw new ApiError(status, env?.error ?? { code: 'HTTP_ERROR', message: `Request failed (${status})` })
 }
 
-function settle<T>(status: number, path: string, text: string): T {
-  return settleResult<T>(status, path, text).data
-}
-
 async function send<T>(method: string, path: string, body?: unknown): Promise<ApiResult<T>> {
   const headers: Record<string, string> = {}
   if (body !== undefined) headers['Content-Type'] = 'application/json'
@@ -74,23 +70,44 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   return (await send<T>(method, path, body)).data
 }
 
-function upload<T>(path: string, form: FormData, onProgress?: (fraction: number) => void): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
+function isSameOrigin(url: string): boolean {
+  return url.startsWith('/') || url.startsWith(window.location.origin)
+}
+
+function originOf(url: string): string {
+  try {
+    return new URL(url, window.location.origin).origin
+  } catch {
+    return url
+  }
+}
+
+/** PUTs the raw bytes to a presigned storage URL. Cookies only go to our own origin, never to the bucket. */
+function putRaw(url: string, body: Blob, headers: Record<string, string>, onProgress?: (fraction: number) => void): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
     const xhr = new XMLHttpRequest()
-    xhr.open('POST', `${API_URL}${path}`)
-    xhr.withCredentials = true
+    xhr.open('PUT', url)
+    xhr.withCredentials = isSameOrigin(url)
+    for (const [name, value] of Object.entries(headers)) xhr.setRequestHeader(name, value)
     xhr.upload.onprogress = (e) => {
       if (onProgress && e.lengthComputable) onProgress(e.loaded / e.total)
     }
-    xhr.onerror = () => reject(new ApiError(0, NETWORK_ERROR))
+    xhr.onerror = () =>
+      reject(
+        new ApiError(0, {
+          code: 'UPLOAD_BLOCKED',
+          message: `The storage at ${originOf(url)} refused the upload. Check the bucket CORS rule.`,
+        }),
+      )
     xhr.onload = () => {
-      try {
-        resolve(settle<T>(xhr.status, path, xhr.responseText))
-      } catch (err) {
-        reject(err)
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve()
+        return
       }
+      if (xhr.status === 401 && isSameOrigin(url)) notifySessionExpired(401, url)
+      reject(new ApiError(xhr.status, { code: 'UPLOAD_FAILED', message: `Storage returned ${xhr.status}` }))
     }
-    xhr.send(form)
+    xhr.send(body)
   })
 }
 
@@ -101,5 +118,5 @@ export const api = {
   put: <T>(path: string, body?: unknown) => request<T>('PUT', path, body),
   patch: <T>(path: string, body?: unknown) => request<T>('PATCH', path, body),
   delete: <T>(path: string, body?: unknown) => request<T>('DELETE', path, body),
-  upload,
+  putRaw,
 }

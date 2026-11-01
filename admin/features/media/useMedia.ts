@@ -1,6 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../../lib/api'
-import type { Media, MediaDetail, MediaKindFilter } from './types'
+import type { Media, MediaDetail, MediaKindFilter, UploadTarget } from './types'
 
 export const MEDIA_PAGE_SIZE = 18
 export const PICKER_PAGE_SIZE = 12
@@ -32,15 +32,22 @@ export function useMediaDetail(id: string, enabled = true) {
 
 type UploadArgs = { file: File; alt: string; onProgress?: (fraction: number) => void }
 
+/** The PUT is the slow part, so it owns the first 90% of the bar; the server-side finish owns the rest. */
+const PUT_PROGRESS_SHARE = 0.9
+
+/** Authorise, PUT straight to storage, then ask the server to record and process the object. */
+async function uploadViaStorage({ file, alt, onProgress }: UploadArgs): Promise<Media> {
+  const target = await api.post<UploadTarget>('/media/uploads', { filename: file.name, mime: file.type, bytes: file.size, alt })
+  await api.putRaw(target.url, file, target.headers, (f) => onProgress?.(f * PUT_PROGRESS_SHARE))
+  const media = await api.post<Media>('/media/uploads/complete', { key: target.key, alt })
+  onProgress?.(1)
+  return media
+}
+
 export function useUploadMedia() {
   const client = useQueryClient()
   return useMutation({
-    mutationFn: ({ file, alt, onProgress }: UploadArgs) => {
-      const form = new FormData()
-      form.append('file', file)
-      form.append('alt', alt)
-      return api.upload<Media>('/media', form, onProgress)
-    },
+    mutationFn: uploadViaStorage,
     onSuccess: () => client.invalidateQueries({ queryKey: ['media'] }),
   })
 }

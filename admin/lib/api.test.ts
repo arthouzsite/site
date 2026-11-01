@@ -84,24 +84,80 @@ describe('api', () => {
   })
 })
 
-describe('api.upload', () => {
-  it('posts form data with credentials, reports progress and unwraps the envelope', async () => {
-    server.use(http.post(`${API_URL}/media`, () => HttpResponse.json(envelope({ id: 'm1' }))))
+describe('api.putRaw', () => {
+  const STORAGE = 'https://bucket.r2.example'
+  const blob = () => new Blob(['hello'], { type: 'image/jpeg' })
+
+  it('sends the raw bytes and headers to an absolute URL without credentials', async () => {
+    const seen: Array<{ credentials: string; contentType: string | null; cookie: string | null; text: string }> = []
+    server.use(
+      http.put(`${STORAGE}/arthouz/a.jpg`, async ({ request }) => {
+        seen.push({
+          credentials: request.credentials,
+          contentType: request.headers.get('content-type'),
+          cookie: request.headers.get('cookie'),
+          text: await request.text(),
+        })
+        return new HttpResponse(null, { status: 200 })
+      }),
+    )
+    await expect(api.putRaw(`${STORAGE}/arthouz/a.jpg`, blob(), { 'content-type': 'image/jpeg' })).resolves.toBeUndefined()
+    expect(seen).toEqual([{ credentials: 'same-origin', contentType: 'image/jpeg', cookie: null, text: 'hello' }])
+  })
+
+  it('sends credentials to a same-origin URL, relative or absolute', async () => {
+    const credentials: string[] = []
+    server.use(
+      http.put(`${API_URL}/media/uploads/*`, ({ request }) => {
+        credentials.push(request.credentials)
+        return new HttpResponse(null, { status: 200 })
+      }),
+    )
+    await api.putRaw('/api/media/uploads/arthouz/a.jpg', blob(), { 'content-type': 'image/jpeg' })
+    await api.putRaw(`${window.location.origin}/api/media/uploads/arthouz/b.jpg`, blob(), { 'content-type': 'image/jpeg' })
+    expect(credentials).toEqual(['include', 'include'])
+  })
+
+  it('reports progress as fractions', async () => {
+    server.use(http.put(`${STORAGE}/p`, () => new HttpResponse(null, { status: 200 })))
     const fractions: number[] = []
-    const form = new FormData()
-    form.append('file', new File(['hello'], 'a.txt'))
-    await expect(api.upload<{ id: string }>('/media', form, (f) => fractions.push(f))).resolves.toEqual({ id: 'm1' })
-    fractions.forEach((f) => expect(f).toBeGreaterThanOrEqual(0))
+    await api.putRaw(`${STORAGE}/p`, blob(), {}, (f) => fractions.push(f))
+    fractions.forEach((f) => {
+      expect(f).toBeGreaterThanOrEqual(0)
+      expect(f).toBeLessThanOrEqual(1)
+    })
   })
 
-  it('rejects with ApiError on a server error', async () => {
-    server.use(http.post(`${API_URL}/media`, () => HttpResponse.json(errorEnvelope('UNSUPPORTED_MEDIA', 'Not an image'), { status: 415 })))
-    await expect(api.upload('/media', new FormData())).rejects.toMatchObject({ status: 415, code: 'UNSUPPORTED_MEDIA' })
+  it('rejects with UPLOAD_BLOCKED naming the storage origin when the request fails', async () => {
+    server.use(http.put(`${STORAGE}/x`, () => HttpResponse.error()))
+    await expect(api.putRaw(`${STORAGE}/x`, blob(), {})).rejects.toMatchObject({
+      status: 0,
+      code: 'UPLOAD_BLOCKED',
+      message: `The storage at ${STORAGE} refused the upload. Check the bucket CORS rule.`,
+    })
   })
 
-  it('rejects with NETWORK_ERROR when the request fails', async () => {
-    server.use(http.post(`${API_URL}/media`, () => HttpResponse.error()))
-    await expect(api.upload('/media', new FormData())).rejects.toMatchObject({ status: 0, code: 'NETWORK_ERROR' })
+  it('rejects with UPLOAD_FAILED and the status for a non-2xx answer', async () => {
+    server.use(http.put(`${STORAGE}/x`, () => new HttpResponse(null, { status: 403 })))
+    await expect(api.putRaw(`${STORAGE}/x`, blob(), {})).rejects.toMatchObject({ status: 403, code: 'UPLOAD_FAILED', message: 'Storage returned 403' })
+  })
+
+  it('announces an expired session when our own origin answers 401', async () => {
+    server.use(http.put(`${API_URL}/media/uploads/*`, () => new HttpResponse(null, { status: 401 })))
+    const listener = vi.fn()
+    window.addEventListener(SESSION_EXPIRED_EVENT, listener)
+    await expect(api.putRaw('/api/media/uploads/arthouz/a.jpg', blob(), {})).rejects.toMatchObject({ status: 401, code: 'UPLOAD_FAILED' })
+    window.removeEventListener(SESSION_EXPIRED_EVENT, listener)
+    expect(listener).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not treat a storage 401 as a CMS session expiry', async () => {
+    server.use(http.put(`${STORAGE}/x`, () => new HttpResponse(null, { status: 401 })))
+    const listener = vi.fn()
+    window.addEventListener(SESSION_EXPIRED_EVENT, listener)
+    await expect(api.putRaw(`${STORAGE}/x`, blob(), {})).rejects.toMatchObject({ status: 401 })
+    window.removeEventListener(SESSION_EXPIRED_EVENT, listener)
+    expect(listener).not.toHaveBeenCalled()
   })
 
   it('falls back to a generic error for a non-JSON failure body', async () => {

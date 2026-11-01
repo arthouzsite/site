@@ -2,7 +2,9 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { api, ApiError } from '../../lib/api'
+import { HttpResponse, http, server } from '../../test/msw'
 import { UploadQueue } from './UploadQueue'
+import { mockUploadFlow } from '../../test/uploadMocks'
 import { makeMedia, renderWithProviders } from './testUtils'
 
 const file = (name = 'hero.jpg') => new File(['x'], name, { type: 'image/jpeg' })
@@ -18,7 +20,7 @@ afterEach(() => vi.restoreAllMocks())
 
 describe('UploadQueue', () => {
   it('upload button disabled until alt text entered', async () => {
-    const upload = vi.spyOn(api, 'upload').mockResolvedValue(makeMedia())
+    const calls = mockUploadFlow()
     renderWithProviders(<UploadQueue />)
     const user = await choose([file()])
     const button = screen.getByRole('button', { name: /^upload 1 file/i })
@@ -26,15 +28,17 @@ describe('UploadQueue', () => {
     await user.type(screen.getByLabelText('Alt text for hero.jpg'), 'A hero image')
     expect(button).toBeEnabled()
     await user.click(button)
-    await waitFor(() => expect(upload).toHaveBeenCalledTimes(1))
-    const form = upload.mock.calls[0]![1] as FormData
-    expect(form.get('alt')).toBe('A hero image')
-    expect((form.get('file') as File).name).toBe('hero.jpg')
+    await waitFor(() => expect(calls.completed).toHaveLength(1))
+    expect(calls.authorised).toEqual([{ filename: 'hero.jpg', mime: 'image/jpeg', bytes: 1, alt: 'A hero image' }])
+    expect(calls.puts).toEqual([{ key: 'arthouz/2026/hero.jpg', contentType: 'image/jpeg', bytes: 1 }])
+    expect(calls.completed).toEqual([{ key: 'arthouz/2026/hero.jpg', alt: 'A hero image' }])
   })
 
   it('progress updates from onProgress', async () => {
-    vi.spyOn(api, 'upload').mockImplementation((_p, _f, onProgress) => {
-      onProgress?.(0.4)
+    mockUploadFlow()
+    // The PUT owns the first 90% of the bar, so half the bytes sent reads as 45%.
+    vi.spyOn(api, 'putRaw').mockImplementation((_url, _body, _headers, onProgress) => {
+      onProgress?.(0.5)
       return new Promise(() => {})
     })
     renderWithProviders(<UploadQueue />)
@@ -42,7 +46,7 @@ describe('UploadQueue', () => {
     await user.type(screen.getByLabelText('Alt text for hero.jpg'), 'Alt')
     await user.click(screen.getByRole('button', { name: /^upload 1 file/i }))
     const bar = await screen.findByRole('progressbar', { name: /uploading hero\.jpg/i })
-    expect(bar).toHaveAttribute('aria-valuenow', '40')
+    expect(bar).toHaveAttribute('aria-valuenow', '45')
   })
 
   it.each([
@@ -53,7 +57,7 @@ describe('UploadQueue', () => {
     ['INVALID_VIDEO', 400, 'This file is not a valid video.'],
     ['TOO_MANY_UPLOADS', 429, 'Too many uploads at once'],
   ])('maps %s to plain English inline', async (code, status, text) => {
-    vi.spyOn(api, 'upload').mockRejectedValue(new ApiError(status, { code, message: 'raw', fields: { alt: 'x' } }))
+    mockUploadFlow({ complete: () => { throw new ApiError(status, { code, message: 'raw', fields: { alt: 'x' } }) } })
     renderWithProviders(<UploadQueue />)
     const user = await choose([file()])
     await user.type(screen.getByLabelText('Alt text for hero.jpg'), 'Alt')
@@ -64,8 +68,39 @@ describe('UploadQueue', () => {
     expect(within(item).getByText('hero.jpg')).toBeInTheDocument()
   })
 
+  it('shows the storage message when the browser blocks the PUT', async () => {
+    mockUploadFlow({ targetUrl: (key) => `https://bucket.r2.example/${key}` })
+    server.use(http.put('https://bucket.r2.example/*', () => HttpResponse.error()))
+    renderWithProviders(<UploadQueue />)
+    const user = await choose([file()])
+    await user.type(screen.getByLabelText('Alt text for hero.jpg'), 'Alt')
+    await user.click(screen.getByRole('button', { name: /^upload 1 file/i }))
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('The storage at https://bucket.r2.example refused the upload. Check the bucket CORS rule.')
+    expect(within(alert.closest('li')!).getByText('hero.jpg')).toBeInTheDocument()
+  })
+
+  it('shows the storage status when the PUT is rejected', async () => {
+    mockUploadFlow({ targetUrl: (key) => `https://bucket.r2.example/${key}` })
+    server.use(http.put('https://bucket.r2.example/*', () => new HttpResponse(null, { status: 403 })))
+    renderWithProviders(<UploadQueue />)
+    const user = await choose([file()])
+    await user.type(screen.getByLabelText('Alt text for hero.jpg'), 'Alt')
+    await user.click(screen.getByRole('button', { name: /^upload 1 file/i }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Storage returned 403')
+  })
+
+  it('shows the server message for an expired or unknown upload', async () => {
+    mockUploadFlow({ complete: () => { throw new ApiError(404, { code: 'UPLOAD_NOT_FOUND', message: 'The uploaded file was not found. Upload it again.' }) } })
+    renderWithProviders(<UploadQueue />)
+    const user = await choose([file()])
+    await user.type(screen.getByLabelText('Alt text for hero.jpg'), 'Alt')
+    await user.click(screen.getByRole('button', { name: /^upload 1 file/i }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('The uploaded file was not found. Upload it again.')
+  })
+
   it('does not name video formats in a 415 when only images are accepted', async () => {
-    vi.spyOn(api, 'upload').mockRejectedValue(new ApiError(415, { code: 'UNSUPPORTED_MEDIA_TYPE', message: 'raw' }))
+    mockUploadFlow({ authorise: () => { throw new ApiError(415, { code: 'UNSUPPORTED_MEDIA_TYPE', message: 'raw' }) } })
     renderWithProviders(<UploadQueue accept="image/jpeg,image/png,image/webp,image/avif" />)
     const user = await choose([file()])
     await user.type(screen.getByLabelText('Alt text for hero.jpg'), 'Alt')
@@ -76,7 +111,7 @@ describe('UploadQueue', () => {
   })
 
   it('maps a 413 without a JSON envelope', async () => {
-    vi.spyOn(api, 'upload').mockRejectedValue(new ApiError(413, { code: 'HTTP_ERROR', message: 'Request failed (413)' }))
+    mockUploadFlow({ authorise: () => { throw new ApiError(413, { code: 'HTTP_ERROR', message: 'Request failed (413)' }) } })
     renderWithProviders(<UploadQueue />)
     const user = await choose([file()])
     await user.type(screen.getByLabelText('Alt text for hero.jpg'), 'Alt')
@@ -85,7 +120,7 @@ describe('UploadQueue', () => {
   })
 
   it('names the 200 MB video limit for a rejected video', async () => {
-    vi.spyOn(api, 'upload').mockRejectedValue(new ApiError(413, { code: 'PAYLOAD_TOO_LARGE', message: 'raw' }))
+    mockUploadFlow({ authorise: () => { throw new ApiError(413, { code: 'PAYLOAD_TOO_LARGE', message: 'raw' }) } })
     renderWithProviders(<UploadQueue />)
     const user = await choose([video()])
     await user.type(screen.getByLabelText('Alt text for tour.mp4'), 'Alt')
@@ -112,8 +147,7 @@ describe('UploadQueue', () => {
     const started: string[] = []
     let inFlight = 0
     let maxInFlight = 0
-    vi.spyOn(api, 'upload').mockImplementation(async (_p, form) => {
-      const name = ((form as FormData).get('file') as File).name
+    mockUploadFlow({ complete: async ({ filename: name }) => {
       started.push(name)
       inFlight += 1
       maxInFlight = Math.max(maxInFlight, inFlight)
@@ -121,7 +155,7 @@ describe('UploadQueue', () => {
       inFlight -= 1
       if (name === 'b.jpg') throw new ApiError(400, { code: 'INVALID_IMAGE', message: 'raw' })
       return makeMedia({ id: name })
-    })
+    } })
     const onUploaded = vi.fn()
     renderWithProviders(<UploadQueue onUploaded={onUploaded} />)
     const user = await choose([file('a.jpg'), file('b.jpg'), file('c.jpg')])
@@ -135,17 +169,18 @@ describe('UploadQueue', () => {
   })
 
   it('uploads a video file', async () => {
-    const upload = vi.spyOn(api, 'upload').mockResolvedValue(makeMedia({ kind: 'VIDEO' }))
+    const calls = mockUploadFlow({ complete: () => makeMedia({ kind: 'VIDEO' }) })
     renderWithProviders(<UploadQueue />)
     const user = await choose([video()])
     await user.type(screen.getByLabelText('Alt text for tour.mp4'), 'Studio tour')
     await user.click(screen.getByRole('button', { name: /^upload 1 file/i }))
-    await waitFor(() => expect(upload).toHaveBeenCalledTimes(1))
-    expect(((upload.mock.calls[0]![1] as FormData).get('file') as File).type).toBe('video/mp4')
+    await waitFor(() => expect(calls.completed).toHaveLength(1))
+    expect(calls.authorised[0]).toMatchObject({ filename: 'tour.mp4', mime: 'video/mp4' })
+    expect(calls.puts[0]!.contentType).toBe('video/mp4')
   })
 
   it('shows the server message for other validation fields', async () => {
-    vi.spyOn(api, 'upload').mockRejectedValue(new ApiError(400, { code: 'VALIDATION', message: 'bad', fields: { file: 'File is missing' } }))
+    mockUploadFlow({ authorise: () => { throw new ApiError(400, { code: 'VALIDATION', message: 'bad', fields: { file: 'File is missing' } }) } })
     renderWithProviders(<UploadQueue />)
     const user = await choose([file()])
     await user.type(screen.getByLabelText('Alt text for hero.jpg'), 'Alt')
@@ -155,7 +190,7 @@ describe('UploadQueue', () => {
 
   it('removes a queued file and reports uploaded media', async () => {
     const media = makeMedia({ id: 'new' })
-    vi.spyOn(api, 'upload').mockResolvedValue(media)
+    mockUploadFlow({ complete: () => media })
     const onUploaded = vi.fn()
     renderWithProviders(<UploadQueue onUploaded={onUploaded} />)
     const user = await choose([file('a.jpg'), file('b.jpg')])
@@ -171,16 +206,14 @@ describe('UploadQueue', () => {
       const started: Array<{ name: string; alt: string }> = []
       let release: () => void = () => {}
       let first = true
-      vi.spyOn(api, 'upload').mockImplementation(async (_p, form) => {
-        const f = form as FormData
-        const name = (f.get('file') as File).name
-        started.push({ name, alt: String(f.get('alt')) })
+      mockUploadFlow({ complete: async ({ filename: name, alt }) => {
+        started.push({ name, alt })
         if (first) {
           first = false
           await new Promise<void>((resolve) => { release = resolve })
         }
         return makeMedia({ id: name })
-      })
+      } })
       return { started, release: () => release() }
     }
 
@@ -225,11 +258,10 @@ describe('UploadQueue', () => {
     })
 
     it('reports the whole run once, with what was uploaded and how many failed', async () => {
-      vi.spyOn(api, 'upload').mockImplementation(async (_p, form) => {
-        const name = ((form as FormData).get('file') as File).name
+      mockUploadFlow({ complete: ({ filename: name }) => {
         if (name === 'b.jpg') throw new ApiError(400, { code: 'INVALID_IMAGE', message: 'raw' })
         return makeMedia({ id: name })
-      })
+      } })
       const onRunComplete = vi.fn()
       renderWithProviders(<UploadQueue onRunComplete={onRunComplete} />)
       const user = await choose([file('a.jpg'), file('b.jpg'), file('c.jpg')])
