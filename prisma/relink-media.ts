@@ -15,6 +15,7 @@ async function main(): Promise<void> {
     for (const key of summary.missingKeys) console.error(`missing in bucket: ${key}`)
     console.log(formatRelinkSummary(summary))
     if (summary.missingInBucket > 0) process.exitCode = 1
+    console.log('done — now expire the site cache: POST /api/revalidate as an admin (see README)')
   } finally {
     await prisma.$disconnect()
   }

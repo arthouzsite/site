@@ -71,7 +71,7 @@ async function main(): Promise<void> {
     }
     const failed = outcomes.filter((o) => !o.ok)
     if (failed.length > 0) throw new Error(`rehome: ${failed.length} of ${outcomes.length} rows failed; re-run to retry them`)
-    console.log('rehome: done — restart or redeploy the app to refresh cached pages')
+    console.log('done — now expire the site cache: POST /api/revalidate as an admin (see README)')
   } finally {
     await prisma.$disconnect()
   }
