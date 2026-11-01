@@ -87,8 +87,8 @@ describe('video upload', () => {
     expect(fake.media.create).toHaveBeenCalledTimes(1)
     expect(fake.media.create.mock.calls[0]![0].data).toMatchObject({
       key,
-      url: `memory://${key}`,
-      thumbUrl: `memory://${key}`,
+      url: `/media/${key}`,
+      thumbUrl: `/media/${key}`,
       width: 0,
       height: 0,
       mime: mimetype,

@@ -1,17 +1,11 @@
-import { describe, expect, it } from 'vitest'
-import { needsRehome, rehomedKey, selectCandidates, thumbKeyFor } from './rehome'
+import { describe, expect, it, vi } from 'vitest'
+import { isHostedExternally, rehomedKey, selectCandidates, thumbKeyFor, withoutBucketObject } from './rehome'
 
-const PUBLIC_URL = 'https://cdn.example.test'
-
-describe('needsRehome', () => {
-  it('is true for external hosts and false for our bucket or memory urls', () => {
-    expect(needsRehome('https://picsum.photos/seed/x/1200/1000', PUBLIC_URL)).toBe(true)
-    expect(needsRehome('https://cdn.example.test/arthouz/seed/x.jpg', `${PUBLIC_URL}/`)).toBe(false)
-    expect(needsRehome('memory://arthouz/a.jpg', PUBLIC_URL)).toBe(false)
-  })
-
-  it('does not match a host that merely starts with the public url', () => {
-    expect(needsRehome('https://cdn.example.test.evil/a.jpg', PUBLIC_URL)).toBe(true)
+describe('isHostedExternally', () => {
+  it('is true for absolute urls and false for same-origin media paths', () => {
+    expect(isHostedExternally('https://picsum.photos/seed/x/1200/1000')).toBe(true)
+    expect(isHostedExternally('http://old-bucket.example.test/arthouz/a.jpg')).toBe(true)
+    expect(isHostedExternally('/media/arthouz/a.jpg')).toBe(false)
   })
 })
 
@@ -30,12 +24,24 @@ describe('rehomedKey', () => {
 })
 
 describe('selectCandidates', () => {
-  it('keeps only images hosted elsewhere', () => {
+  it('keeps only images at an absolute url', () => {
     const rows = [
       { id: '1', key: 'seed/a', url: 'https://picsum.photos/seed/a/1200/1000', kind: 'IMAGE' },
-      { id: '2', key: 'arthouz/b.jpg', url: 'https://cdn.example.test/arthouz/b.jpg', kind: 'IMAGE' },
+      { id: '2', key: 'arthouz/b.jpg', url: '/media/arthouz/b.jpg', kind: 'IMAGE' },
       { id: '3', key: 'arthouz/c.mp4', url: 'https://other.test/c.mp4', kind: 'VIDEO' },
     ]
-    expect(selectCandidates(rows, PUBLIC_URL).map((r) => r.id)).toEqual(['1'])
+    expect(selectCandidates(rows).map((r) => r.id)).toEqual(['1'])
+  })
+})
+
+describe('withoutBucketObject', () => {
+  it('drops rows whose object already exists in the bucket', async () => {
+    const head = vi.fn(async (key: string) => (key === 'arthouz/seed/in.jpg' ? { bytes: 1, contentType: 'image/jpeg' } : null))
+    const rows = [
+      { id: '1', key: 'seed/out', url: 'https://picsum.photos/a', kind: 'IMAGE' },
+      { id: '2', key: 'arthouz/seed/in.jpg', url: 'https://old-bucket.example.test/arthouz/seed/in.jpg', kind: 'IMAGE' },
+    ]
+    expect((await withoutBucketObject(rows, { head })).map((r) => r.id)).toEqual(['1'])
+    expect(head).toHaveBeenCalledTimes(2)
   })
 })

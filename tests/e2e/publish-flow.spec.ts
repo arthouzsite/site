@@ -38,7 +38,12 @@ test('editor publishes an exhibition and the public site lists it with its hero 
   const heroPreview = page.getByRole('img', { name: HERO_ALT })
   await expect(heroPreview).toBeVisible()
   const heroUrl = await heroPreview.getAttribute('src')
-  expect(heroUrl).toBeTruthy()
+  // The bucket is private: uploaded media is recorded as a same-origin /media path, never a bucket host.
+  expect(heroUrl).toMatch(/^\/media\/arthouz\/\d{4}\/[0-9a-f-]{36}\.jpg$/)
+  const served = await page.request.get(`${WEB_URL}${heroUrl}`)
+  expect(served.status()).toBe(200)
+  expect(served.headers()['content-type']).toBe('image/jpeg')
+  expect(served.headers()['cache-control']).toBe('public, max-age=31536000, s-maxage=31536000, immutable')
 
   await page.getByLabel('Add artist').fill('Parvathi')
   await page.getByRole('button', { name: `Add ${ARTIST}` }).click()
@@ -62,8 +67,14 @@ test('editor publishes an exhibition and the public site lists it with its hero 
   }).toPass({ timeout: COLD_RENDER_TIMEOUT_MS })
   expect(Date.now() - publishedAt).toBeLessThanOrEqual(PUBLIC_VISIBILITY_BUDGET_MS)
 
+  // The site renders the hero from /media and the browser actually decodes it.
+  await expect(hero).toHaveJSProperty('complete', true)
+  expect(await hero.evaluate((img) => (img as HTMLImageElement).naturalWidth)).toBeGreaterThan(0)
+
   await page.goto(`${WEB_URL}/exhibitions/${SLUG}`)
   await expect(page.getByRole('heading', { name: TITLE })).toBeVisible()
+  // A relative image path resolves to an absolute og:image through metadataBase.
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', `${WEB_URL}${heroUrl}`)
   await expect(page.getByText(ARTIST).first()).toBeVisible()
 })
 

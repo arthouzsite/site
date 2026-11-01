@@ -21,6 +21,7 @@
     "db:migrate": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
     "media:rehome": "tsx --conditions=react-server prisma/rehome-media.ts",
+    "media:relink": "tsx --conditions=react-server prisma/relink-media.ts",
     "verify": "pnpm typecheck && pnpm lint && pnpm test:coverage && pnpm test:visual && pnpm test:a11y && pnpm test:e2e"
   },
   "dependencies": {

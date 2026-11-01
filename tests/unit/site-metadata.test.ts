@@ -143,6 +143,5 @@ describe('next config guards', () => {
     expect(hosts({ NODE_ENV: 'development' })).toEqual(['picsum.photos', 'fastly.picsum.photos'])
     expect(hosts({ NODE_ENV: 'production' })).toEqual([])
     expect(hosts({ NODE_ENV: 'production', ALLOW_TEST_OVERRIDES: '1' })).toEqual(['picsum.photos', 'fastly.picsum.photos'])
-    expect(hosts({ NODE_ENV: 'production', IMAGE_HOST: 'cdn.example.com' })).toEqual(['cdn.example.com'])
   })
 })

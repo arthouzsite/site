@@ -13,7 +13,6 @@ const STORAGE_VARS = {
   AWS_ACCESS_KEY_ID: 'b',
   AWS_SECRET_ACCESS_KEY: 'c',
   AWS_S3_BUCKET_NAME: 'd',
-  AWS_S3_PUBLIC_URL: 'https://cdn.example.test',
 }
 
 const build = (extra: Record<string, string>): Record<string, string> => ({ ...VALID_BASE, ...extra })
@@ -37,6 +36,23 @@ describe('parseEnv', () => {
   it('defaults STORAGE_DRIVER to r2 outside test and then requires the R2 vars', () => {
     expect(() => parseEnv(build({ NODE_ENV: 'production' }))).toThrow(/AWS_S3_BUCKET_NAME is required/)
     expect(parseEnv(build({ NODE_ENV: 'production', ...STORAGE_VARS })).STORAGE_DRIVER).toBe('r2')
+  })
+
+  it('needs no public bucket url: media is served through the app', () => {
+    const env = parseEnv(build({ NODE_ENV: 'production', ...STORAGE_VARS, RETIRED_BUCKET_URL: 'https://old.example.test' }))
+    expect(env.STORAGE_DRIVER).toBe('r2')
+  })
+
+  it('defaults MEDIA_URL_BASE to /media, trims trailing slashes and accepts an absolute origin', () => {
+    expect(parseEnv(build({ NODE_ENV: 'test' })).MEDIA_URL_BASE).toBe('/media')
+    expect(parseEnv(build({ NODE_ENV: 'test', MEDIA_URL_BASE: '' })).MEDIA_URL_BASE).toBe('/media')
+    expect(parseEnv(build({ NODE_ENV: 'test', MEDIA_URL_BASE: '/assets/' })).MEDIA_URL_BASE).toBe('/assets')
+    expect(parseEnv(build({ NODE_ENV: 'test', MEDIA_URL_BASE: 'https://cdn.example.test//' })).MEDIA_URL_BASE).toBe('https://cdn.example.test')
+  })
+
+  it('rejects a MEDIA_URL_BASE that is neither a path nor an http(s) URL', () => {
+    expect(() => parseEnv(build({ NODE_ENV: 'test', MEDIA_URL_BASE: 'media' }))).toThrow(/MEDIA_URL_BASE/)
+    expect(() => parseEnv(build({ NODE_ENV: 'test', MEDIA_URL_BASE: 'ftp://x' }))).toThrow(/MEDIA_URL_BASE/)
   })
 
   it('does not require R2 vars when STORAGE_DRIVER is memory', () => {

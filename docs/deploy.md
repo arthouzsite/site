@@ -1,6 +1,6 @@
 # Deploying Art Houz
 
-One Next.js process serves the site (`/`), the CMS (`/admin`) and the API (`/api`). It needs one PostgreSQL database and one S3-compatible bucket (the server writes, browsers read). Every environment variable is listed in the README.
+One Next.js process serves the site (`/`), the CMS (`/admin`) and the API (`/api`). It needs one PostgreSQL database and one private S3-compatible bucket (the server reads and writes; browsers only ever talk to the app). Every environment variable is listed in the README.
 
 ## Build and run (Node host)
 
@@ -26,7 +26,8 @@ Build and deploy need devDependencies installed (`prisma`, `tsx`, `typescript`, 
 ## Object storage (R2)
 
 - Uploads go through the server: images (JPEG, PNG, WebP, AVIF, up to 25 MB) are stored as the original plus a 480 px WebP thumbnail; videos (MP4, WebM, MOV, up to 200 MB) as a single object. No presigned uploads yet, so the bucket needs no CORS rule today.
-- The bucket must be publicly readable at `AWS_S3_PUBLIC_URL`. Objects are written with `Cache-Control: public, max-age=31536000, immutable`. Set `IMAGE_HOST` to that URL's hostname.
+- The bucket stays private (no public hostname). The app streams objects through `GET /media/<key>` (public, no session; only keys of the shapes the app stores are served) with `Cache-Control: public, max-age=31536000, s-maxage=31536000, immutable`, `ETag` and byte-range support, so a CDN or the platform edge caches repeats. Stored URLs are `/media/<key>`; `MEDIA_URL_BASE` (optional, default `/media`) changes that prefix, for example to a CDN origin later.
+- Moving to another bucket or account: point the `S3_*` / `AWS_*` variables at it, make sure it holds the same objects, then run `pnpm media:relink` once (idempotent). It rewrites each `Media` row to `${MEDIA_URL_BASE}/<key>` only after confirming the object exists, prints `relinked N, already relative M, missing in bucket K` and exits non-zero when K > 0. Restart or redeploy afterwards to refresh cached pages.
 - The access key only needs read, write and delete on this bucket.
 
 ## Never set in production

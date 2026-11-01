@@ -18,7 +18,7 @@ Public gallery website and content management system (CMS) for Art Houz, one Nex
 | `lib/` | Site data layer (`api.ts`, `public-paths.ts`, ...) |
 | `lib/server/` | Server code: env, Prisma client, auth, HTTP wrapper, domain services, storage, revalidation |
 | `lib/shared/` | Zod schemas, types and helpers shared by the site, CMS and server |
-| `prisma/` | Schema, migrations, seed, `rehome-media.ts` |
+| `prisma/` | Schema, migrations, seed, `rehome-media.ts`, `relink-media.ts` |
 | `styles/` | Design tokens, site base, scoped CMS base |
 | `tests/` | `unit/` (site), `api/` (database-backed endpoint specs), `visual/`, `a11y/`, `e2e/` |
 | `mockups/`, `docs/` | Static CMS mockups; design specs, plans and deploy notes |
@@ -45,13 +45,12 @@ Configuration is read from the process environment; locally from `.env` at the r
 | `SEED_ADMIN_EMAIL` | yes | Email of the admin user created by the seed | `admin@example.com` |
 | `SEED_ADMIN_PASSWORD` | yes | Password of the seeded admin | `<choose a password>` |
 | `NEXT_PUBLIC_SITE_URL` | build | Public origin, no trailing slash. Inlined at build time (canonical URLs, sitemap, robots). A production build fails if it is unset or a localhost URL | `https://www.example.com` |
-| `IMAGE_HOST` | no | Hostname of `AWS_S3_PUBLIC_URL`; lets `next/image` load bucket images | `media.example.com` |
-| `STORAGE_DRIVER` | no | `r2` (S3-compatible bucket, default) or `memory` (nothing persisted, `memory://` URLs) | `r2` |
+| `MEDIA_URL_BASE` | no | Prefix of the media URLs stored in the database; default `/media` (served by this app from the private bucket). Set an absolute origin only when a CDN fronts the route | `/media` |
+| `STORAGE_DRIVER` | no | `r2` (S3-compatible bucket, default) or `memory` (nothing persisted, still served at `/media/...`) | `r2` |
 | `S3_ENDPOINT` | with `r2` | S3 API endpoint of the bucket | `https://ACCOUNT_ID.r2.cloudflarestorage.com` |
 | `AWS_ACCESS_KEY_ID` | with `r2` | Bucket access key id | `<access key id>` |
 | `AWS_SECRET_ACCESS_KEY` | with `r2` | Bucket secret key | `<secret access key>` |
 | `AWS_S3_BUCKET_NAME` | with `r2` | Bucket name | `<bucket name>` |
-| `AWS_S3_PUBLIC_URL` | with `r2` | Public base URL of the bucket, no trailing slash; stored image URLs are built from it | `https://media.example.com` |
 | `TRUST_PROXY` | behind a proxy | Number of reverse-proxy hops whose `X-Forwarded-For` is trusted for the per-IP login limit. Default `0`; set `1` behind one proxy | `1` |
 | `SEED_FORCE` | no | `1` makes the seed reload content over a database that already has it | `1` |
 | `NEXT_DIST_DIR` | no | Build output directory, default `.next`; the Playwright harnesses use `.next-visual` and `.next-e2e` | `.next` |
@@ -75,13 +74,13 @@ pnpm dev                        # next dev on http://localhost:3300
 - CMS: http://localhost:3300/admin (sign in with `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`)
 - API: http://localhost:3300/api (`GET /api/health`)
 
-The seed loads the prototype content, including the five services (published with placeholder copy to replace in the CMS), and writes picsum placeholder image URLs. It skips a database that already has content unless `SEED_FORCE=1`. `STORAGE_DRIVER=memory` accepts uploads but persists nothing; use `r2` with the five bucket variables for real files. The media library takes images (JPEG, PNG, WebP, AVIF, up to 25 MB) and videos (MP4, WebM, MOV, up to 200 MB); videos are library-only and never offered in image pickers.
+The seed loads the prototype content, including the five services (published with placeholder copy to replace in the CMS), and writes picsum placeholder image URLs. It skips a database that already has content unless `SEED_FORCE=1`. `STORAGE_DRIVER=memory` accepts uploads but persists nothing; use `r2` with the four bucket variables for real files. The bucket stays private: the app serves every image and video itself at `GET /media/<key>` (streamed from the bucket, byte ranges honoured for video, cached for a year). The media library takes images (JPEG, PNG, WebP, AVIF, up to 25 MB) and videos (MP4, WebM, MOV, up to 200 MB); videos are library-only and never offered in image pickers.
 
-Content is cached with tags and refreshed when the CMS publishes. To move the seed's placeholder images into the bucket run `pnpm media:rehome` (with `STORAGE_DRIVER=r2`); it is idempotent and skips rows already served from `AWS_S3_PUBLIC_URL`. It runs outside the server, so it cannot refresh the cache: restart or redeploy afterwards to refresh cached pages.
+Content is cached with tags and refreshed when the CMS publishes. To move the seed's placeholder images into the bucket run `pnpm media:rehome` (with `STORAGE_DRIVER=r2`); it is idempotent and skips rows whose object already exists in the bucket. It runs outside the server, so it cannot refresh the cache: restart or redeploy afterwards to refresh cached pages.
 
 ### Scripts
 
-`db:seed` and `media:rehome` run `tsx` and need the variables in the environment. Run other scripts the same way: `pnpm exec tsx --env-file=.env prisma/some-script.ts`.
+`db:seed`, `media:rehome` and `media:relink` run `tsx` and need the variables in the environment. Run other scripts the same way: `pnpm exec tsx --env-file=.env prisma/some-script.ts`.
 
 | Command | What it does |
 | --- | --- |

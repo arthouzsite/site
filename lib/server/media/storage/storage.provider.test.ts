@@ -6,7 +6,7 @@ const R2_ENV = {
   AWS_ACCESS_KEY_ID: 'key',
   AWS_SECRET_ACCESS_KEY: 'secret',
   AWS_S3_BUCKET_NAME: 'bucket',
-  AWS_S3_PUBLIC_URL: 'https://cdn.example.test',
+  MEDIA_URL_BASE: '/media',
 }
 
 afterEach(() => {

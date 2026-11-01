@@ -4,7 +4,7 @@ import { R2Storage } from './r2.storage'
 import type { Storage } from './storage.interface'
 
 /** The one in-memory store of a non-r2 run; tests import it to inspect what was written. */
-export const memoryStorage = new MemoryStorage()
+export const memoryStorage = new MemoryStorage(env.MEDIA_URL_BASE)
 
 let r2Storage: R2Storage | undefined
 

@@ -106,7 +106,7 @@ describe('presigned media uploads', () => {
       expect(res.status).toBe(201)
       expect(res.body.data).toMatchObject({
         key: target.key,
-        url: `memory://${target.key}`,
+        url: `/media/${target.key}`,
         width: 1600,
         height: 1200,
         mime: 'image/jpeg',
@@ -116,7 +116,7 @@ describe('presigned media uploads', () => {
         uploadedById: userId,
       })
       const thumbKey = target.key.replace(/\.jpg$/, '-thumb.webp')
-      expect(res.body.data.thumbUrl).toBe(`memory://${thumbKey}`)
+      expect(res.body.data.thumbUrl).toBe(`/media/${thumbKey}`)
       expect(memoryStorage.has(thumbKey)).toBe(true)
       expect(await prisma.media.count()).toBe(1)
       expect(activeUploadCount()).toBe(0)
@@ -128,8 +128,8 @@ describe('presigned media uploads', () => {
       expect(res.status).toBe(201)
       expect(res.body.data).toMatchObject({
         key: target.key,
-        url: `memory://${target.key}`,
-        thumbUrl: `memory://${target.key}`,
+        url: `/media/${target.key}`,
+        thumbUrl: `/media/${target.key}`,
         width: 0,
         height: 0,
         mime: 'video/mp4',
