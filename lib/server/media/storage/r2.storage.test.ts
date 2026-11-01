@@ -54,18 +54,19 @@ describe('R2Storage', () => {
     it('presigns a 15 minute PUT with the content type signed and nothing sent to the network', async () => {
       const key = 'arthouz/2026/12345678-1234-1234-1234-123456789012.jpg'
       const before = Date.now()
-      const target = await new R2Storage(config).createUploadTarget(key, 'image/jpeg')
+      const target = await new R2Storage(config).createUploadTarget(key, 'image/jpeg', 1234)
 
       const url = new URL(target.url)
       expect(url.host).toBe('arthouz-bucket.acct.r2.cloudflarestorage.com')
       expect(url.pathname).toBe(`/${key}`)
       expect(url.searchParams.get('X-Amz-Expires')).toBe('900')
-      expect(url.searchParams.get('X-Amz-SignedHeaders')?.split(';')).toContain('content-type')
+      expect(url.searchParams.get('X-Amz-SignedHeaders')?.split(';')).toEqual(['cache-control', 'content-length', 'content-type', 'host'])
       expect(url.searchParams.get('X-Amz-Signature')).toMatch(/^[0-9a-f]{64}$/)
       // A checksum of the (unknown) body in the URL would make R2 reject the real upload.
       expect([...url.searchParams.keys()].filter((name) => name.toLowerCase().includes('checksum') && name !== 'X-Amz-Content-Sha256')).toEqual([])
       expect(target.method).toBe('PUT')
-      expect(target.headers).toEqual({ 'content-type': 'image/jpeg' })
+      // content-length is signed but never returned: browsers set it themselves and refuse a manual one.
+      expect(target.headers).toEqual({ 'content-type': 'image/jpeg', 'cache-control': 'public, max-age=31536000, immutable' })
       expect(new Date(target.expiresAt).getTime()).toBeGreaterThanOrEqual(before + 900_000)
       expect(send).not.toHaveBeenCalled()
     })

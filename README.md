@@ -136,14 +136,16 @@ Media reaches the bucket in three steps, so the file bytes never pass through th
 2. The browser `PUT`s the file to `url` with the returned `headers`.
 3. `POST /api/media/uploads/complete` with `{ key, alt }` checks the stored object (size, type, image decodes or video signature), stores the thumbnail and answers `201` with the `Media` row. A file that fails the checks is deleted from storage. A key can be completed once (`409 UPLOAD_ALREADY_COMPLETED`); a key with nothing stored is `400 UPLOAD_NOT_FOUND`.
 
-With the `memory` driver (tests, local runs without R2) `url` is the same-origin `PUT /api/media/uploads/<key>`, which stores the bytes in memory; with `r2` that route answers 404. `POST /api/media` (multipart) remains as the server-side alternative for API callers and small files.
+The presigned URL also signs `cache-control` and the declared `content-length`, so a PUT with different bytes is refused by R2 (the browser sets the length itself; the client forwards only the returned `headers`). Uploads that are never completed stay in the bucket: periodically prune objects under `arthouz/<year>/` that have no `Media` row (a script is a follow-up).
+
+With the `memory` driver (tests, local runs without R2) `url` is the same-origin `PUT /api/media/uploads/<key>`, which holds the body to the declared size and stores it in memory; with `r2` that route answers 404. `POST /api/media` (multipart) remains as the server-side alternative for API callers and small files.
 
 The bucket needs this CORS rule (Cloudflare dashboard) or browsers refuse the `PUT`:
 
 ```json
 [{ "AllowedOrigins": ["https://site-arthouz.vercel.app", "http://localhost:3300"],
    "AllowedMethods": ["PUT", "GET", "HEAD"],
-   "AllowedHeaders": ["content-type"],
+   "AllowedHeaders": ["content-type", "cache-control"],
    "ExposeHeaders": ["etag"],
    "MaxAgeSeconds": 3600 }]
 ```

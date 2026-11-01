@@ -1,7 +1,7 @@
-import { ApiException, badRequest, conflict, unsupportedMediaType } from '@/lib/server/http/errors'
+import { ApiException, badRequest, conflict, payloadTooLarge, unsupportedMediaType } from '@/lib/server/http/errors'
 import type { Media } from '@/lib/server/generated/prisma/client'
 import { prisma } from '@/lib/server/prisma'
-import { VIDEO_SIGNATURE_BYTES } from './media.constants'
+import { MAX_IMAGE_UPLOAD_BYTES, VIDEO_SIGNATURE_BYTES } from './media.constants'
 import { processImage } from './image.service'
 import { cleanup, recordImage, recordVideo } from './media.service'
 import { getStorage } from './storage/storage.provider'
@@ -31,6 +31,7 @@ async function deleteIfRejected<T>(key: string, task: () => Promise<T> | T): Pro
 }
 
 function assertStoredObjectAllowed(key: string, stored: StoredObjectInfo): void {
+  if (stored.bytes <= 0) throw badRequest('EMPTY_UPLOAD', 'The uploaded file is empty')
   assertUploadAllowed({ type: stored.contentType, size: stored.bytes })
   if (extForMime(stored.contentType) !== extOfKey(key)) {
     throw unsupportedMediaType('The uploaded file type does not match the upload')
@@ -50,17 +51,26 @@ function completeImage(key: string, alt: string, userId: string | null): Promise
   return withUploadSlot(async () => {
     const storage = getStorage()
     const buffer = await storage.get(key)
-    const processed = await deleteIfRejected(key, () => processImage(buffer))
+    // The object can change between head and get, so the limit holds for the bytes actually read.
+    const processed = await deleteIfRejected(key, () => {
+      if (buffer.length > MAX_IMAGE_UPLOAD_BYTES) throw payloadTooLarge('Images must be 25 MB or smaller')
+      return processImage(buffer)
+    })
     return recordImage({ key, url: storage.urlFor(key) }, processed, buffer.length, alt, userId)
   })
+}
+
+/** Throws 409 when the key already has a Media row: its object must not be replaced or completed again. */
+export async function assertNotCompleted(key: string): Promise<void> {
+  if (await prisma.media.findUnique({ where: { key }, select: { id: true } })) {
+    throw conflict('UPLOAD_ALREADY_COMPLETED', 'This upload has already been completed')
+  }
 }
 
 /** Step 3: verifies the object the browser put in storage and records it as a Media row. */
 export async function completeUpload(input: CompleteUploadInput, userId: string | null): Promise<Media> {
   const { key, alt } = input
-  if (await prisma.media.findUnique({ where: { key }, select: { id: true } })) {
-    throw conflict('UPLOAD_ALREADY_COMPLETED', 'This upload has already been completed')
-  }
+  await assertNotCompleted(key)
   const stored = await getStorage().head(key)
   if (!stored) throw badRequest('UPLOAD_NOT_FOUND', 'No uploaded file was found for this key')
   await deleteIfRejected(key, () => assertStoredObjectAllowed(key, stored))

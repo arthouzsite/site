@@ -1,4 +1,5 @@
 import { env } from '@/lib/server/env'
+import { assertNotCompleted } from '@/lib/server/media/direct-upload.service'
 import { badRequest, notFound, unsupportedMediaType } from '@/lib/server/http/errors'
 import { route } from '@/lib/server/http/route'
 import { extForMime, extOfKey, isUploadKey } from '@/lib/server/media/upload-keys'
@@ -15,6 +16,11 @@ export const PUT = route<{ key: string[] }>('user', async ({ request, params }) 
   if (!isUploadKey(key)) throw badRequest('INVALID_KEY', 'Not a valid upload key')
   const contentType = request.headers.get('content-type') ?? ''
   if (extForMime(contentType) !== extOfKey(key)) throw unsupportedMediaType('The content type does not match the upload')
-  await memoryStorage.put(key, await readBoundedBody(request, MAX_BODY_BYTES), contentType)
+  const declared = memoryStorage.declaredSize(key)
+  if (declared === undefined) throw badRequest('UPLOAD_NOT_ALLOCATED', 'No upload was created for this key')
+  await assertNotCompleted(key)
+  const body = await readBoundedBody(request, MAX_BODY_BYTES)
+  if (body.length !== declared) throw badRequest('UPLOAD_SIZE_MISMATCH', `Expected ${declared} bytes but received ${body.length}`)
+  await memoryStorage.put(key, body, contentType)
   return null
 })

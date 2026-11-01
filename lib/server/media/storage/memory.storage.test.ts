@@ -5,9 +5,16 @@ describe('MemoryStorage', () => {
   const bytes = Buffer.from('0123456789')
 
   it('hands out the same-origin PUT route as the upload target', async () => {
-    const target = await new MemoryStorage().createUploadTarget('arthouz/2026/a.png', 'image/png')
-    expect(target).toMatchObject({ url: '/api/media/uploads/arthouz/2026/a.png', method: 'PUT', headers: { 'content-type': 'image/png' } })
+    const target = await new MemoryStorage().createUploadTarget('arthouz/2026/a.png', 'image/png', 10)
+    expect(target).toMatchObject({ url: '/api/media/uploads/arthouz/2026/a.png', method: 'PUT', headers: { 'content-type': 'image/png', 'cache-control': 'public, max-age=31536000, immutable' } })
     expect(new Date(target.expiresAt).getTime()).toBeGreaterThan(Date.now())
+  })
+
+  it('remembers the declared size per key', async () => {
+    const storage = new MemoryStorage()
+    await storage.createUploadTarget('a.png', 'image/png', 10)
+    expect(storage.declaredSize('a.png')).toBe(10)
+    expect(storage.declaredSize('b.png')).toBeUndefined()
   })
 
   it('head reports size and type, or null when missing', async () => {

@@ -64,7 +64,7 @@ describe('presigned media uploads', () => {
       expect(target.key.endsWith('.jpg')).toBe(true)
       expect(target.method).toBe('PUT')
       expect(target.url).toBe(`/api/media/uploads/${target.key}`)
-      expect(target.headers).toEqual({ 'content-type': 'image/jpeg' })
+      expect(target.headers).toEqual({ 'content-type': 'image/jpeg', 'cache-control': 'public, max-age=31536000, immutable' })
       expect(new Date(target.expiresAt).getTime()).toBeGreaterThan(Date.now())
     })
 
@@ -184,10 +184,24 @@ describe('presigned media uploads', () => {
     })
 
     it('413 and deletes the object when the stored size exceeds the image limit', async () => {
-      const target = await stage(Buffer.alloc(25 * MB + 1), 'image/jpeg', 1000)
-      const res = await complete({ key: target.key, alt: 'x' })
+      const key = 'arthouz/2026/12345678-1234-1234-1234-123456789012.jpg'
+      await memoryStorage.put(key, Buffer.alloc(25 * MB + 1), 'image/jpeg')
+      const res = await complete({ key, alt: 'x' })
       expect(res.status).toBe(413)
-      expect(memoryStorage.has(target.key)).toBe(false)
+      expect(memoryStorage.has(key)).toBe(false)
+      expect(await prisma.media.count()).toBe(0)
+    })
+
+    it.each([
+      ['image/png', 'png'],
+      ['video/mp4', 'mp4'],
+    ])('400 EMPTY_UPLOAD and deletes a zero-byte %s object', async (mime, ext) => {
+      const key = `arthouz/2026/12345678-1234-1234-1234-123456789012.${ext}`
+      await memoryStorage.put(key, Buffer.alloc(0), mime)
+      const res = await complete({ key, alt: 'x' })
+      expect(res.status).toBe(400)
+      expect(res.body.error.code).toBe('EMPTY_UPLOAD')
+      expect(memoryStorage.has(key)).toBe(false)
       expect(await prisma.media.count()).toBe(0)
     })
 
@@ -227,6 +241,34 @@ describe('presigned media uploads', () => {
   })
 
   describe('local PUT (memory driver)', () => {
+    it('400 UPLOAD_SIZE_MISMATCH and stores nothing when the body length differs from the declared bytes', async () => {
+      const created = await createTarget({ filename: 'f', mime: 'image/png', bytes: png.length, alt: 'x' })
+      const target = created.body.data as Target
+      const longer = await putBytes(target, Buffer.concat([png, Buffer.from([0])]))
+      expect(longer.status).toBe(400)
+      expect(longer.body.error.code).toBe('UPLOAD_SIZE_MISMATCH')
+      expect((await putBytes(target, png.subarray(1))).status).toBe(400)
+      expect(memoryStorage.has(target.key)).toBe(false)
+    })
+
+    it('409 UPLOAD_ALREADY_COMPLETED when a completed key is PUT again, keeping the original bytes', async () => {
+      const target = await stage(png, 'image/png')
+      expect((await complete({ key: target.key, alt: 'a' })).status).toBe(201)
+      const again = await putBytes(target, Buffer.from(png))
+      expect(again.status).toBe(409)
+      expect(again.body.error.code).toBe('UPLOAD_ALREADY_COMPLETED')
+    })
+
+    it('400 UPLOAD_NOT_ALLOCATED for a well-formed key no target was created for', async () => {
+      const res = await call('PUT', '/api/media/uploads/arthouz/2026/12345678-1234-1234-1234-123456789012.png', {
+        raw: png as BodyInit,
+        headers: { 'content-type': 'image/png' },
+        cookie: auth(),
+      })
+      expect(res.status).toBe(400)
+      expect(res.body.error.code).toBe('UPLOAD_NOT_ALLOCATED')
+    })
+
     it('413 when the body exceeds the bound, storing nothing', async () => {
       const created = await createTarget({ filename: 'f', mime: 'image/png', bytes: 10, alt: 'x' })
       const target = created.body.data as Target

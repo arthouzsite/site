@@ -96,6 +96,21 @@ describe('completeUpload', () => {
     expect(fake.media.create.mock.calls[0]![0].data).toMatchObject({ key, kind: 'VIDEO', uploadedById: 'u1', url: `memory://${key}` })
   })
 
+  it('deletes the object when the bytes read exceed the image limit although head reported a small size', async () => {
+    await storage.put(KEY, png, 'image/png')
+    vi.spyOn(storage, 'get').mockResolvedValue(Buffer.alloc(25 * 1024 * 1024 + 1))
+    await expect(completeUpload({ key: KEY, alt: 'x' }, null)).rejects.toMatchObject({ status: 413 })
+    expect(storage.has(KEY)).toBe(false)
+    expect(fake.media.create).not.toHaveBeenCalled()
+  })
+
+  it('records the size of the bytes read, not the size head reported', async () => {
+    await storage.put(KEY, png, 'image/png')
+    vi.spyOn(storage, 'head').mockResolvedValue({ bytes: 1, contentType: 'image/png' })
+    await completeUpload({ key: KEY, alt: 'x' }, null)
+    expect(fake.media.create.mock.calls[0]![0].data.bytes).toBe(png.length)
+  })
+
   it('does not delete the object on an unexpected storage failure', async () => {
     await storage.put(KEY, png, 'image/png')
     vi.spyOn(storage, 'get').mockRejectedValue(new Error('r2 timeout'))

@@ -7,6 +7,7 @@ import type { Storage, StoredObjectInfo, UploadTarget } from './storage.interfac
 
 const HTTP_NOT_FOUND = 404
 const MS_PER_SECOND = 1000
+const SIGNED_UPLOAD_HEADERS = new Set(['content-type', 'cache-control', 'content-length'])
 
 function isMissingObject(error: unknown): boolean {
   const { name, $metadata } = (error ?? {}) as { name?: string; $metadata?: { httpStatusCode?: number } }
@@ -75,17 +76,21 @@ export class R2Storage implements Storage {
     }
   }
 
-  /** A presigned PUT URL with the content type signed, so the browser must send exactly the declared type. */
-  async createUploadTarget(key: string, contentType: string): Promise<UploadTarget> {
+  /**
+   * A presigned PUT URL with content type, cache control and the declared length signed: a PUT with other bytes
+   * is refused by R2. Browsers send Content-Length themselves, so only content-type and cache-control are returned
+   * for the client to forward.
+   */
+  async createUploadTarget(key: string, contentType: string, bytes: number): Promise<UploadTarget> {
     const url = await getSignedUrl(
       this.client,
-      new PutObjectCommand({ Bucket: this.config.bucket, Key: key, ContentType: contentType }),
-      { expiresIn: UPLOAD_URL_TTL_SECONDS, signableHeaders: new Set(['content-type']) },
+      new PutObjectCommand({ Bucket: this.config.bucket, Key: key, ContentType: contentType, CacheControl: CACHE_CONTROL, ContentLength: bytes }),
+      { expiresIn: UPLOAD_URL_TTL_SECONDS, signableHeaders: SIGNED_UPLOAD_HEADERS },
     )
     return {
       url,
       method: 'PUT',
-      headers: { 'content-type': contentType },
+      headers: { 'content-type': contentType, 'cache-control': CACHE_CONTROL },
       expiresAt: new Date(Date.now() + UPLOAD_URL_TTL_SECONDS * MS_PER_SECOND).toISOString(),
     }
   }

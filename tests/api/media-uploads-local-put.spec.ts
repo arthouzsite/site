@@ -8,11 +8,17 @@ vi.mock('@/lib/server/auth/current-user', () => ({
   requireUser: async () => ({ id: 'u1', role: 'EDITOR' }),
 }))
 
+vi.mock('@/lib/server/prisma', () => ({ prisma: { media: { findUnique: async () => null } } }))
+
 import { PUT } from '@/app/api/media/uploads/[...key]/route'
 import { memoryStorage } from '@/lib/server/media/storage/storage.provider'
 
 const KEY = 'arthouz/2026/12345678-1234-1234-1234-123456789012.png'
-const put = () =>
+const put = async () => {
+  await memoryStorage.createUploadTarget(KEY, 'image/png', 1)
+  return send()
+}
+const send = () =>
   PUT(new Request(`http://localhost/api/media/uploads/${KEY}`, { method: 'PUT', headers: { 'content-type': 'image/png' }, body: 'x' }), {
     params: Promise.resolve({ key: KEY.split('/') }),
   })
