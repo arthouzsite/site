@@ -22,6 +22,7 @@ const PATHS = {
   news: (<><path d="M4 5h13v14H4z" /><path d="M17 9h3v8a2 2 0 0 1-2 2H6" /><path d="M7 9h7M7 13h7" /></>),
   locations: (<><path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></>),
   about: (<><path d="M6 3h9l4 4v14H6z" /><path d="M9 12h6M9 16h6" /></>),
+  services: (<><rect x="3" y="7" width="18" height="13" rx="1.5" /><path d="M9 7V4h6v3" /><path d="M3 13h18" /><path d="M12 12v3" /></>),
   settings: (<><path d="M4 6h16M4 12h16M4 18h16" /><circle cx="9" cy="6" r="2" /><circle cx="15" cy="12" r="2" /><circle cx="8" cy="18" r="2" /></>),
   media: (<><rect x="3" y="5" width="18" height="14" /><circle cx="9" cy="10" r="1.5" /><path d="M21 16l-5-5-8 8" /></>),
   users: (<><circle cx="9" cy="8" r="3.5" /><path d="M2 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5" /><circle cx="17.5" cy="9" r="2.5" /><path d="M22 19c0-2.5-2-4-4.5-4" /></>),
