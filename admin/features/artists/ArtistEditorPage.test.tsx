@@ -1,6 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
+import { delay } from 'msw'
 import { API_URL, HttpResponse, envelope, errorEnvelope, http, server } from '../../test/msw'
 import ArtistEditorPage from './ArtistEditorPage'
 import { makeArtist, makeArtwork, renderRoutes } from './testUtils'
@@ -98,6 +99,42 @@ describe('ArtistEditorPage', () => {
     await user.type(screen.getByLabelText('Medium'), ' on wood')
     expect(screen.getByRole('switch', { name: 'Published' })).toBeDisabled()
     expect(screen.getByRole('switch', { name: 'Featured' })).toBeDisabled()
+  })
+
+  it('flips Published at once and keeps the new state when the server agrees', async () => {
+    setup('/artists/a1')
+    server.use(
+      http.patch(`${API_URL}/artists/a1/publish`, async () => {
+        await delay(150)
+        return HttpResponse.json(envelope({ ...artist, isPublished: false }))
+      }),
+    )
+    const user = userEvent.setup()
+    const published = await screen.findByRole('switch', { name: 'Published' })
+    await waitFor(() => expect(published).toBeEnabled())
+    expect(published).toBeChecked()
+    await user.click(published)
+    expect(screen.getByRole('switch', { name: 'Published' })).not.toBeChecked()
+    await waitFor(() => expect(screen.getByRole('switch', { name: 'Published' })).toBeEnabled())
+    expect(screen.getByRole('switch', { name: 'Published' })).not.toBeChecked()
+  })
+
+  it('rolls Featured back and reports the error when the server refuses', async () => {
+    setup('/artists/a1')
+    server.use(
+      http.patch(`${API_URL}/artists/a1/feature`, async () => {
+        await delay(150)
+        return HttpResponse.json(errorEnvelope('INTERNAL', 'Database unavailable'), { status: 500 })
+      }),
+    )
+    const user = userEvent.setup()
+    const featured = await screen.findByRole('switch', { name: 'Featured' })
+    await waitFor(() => expect(featured).toBeEnabled())
+    expect(featured).toBeChecked()
+    await user.click(featured)
+    expect(screen.getByRole('switch', { name: 'Featured' })).not.toBeChecked()
+    expect(await screen.findByText('Database unavailable')).toBeInTheDocument()
+    expect(screen.getByRole('switch', { name: 'Featured' })).toBeChecked()
   })
 
   it('shows the featured position', async () => {

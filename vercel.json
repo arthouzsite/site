@@ -1,4 +1,7 @@
 {
+  "regions": [
+    "sin1"
+  ],
   "functions": {
     "app/api/media/route.ts": {
       "maxDuration": 300

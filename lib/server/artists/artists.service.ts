@@ -64,28 +64,48 @@ export async function updateArtist(id: string, input: ArtistInput) {
   return toAdminArtist(updated)
 }
 
+// The database may sit far from the function (FIN-3492), so each toggle keeps its sequential round trips to a minimum:
+// independent reads and writes run together, and the featured list is renumbered in one statement instead of one per row.
 export async function publishArtist(id: string, isPublished: boolean) {
   const existing = await find(id)
-  const updated = await prisma.artist.update({ where: { id }, data: { isPublished }, include: ARTIST_INCLUDE })
-  revalidateSite(await artistTagsWithExhibitions(prisma, id, [existing.slug]))
+  const [updated, tags] = await Promise.all([
+    prisma.artist.update({ where: { id }, data: { isPublished }, include: ARTIST_INCLUDE }),
+    artistTagsWithExhibitions(prisma, id, [existing.slug]),
+  ])
+  revalidateSite(tags)
   return toAdminArtist(updated)
 }
+
+/** Appends the artist after the current last featured position in one atomic statement. */
+const appendFeatured = (id: string) =>
+  prisma.$executeRaw`
+    UPDATE "Artist"
+    SET "isFeatured" = true,
+        "featuredOrder" = (SELECT COALESCE(MAX("featuredOrder"), 0) + 1 FROM "Artist" WHERE "isFeatured" = true)
+    WHERE id = ${id}`
+
+/** Closes the gap left by an unfeatured artist: remaining featured artists get positions 1..n in their current order. */
+const compactFeaturedOrder = () =>
+  prisma.$executeRaw`
+    UPDATE "Artist" AS a
+    SET "featuredOrder" = ranked.position
+    FROM (
+      SELECT id, ROW_NUMBER() OVER (ORDER BY "featuredOrder" ASC, id ASC)::int AS position
+      FROM "Artist" WHERE "isFeatured" = true
+    ) AS ranked
+    WHERE a.id = ranked.id AND a."featuredOrder" <> ranked.position`
 
 export async function setArtistFeatured(id: string, isFeatured: boolean) {
   const existing = await find(id)
   if (existing.isFeatured === isFeatured) return toAdminArtist(existing)
-  await prisma.$transaction(async (tx) => {
-    if (isFeatured) {
-      const last = await tx.artist.aggregate({ where: { isFeatured: true }, _max: { featuredOrder: true } })
-      await tx.artist.update({ where: { id }, data: { isFeatured: true, featuredOrder: (last._max.featuredOrder ?? 0) + 1 } })
-      return
-    }
-    await tx.artist.update({ where: { id }, data: { isFeatured: false, featuredOrder: NOT_FEATURED_ORDER } })
-    const remaining = await tx.artist.findMany({ where: { isFeatured: true }, orderBy: [{ featuredOrder: 'asc' }, { id: 'asc' }], select: { id: true } })
-    for (const [index, row] of remaining.entries()) {
-      await tx.artist.update({ where: { id: row.id }, data: { featuredOrder: index + 1 } })
-    }
-  })
+  if (isFeatured) {
+    await appendFeatured(id)
+  } else {
+    await prisma.$transaction([
+      prisma.artist.update({ where: { id }, data: { isFeatured: false, featuredOrder: NOT_FEATURED_ORDER } }),
+      compactFeaturedOrder(),
+    ])
+  }
   revalidateSite(tagsFor('artist', existing.slug))
   return getArtist(id)
 }

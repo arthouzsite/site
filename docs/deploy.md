@@ -39,5 +39,6 @@ Build and deploy need devDependencies installed (`prisma`, `tsx`, `typescript`, 
 Works for the site, CMS and API. Media uploads above 4.5 MB fail because of Vercel's request body limit until presigned browser-to-bucket uploads are built; that also needs a CORS rule on the R2 bucket. Run `prisma migrate deploy` and `prisma generate` in the build step.
 
 - Set `TRUST_PROXY=1`: Vercel sits behind one proxy, and without it every client shares one login-throttle bucket.
+- `vercel.json` pins functions to `sin1` (Singapore) because the Neon database lives in `ap-southeast-1`. Keep the two in the same region: from a US region every query is a ~230 ms round trip and a CMS toggle takes seconds (FIN-3492). If the database moves, change `regions` with it.
 - `app/api/media/route.ts` sets `maxDuration = 600`, which exceeds the Hobby plan's function limit. Use a plan that allows it or lower the value.
 - The build step needs the same environment as a Node host build, including `STORAGE_DRIVER` or the R2 variables, and devDependencies installed.

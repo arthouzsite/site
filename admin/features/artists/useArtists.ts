@@ -104,24 +104,41 @@ export function useSaveArtist(id: string | null) {
   })
 }
 
-export function usePublishArtist() {
-  const refresh = useRefreshArtists()
+type FlagPatch = Partial<Pick<AdminArtist, 'isPublished' | 'isFeatured'>>
+
+/**
+ * Shared shape of the Published and Featured switches: the cached artist flips at once, the server's row replaces it
+ * on success, and the previous row returns on failure. Only the lists refetch afterwards, in the background.
+ */
+function useFlagMutation(path: 'publish' | 'feature') {
+  const client = useQueryClient()
   const toast = useToast()
   return useMutation({
-    mutationFn: ({ id, isPublished }: { id: string; isPublished: boolean }) => api.patch<AdminArtist>(`/artists/${id}/publish`, { isPublished }),
-    onSuccess: (_saved, { id }) => refresh(id),
-    onError: (err) => toast.error(errorMessage(err)),
+    mutationFn: ({ id, ...body }: { id: string } & FlagPatch) => api.patch<AdminArtist>(`/artists/${id}/${path}`, body),
+    onMutate: async ({ id, ...patch }) => {
+      const key = ['artist', id]
+      await client.cancelQueries({ queryKey: key })
+      const previous = client.getQueryData<AdminArtist>(key)
+      if (previous) client.setQueryData<AdminArtist>(key, { ...previous, ...patch })
+      return { previous }
+    },
+    onSuccess: (saved) => {
+      client.setQueryData(['artist', saved.id], saved)
+      void client.invalidateQueries({ queryKey: ['artists'] })
+    },
+    onError: (err, { id }, context) => {
+      if (context?.previous) client.setQueryData(['artist', id], context.previous)
+      toast.error(errorMessage(err))
+    },
   })
 }
 
+export function usePublishArtist() {
+  return useFlagMutation('publish')
+}
+
 export function useFeatureArtist() {
-  const refresh = useRefreshArtists()
-  const toast = useToast()
-  return useMutation({
-    mutationFn: ({ id, isFeatured }: { id: string; isFeatured: boolean }) => api.patch<AdminArtist>(`/artists/${id}/feature`, { isFeatured }),
-    onSuccess: (_saved, { id }) => refresh(id),
-    onError: (err) => toast.error(errorMessage(err)),
-  })
+  return useFlagMutation('feature')
 }
 
 export function useReorderFeatured() {
