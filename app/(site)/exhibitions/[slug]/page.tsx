@@ -1,6 +1,5 @@
 import { publicExhibitionDetailSchema, type PublicExhibitionDetail } from '@/lib/shared'
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArtistPills } from '@/components/exhibitions/ArtistPills'
 import { ExhibitionMeta } from '@/components/exhibitions/ExhibitionMeta'
@@ -12,6 +11,8 @@ import { StatusBadge } from '@/components/site/StatusBadge'
 import { ApiError, apiGet } from '@/lib/api'
 import { detailMetadata } from '@/lib/site-metadata'
 import { TAGS } from '@/lib/tags'
+import { PageTitle } from '@/components/site/PageTitle'
+import { BackLink } from '@/components/site/BackLink'
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -37,16 +38,14 @@ export default async function ExhibitionPage({ params }: Props) {
   return (
     <main>
       <Container className="pt-[clamp(28px,4vw,48px)] pb-[clamp(32px,4vw,56px)]">
-        <Link href="/exhibitions" className="hit-44 text-[12.5px] tracking-[0.16em] text-muted uppercase">
-          <span aria-hidden="true">←</span> Exhibitions
-        </Link>
+        <BackLink href="/exhibitions">Exhibitions</BackLink>
         <div className="mt-10 mb-[18px] flex flex-wrap items-center gap-x-4 gap-y-2">
           <span className="text-[12px] tracking-[0.18em] text-rust uppercase">
             {e.city}, {e.country} · {TYPE_LABELS[e.type]}
           </span>
           <StatusBadge status={e.status} />
         </div>
-        <h1 className="m-0 max-w-[1200px] font-display text-[clamp(44px,7vw,112px)] leading-[0.95] font-normal tracking-[-0.015em] text-balance">{e.title}</h1>
+        <PageTitle variant="detail" className="max-w-[1200px]">{e.title}</PageTitle>
         <div className="mt-5 font-display text-[clamp(22px,2.2vw,30px)] text-body italic">{e.subtitle}</div>
       </Container>
       <div className="relative h-[clamp(360px,70vh,820px)] w-full bg-imgph">

@@ -86,6 +86,19 @@ describe('LocationsPage', () => {
     expect(screen.getByText('Footer hours')).toBeInTheDocument()
   })
 
+  it('opens the new card first with City focused, and rejects letters in Phone', async () => {
+    server.use(http.get(`${API_URL}/locations`, () => HttpResponse.json(envelope(locations))))
+    mount()
+    await screen.findByRole('region', { name: 'Chennai' })
+    await userEvent.click(screen.getByRole('button', { name: 'Add location' }))
+    expect(screen.getAllByRole('region')[0]).toHaveAccessibleName('New location')
+    const fresh = card('New location')
+    expect(within(fresh).getByLabelText(/City/)).toHaveFocus()
+    await userEvent.type(within(fresh).getByLabelText(/^Phone/), 'wertyuiytrertyui')
+    await userEvent.click(within(fresh).getByRole('button', { name: 'Save' }))
+    expect(await within(fresh).findAllByText('Use digits only, with spaces, +, - or brackets')).not.toHaveLength(0)
+  })
+
   it('deletes through a confirm modal', async () => {
     let deleted = false
     server.use(

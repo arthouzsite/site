@@ -33,8 +33,9 @@ export default function LocationsPage() {
     }
   }
   const dropDraft = (key: number) => setDrafts((cur) => cur.filter((k) => k !== key))
+  // A new card opens at the top, next to the button that created it; its City field takes focus (FIN-3499).
   const addDraft = () => {
-    setDrafts((cur) => [...cur, nextDraft])
+    setDrafts((cur) => [nextDraft, ...cur])
     setNextDraft((n) => n + 1)
   }
 
@@ -44,13 +45,13 @@ export default function LocationsPage() {
       {list.isError && <p role="alert" className="m-0 text-13 text-danger">Could not load locations. Try again.</p>}
       {list.data && (
         <div className="grid grid-cols-[repeat(auto-fit,minmax(min(420px,100%),1fr))] items-start gap-6">
-          {locations.map((loc, i) => (
-            <LocationCard key={loc.id} location={loc} canMoveUp={i > 0} canMoveDown={i < locations.length - 1} moving={reorder.isPending}
-              onMove={(by) => void reorderBy(i, by)} onSettled={() => undefined} onDiscard={() => undefined} />
-          ))}
           {drafts.map((key) => (
             <LocationCard key={`draft-${key}`} location={null} canMoveUp={false} canMoveDown={false} moving={false}
               onMove={() => undefined} onSettled={() => dropDraft(key)} onDiscard={() => dropDraft(key)} />
+          ))}
+          {locations.map((loc, i) => (
+            <LocationCard key={loc.id} location={loc} canMoveUp={i > 0} canMoveDown={i < locations.length - 1} moving={reorder.isPending}
+              onMove={(by) => void reorderBy(i, by)} onSettled={() => undefined} onDiscard={() => undefined} />
           ))}
         </div>
       )}

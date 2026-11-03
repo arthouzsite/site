@@ -8,6 +8,7 @@ import { LetterStrip } from '@/components/artists/LetterStrip'
 import { Container } from '@/components/site/Container'
 import { apiGet, apiGetUncached } from '@/lib/api'
 import { TAGS } from '@/lib/tags'
+import { PageTitle } from '@/components/site/PageTitle'
 
 export const metadata: Metadata = { title: 'Artists' }
 
@@ -27,7 +28,7 @@ export default async function ArtistsPage({ searchParams }: Props) {
   return (
     <main>
       <Container className="pt-[clamp(40px,6vw,88px)] pb-[clamp(72px,9vw,140px)]">
-        <h1 className="m-0 mb-12 font-display text-[clamp(56px,9vw,148px)] leading-[0.9] font-normal tracking-[-0.02em]">Artists</h1>
+        <PageTitle className="mb-12">Artists</PageTitle>
         <FeaturedGrid artists={featured} />
         <div className="mb-6 flex flex-wrap items-end justify-between gap-x-12 gap-y-6">
           <h2 className="m-0 font-display text-[clamp(36px,4vw,56px)] leading-none font-normal">Index A–Z</h2>

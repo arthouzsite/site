@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { ServiceRow } from '@/components/services/ServiceRow'
 import { Container } from '@/components/site/Container'
 import { getServices } from '@/lib/services'
+import { PageTitle } from '@/components/site/PageTitle'
 
 export function generateMetadata(): Metadata {
   return { title: 'Services' }
@@ -12,7 +13,7 @@ export default async function ServicesPage() {
   return (
     <main>
       <Container className="pt-[clamp(40px,6vw,88px)] pb-[clamp(72px,9vw,140px)]">
-        <h1 className="m-0 mb-14 font-display text-[clamp(56px,9vw,148px)] leading-[0.9] font-normal tracking-[-0.02em]">Services</h1>
+        <PageTitle className="mb-14">Services</PageTitle>
         {services.map((service, index) => (
           <ServiceRow key={service.slug} service={service} flipped={index % 2 === 1} />
         ))}

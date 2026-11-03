@@ -120,10 +120,11 @@ describe('ArtistsListPage', () => {
     expect(within(dialog).queryByText(/exhibition works?/)).not.toBeInTheDocument()
   })
 
-  it('the # letter filters artists whose name starts with a non-letter', async () => {
-    const { listRequests } = setup()
+  it('the letter strip offers A to Z only, with no # bucket', async () => {
+    setup()
     await screen.findByRole('table', { name: 'Artists' })
-    await userEvent.click(screen.getByRole('button', { name: '#' }))
-    await waitFor(() => expect(listRequests.at(-1)!.searchParams.get('letter')).toBe('#'))
+    const strip = screen.getByRole('navigation', { name: 'Jump to letter' })
+    expect(within(strip).getAllByRole('button')).toHaveLength(26)
+    expect(within(strip).queryByRole('button', { name: '#' })).not.toBeInTheDocument()
   })
 })

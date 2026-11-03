@@ -1,4 +1,4 @@
-import { MIN_PASSWORD_LENGTH, ROLES } from '@/lib/shared'
+import { MIN_PASSWORD_LENGTH, NAME_MESSAGE, NO_DIGITS_PATTERN, ROLES } from '@/lib/shared'
 import { useState } from 'react'
 import { z } from 'zod'
 import { Button } from '../../components/ui/Button'
@@ -16,7 +16,7 @@ import { generatePassword } from './password'
 import { useUpdateUser, type User, type UserPatch } from './useUsers'
 
 const schema = z.object({
-  editName: z.string().trim().min(1, 'Enter a name').max(200),
+  editName: z.string().trim().min(1, 'Enter a name').max(200).regex(NO_DIGITS_PATTERN, NAME_MESSAGE),
   editRole: z.enum(ROLES),
   editPassword: z.string().refine((v) => v === '' || v.length >= MIN_PASSWORD_LENGTH, `Use at least ${MIN_PASSWORD_LENGTH} characters`),
   isDisabled: z.boolean(),

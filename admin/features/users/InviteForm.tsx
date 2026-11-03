@@ -1,4 +1,4 @@
-import { MIN_PASSWORD_LENGTH, ROLES } from '@/lib/shared'
+import { MIN_PASSWORD_LENGTH, NAME_MESSAGE, NO_DIGITS_PATTERN, ROLES } from '@/lib/shared'
 import { z } from 'zod'
 import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
@@ -13,7 +13,7 @@ import { generatePassword } from './password'
 import { useCreateUser } from './useUsers'
 
 const schema = z.object({
-  name: z.string().trim().min(1, 'Enter a name').max(200),
+  name: z.string().trim().min(1, 'Enter a name').max(200).regex(NO_DIGITS_PATTERN, NAME_MESSAGE),
   email: z.string().trim().toLowerCase().min(1, 'Enter an email address').email('Enter a valid email address').max(254),
   role: z.enum(ROLES),
   password: z.string().min(MIN_PASSWORD_LENGTH, `Use at least ${MIN_PASSWORD_LENGTH} characters`).max(200),

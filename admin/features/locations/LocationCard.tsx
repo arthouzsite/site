@@ -1,4 +1,4 @@
-import { useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { locationInputSchema } from '@/lib/shared'
 import { Button, ConfirmModal, ErrorSummary, Field, Icon, Input, PrefixInput, Textarea, collectErrors } from '../../components/ui'
 import { ApiError } from '../../lib/api'
@@ -56,6 +56,12 @@ export function LocationCard({ location, canMoveUp, canMoveDown, moving, onMove,
     sortOrder: location?.sortOrder ?? 0,
   })
   const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = form
+  // A card the user just added opens with City focused, so typing can start where the button put them (FIN-3499).
+  const cityInput = useRef<HTMLInputElement | null>(null)
+  const cityField = register('city')
+  useEffect(() => {
+    if (!location) cityInput.current?.focus()
+  }, [location])
   const city = watch('city')
   const mapUrl = watch('mapUrl')
   const err = (name: keyof typeof LABELS) => errors[name]?.message as string | undefined
@@ -100,10 +106,10 @@ export function LocationCard({ location, canMoveUp, canMoveDown, moving, onMove,
       <form noValidate onSubmit={(e) => void onSubmit(e)} aria-label={`${heading} details`} className="flex flex-col gap-4 p-4">
         <ErrorSummary errors={collectErrors(errors, LABELS, `${headingId}-`)} focusKey={submits + (save.isError ? 1 : 0)} />
         <ImageField label="Image" ratio="4/3" value={image} onChange={pickImage} />
-        <Field name="city" idPrefix={idPrefix} label="City" required error={err('city')}><Input {...register('city')} /></Field>
+        <Field name="city" idPrefix={idPrefix} label="City" required error={err('city')}><Input {...cityField} ref={(el) => { cityField.ref(el); cityInput.current = el }} /></Field>
         <Field name="address" idPrefix={idPrefix} label="Address" error={err('address')}><Textarea rows={2} className="min-h-0" {...register('address')} /></Field>
         <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
-          <Field name="phone" idPrefix={idPrefix} label="Phone" error={err('phone')}><Input {...register('phone')} /></Field>
+          <Field name="phone" idPrefix={idPrefix} label="Phone" error={err('phone')}><Input inputMode="tel" {...register('phone')} /></Field>
           <Field name="tel" idPrefix={idPrefix} label="Tel" help="E.164, used for the call link" error={err('tel')}><PrefixInput prefix="tel:" type="tel" {...register('tel')} /></Field>
         </div>
         <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">

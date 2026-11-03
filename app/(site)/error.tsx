@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { Container } from '@/components/site/Container'
+import { PageTitle } from '@/components/site/PageTitle'
 
 type Props = { error: Error & { digest?: string }; reset: () => void }
 
@@ -13,9 +14,9 @@ export default function ErrorPage({ error, reset }: Props) {
   return (
     <main>
       <Container className="pt-[clamp(40px,6vw,88px)] pb-[clamp(72px,9vw,140px)]">
-        <h1 className="m-0 mb-6 font-display text-[clamp(56px,9vw,148px)] leading-[0.9] font-normal tracking-[-0.02em]">
+        <PageTitle className="mb-6">
           Something went wrong
-        </h1>
+        </PageTitle>
         <p className="m-0 mb-8 max-w-[560px] text-[15.5px] leading-[1.65] text-body">
           This page could not be loaded. Please try again in a moment.
         </p>

@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ServiceContact } from '@/components/services/ServiceContact'
 import { Container } from '@/components/site/Container'
@@ -9,6 +8,8 @@ import { ApiError } from '@/lib/api'
 import { paragraphs } from '@/lib/format'
 import { getService } from '@/lib/services'
 import { detailMetadata } from '@/lib/site-metadata'
+import { PageTitle } from '@/components/site/PageTitle'
+import { BackLink } from '@/components/site/BackLink'
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -39,10 +40,8 @@ export default async function ServicePage({ params }: Props) {
   return (
     <main>
       <Container className="pt-[clamp(28px,4vw,48px)] pb-[clamp(32px,4vw,56px)]">
-        <Link href="/services" className="hit-44 text-[12.5px] tracking-[0.16em] text-muted uppercase">
-          <span aria-hidden="true">←</span> Services
-        </Link>
-        <h1 className="m-0 mt-10 max-w-[1200px] font-display text-[clamp(44px,7vw,112px)] leading-[0.95] font-normal tracking-[-0.015em] text-balance">{service.title}</h1>
+        <BackLink href="/services">Services</BackLink>
+        <PageTitle variant="detail" className="mt-10 max-w-[1200px]">{service.title}</PageTitle>
         {service.summary && (
           <p className="m-0 mt-5 max-w-[820px] font-display text-[clamp(24px,2.4vw,34px)] leading-[1.3] text-pretty text-body">{service.summary}</p>
         )}

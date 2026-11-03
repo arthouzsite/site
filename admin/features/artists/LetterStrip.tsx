@@ -1,10 +1,10 @@
 import { cx } from '../../components/ui/cx'
 
-const LETTERS = [...Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)), '#']
+const LETTERS = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i))
 
 type Props = { value: string; onChange: (letter: string) => void }
 
-/** A–Z plus # jump strip. Pressing the active letter clears the filter. */
+/** A–Z jump strip. Pressing the active letter clears the filter. Names starting with a digit or symbol stay reachable through search. */
 export function LetterStrip({ value, onChange }: Props) {
   return (
     <nav aria-label="Jump to letter" className="flex flex-wrap gap-1 border-t border-line-strong pt-3">

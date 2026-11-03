@@ -58,6 +58,16 @@ describe('UsersPage', () => {
     expect(screen.getByRole('button', { name: 'Delete Arun Kumar' })).toBeInTheDocument()
   })
 
+  it('refuses a name that contains numbers', async () => {
+    const calls = setup()
+    const user = userEvent.setup()
+    await screen.findByText('Arun Kumar')
+    await user.type(screen.getByLabelText(/^Name/), '55454665')
+    await user.click(screen.getByRole('button', { name: 'Send invite' }))
+    expect(await screen.findAllByText('Name cannot contain numbers')).not.toHaveLength(0)
+    expect(calls).toEqual([])
+  })
+
   it('does not promise a forced password change on first sign-in', async () => {
     setup()
     await screen.findByText('Arun Kumar')
