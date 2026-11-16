@@ -9,7 +9,11 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 
 /** Reads the JSON body and validates it; schema failures surface as a ZodError (mapped to 400 VALIDATION). */
 export async function parseBody<T>(request: Request, schema: ZodType<T>): Promise<T> {
-  const raw: unknown = await request.json().catch(() => undefined)
+  return parseObject(await request.json().catch(() => undefined), schema)
+}
+
+/** Validates an already-read JSON value that must be an object (for callers that read the body themselves). */
+export function parseObject<T>(raw: unknown, schema: ZodType<T>): T {
   if (!isPlainObject(raw)) throw badRequest('BAD_REQUEST', NOT_AN_OBJECT)
   return schema.parse(raw)
 }

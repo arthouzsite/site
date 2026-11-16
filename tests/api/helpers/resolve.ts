@@ -26,12 +26,15 @@ function rank(segment: string | undefined): number {
   return PARAM_SEGMENT.test(segment) ? 1 : 0
 }
 
+/** A total order (rank, then name, then depth): a partial one lets the sort leave `media/[id]` ahead of `media/uploads`. */
 function byPrecedence(a: RouteEntry, b: RouteEntry): number {
   for (let i = 0; i < Math.min(a.segments.length, b.segments.length); i += 1) {
     const diff = rank(a.segments[i]) - rank(b.segments[i])
     if (diff !== 0) return diff
+    const byName = (a.segments[i] ?? '').localeCompare(b.segments[i] ?? '')
+    if (byName !== 0) return byName
   }
-  return 0
+  return a.segments.length - b.segments.length
 }
 
 let routeTable: readonly RouteEntry[] | undefined

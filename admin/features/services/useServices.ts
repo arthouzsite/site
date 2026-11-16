@@ -42,11 +42,6 @@ export function usePublishService() {
   })
 }
 
-export function useReorderServices() {
-  const invalidate = useInvalidate()
-  return useMutation({ mutationFn: (ids: string[]) => api.put<unknown>('/services/order', { ids }), onSuccess: invalidate })
-}
-
 export function useDeleteService() {
   const client = useQueryClient()
   const invalidate = useInvalidate()

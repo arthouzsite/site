@@ -52,7 +52,7 @@ Configuration is read from the process environment; locally from `.env` at the r
 | `AWS_ACCESS_KEY_ID` | with `r2` | Bucket access key id | `<access key id>` |
 | `AWS_SECRET_ACCESS_KEY` | with `r2` | Bucket secret key | `<secret access key>` |
 | `AWS_S3_BUCKET_NAME` | with `r2` | Bucket name | `<bucket name>` |
-| `TRUST_PROXY` | behind a proxy | Number of reverse-proxy hops whose `X-Forwarded-For` is trusted for the per-IP login limit. Default `0`; set `1` behind one proxy | `1` |
+| `TRUST_PROXY` | behind a proxy | Number of reverse-proxy hops whose `X-Forwarded-For` is trusted for the per-IP login limit and the per-IP public enquiry limit. Default `0`; set `1` behind one proxy | `1` |
 | `SEED_FORCE` | no | `1` makes the seed reload content over a database that already has it | `1` |
 | `NEXT_DIST_DIR` | no | Build output directory, default `.next`; the Playwright harnesses use `.next-visual` and `.next-e2e` | `.next` |
 | `TODAY_OVERRIDE` | tests only | Freezes "today" (`YYYY-MM-DD`) for exhibition status and the footer year | `2026-01-15` |
@@ -80,6 +80,8 @@ The seed loads the prototype content, including the five services (published wit
 Content is cached with tags and refreshed when the CMS publishes. To move the seed's placeholder images into the bucket run `pnpm media:rehome` (with `STORAGE_DRIVER=r2`); it is idempotent and skips rows whose object already exists in the bucket. It runs outside the server, so it cannot refresh the cache: call `POST /api/revalidate` afterwards (see Expiring the site cache).
 
 ### Scripts
+
+`services:framing` creates the published `framing-services` Service from the About page's old Framing Services content (idempotent; skips if the slug exists; leaves the About setting in place) and, like the others, needs `POST /api/revalidate` afterwards.
 
 `db:seed`, `media:rehome` and `media:relink` run `tsx` and need the variables in the environment. Run other scripts the same way: `pnpm exec tsx --env-file=.env prisma/some-script.ts`.
 
@@ -121,13 +123,13 @@ The visual suite answers the seed's picsum placeholder images with the same dete
 Details in `docs/deploy.md`. In short:
 
 - Node host: `pnpm install --frozen-lockfile`, `pnpm exec prisma generate` (the client is not committed, so run it on every fresh checkout), `pnpm db:migrate`, `pnpm build`, `pnpm start`. Run one process under pm2 behind a reverse proxy that terminates HTTPS and forwards to port 3300.
-- Set `TRUST_PROXY=1` behind one proxy, otherwise every client shares the proxy's address in the login rate limit. The proxy must overwrite `X-Forwarded-For`.
+- Set `TRUST_PROXY=1` behind one proxy, otherwise every client shares the proxy's address in the login rate limit, and public enquiries (`POST /api/public/enquiries`) fall back to one site-wide cap of 60 per 10 minutes instead of 5 per client address (IPv6 clients count by /64). The proxy must overwrite `X-Forwarded-For`.
 - After out-of-band database changes or the media scripts, expire the cache with `POST /api/revalidate` as an admin (see Expiring the site cache); CMS publishing never needs it.
 - Cookies and API are same-origin, so there is no CORS configuration. Write requests whose `Origin` differs from the request origin get `403 BAD_ORIGIN`.
 - Set `NEXT_PUBLIC_SITE_URL` before `pnpm build`; changing it needs a rebuild. The build reads the database while prerendering, so `DATABASE_URL`, `JWT_SECRET` and `SEED_ADMIN_*` must be set for the build too, and so must `STORAGE_DRIVER` (or the five R2 variables, since production defaults to `r2`): the environment is parsed when the server modules are imported, which `next build` does.
 - The build and deploy steps need devDependencies installed (`prisma`, `tsx`, `typescript`, `@tailwindcss/postcss`), so do not install with `--prod`.
 - Allow request bodies of 200 MB and read timeouts of 600 s on `POST /api/media` at the proxy.
-- Vercel's 4.5 MB request body limit blocks `POST /api/media` for larger files, so the CMS uploads straight to the bucket (see Uploads below), which needs a CORS rule on the R2 bucket. On Vercel set `TRUST_PROXY=1`, otherwise all clients share one login-throttle bucket. The upload route sets `maxDuration = 600`, which exceeds the Hobby plan's function limit; deploy on a plan that allows it or lower the value.
+- Vercel's 4.5 MB request body limit blocks `POST /api/media` for larger files, so the CMS uploads straight to the bucket (see Uploads below), which needs a CORS rule on the R2 bucket. On Vercel set `TRUST_PROXY=1`, otherwise all clients share one login-throttle bucket and one site-wide enquiry cap. The upload route sets `maxDuration = 600`, which exceeds the Hobby plan's function limit; deploy on a plan that allows it or lower the value.
 
 ### Media URLs
 

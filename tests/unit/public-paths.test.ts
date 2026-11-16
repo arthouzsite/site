@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const LOADERS = [
   'getHome', 'getAbout', 'getSettings', 'getLocations', 'getExhibitions', 'getExhibition',
-  'getArtists', 'getArtist', 'getFairs', 'getNews', 'getServices', 'getService', 'search',
+  'getArtists', 'getArtist', 'getFairs', 'getFair', 'getNews', 'getServices', 'getService', 'search',
 ] as const
 type LoaderName = (typeof LOADERS)[number]
 
@@ -41,6 +41,7 @@ describe('resolvePublicPath', () => {
     ['/public/artists?q=%20vij%20', 'getArtists', [{ q: 'vij' }]],
     ['/public/artists/vijay-pichumani', 'getArtist', ['vijay-pichumani']],
     ['/public/fairs', 'getFairs', []],
+    ['/public/fairs/art-dubai', 'getFair', ['art-dubai']],
     ['/public/news', 'getNews', []],
     ['/public/services', 'getServices', []],
     ['/public/services/art-sales', 'getService', ['art-sales']],
@@ -54,9 +55,9 @@ describe('resolvePublicPath', () => {
     expect(call).toEqual([loader, args])
   })
 
-  it('covers all thirteen public reads', async () => {
+  it('covers all fourteen public reads', async () => {
     const paths = ['/public/home', '/public/about', '/public/settings', '/public/locations', '/public/exhibitions',
-      '/public/exhibitions/a', '/public/artists', '/public/artists/a', '/public/fairs', '/public/news',
+      '/public/exhibitions/a', '/public/artists', '/public/artists/a', '/public/fairs', '/public/fairs/a', '/public/news',
       '/public/services', '/public/services/a', '/public/search?q=a']
 
     for (const path of paths) await callFor(path)

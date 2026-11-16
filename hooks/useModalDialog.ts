@@ -3,7 +3,15 @@
 import { useEffect, useRef, type RefObject } from 'react'
 import { APP_ROOT_ID } from '@/lib/dom'
 
-const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])'
+// Elements with tabindex="-1" (the enquiry honeypot) are never reached by Tab, so the trap must not treat them as ends.
+const FOCUSABLE = [
+  'a[href]:not([tabindex="-1"])',
+  'button:not([disabled]):not([tabindex="-1"])',
+  'input:not([disabled]):not([tabindex="-1"])',
+  'select:not([disabled]):not([tabindex="-1"])',
+  'textarea:not([disabled]):not([tabindex="-1"])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(', ')
 
 function focusableIn(panel: HTMLElement): HTMLElement[] {
   return Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE))

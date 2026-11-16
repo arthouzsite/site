@@ -1,5 +1,6 @@
 import sharp, { type Metadata } from 'sharp'
-import { badRequest } from '@/lib/server/http/errors'
+import { imageLimitError } from '@/lib/shared'
+import { ApiException, badRequest } from '@/lib/server/http/errors'
 import { logError } from '@/lib/server/log'
 import { MIME_BY_EXT, THUMB_QUALITY, THUMB_WIDTH, type ImageExt } from './media.constants'
 
@@ -17,6 +18,19 @@ function extFor(meta: Metadata): ImageExt | undefined {
   return EXT_BY_FORMAT[meta.format]
 }
 
+function orientedSize(meta: Metadata): { width: number; height: number } {
+  const isSwapped = (meta.orientation ?? 1) >= SWAPPED_ORIENTATION_MIN
+  const width = meta.width ?? 0
+  const height = meta.height ?? 0
+  return isSwapped ? { width: height, height: width } : { width, height }
+}
+
+// Checked from the header alone, before any pixel work, so an oversized image is never resized or stored.
+function assertWithinDimensions(meta: Metadata): void {
+  const problem = imageLimitError({ bytes: 0, ...orientedSize(meta) })
+  if (problem) throw badRequest('IMAGE_DIMENSIONS_EXCEEDED', problem)
+}
+
 const invalidImage = () => badRequest('INVALID_IMAGE', 'File is not a valid jpeg, png, webp or avif image')
 
 function isDecodeError(error: unknown): error is Error {
@@ -28,6 +42,7 @@ async function decode(buf: Buffer): Promise<{ meta: Metadata; thumb: Buffer }> {
   try {
     const meta = await sharp(buf).metadata()
     if (!extFor(meta)) return { meta, thumb: Buffer.alloc(0) }
+    assertWithinDimensions(meta)
     const thumb = await sharp(buf)
       .rotate()
       .resize({ width: THUMB_WIDTH, withoutEnlargement: true })
@@ -35,7 +50,7 @@ async function decode(buf: Buffer): Promise<{ meta: Metadata; thumb: Buffer }> {
       .toBuffer()
     return { meta, thumb }
   } catch (error) {
-    if (!isDecodeError(error)) throw error
+    if (error instanceof ApiException || !isDecodeError(error)) throw error
     logError(`Image decode failed: ${error.message}`)
     throw invalidImage()
   }
@@ -48,10 +63,7 @@ export function toProcessedImage(meta: Metadata, thumb: Buffer): ProcessedImage 
     logError(`Rejected unsupported image format: ${meta.format}`)
     throw invalidImage()
   }
-  const isSwapped = (meta.orientation ?? 1) >= SWAPPED_ORIENTATION_MIN
-  const width = meta.width ?? 0
-  const height = meta.height ?? 0
-  return { width: isSwapped ? height : width, height: isSwapped ? width : height, thumb, ext, mime: MIME_BY_EXT[ext] }
+  return { ...orientedSize(meta), thumb, ext, mime: MIME_BY_EXT[ext] }
 }
 
 export async function processImage(buf: Buffer): Promise<ProcessedImage> {

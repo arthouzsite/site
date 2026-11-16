@@ -10,7 +10,7 @@ function entityTags(entity: TagEntity, slug?: string): string[] {
     case 'artwork':
       return ['artists', ...(slug ? [`artist:${slug}`] : []), 'exhibitions']
     case 'fair':
-      return ['fairs']
+      return ['fairs', ...(slug ? [`fair:${slug}`] : [])]
     case 'service':
       return ['services', ...(slug ? [`service:${slug}`] : [])]
     case 'news':

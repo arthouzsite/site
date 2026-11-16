@@ -18,6 +18,28 @@ async function choose(files: File[]) {
 
 afterEach(() => vi.restoreAllMocks())
 
+describe('UploadQueue image limits', () => {
+  it('refuses an image over 2 MB before any upload, naming the file and the limit', async () => {
+    const calls = mockUploadFlow()
+    renderWithProviders(<UploadQueue />)
+    await choose([new File([new Uint8Array(2 * 1024 * 1024 + 1)], 'huge.jpg', { type: 'image/jpeg' })])
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent(/huge\.jpg.*2 MB/)
+    expect(screen.queryByRole('button', { name: /^upload/i })).not.toBeInTheDocument()
+    expect(calls.authorised).toHaveLength(0)
+  })
+
+  it('still uploads a valid file added next to a refused one', async () => {
+    const calls = mockUploadFlow()
+    renderWithProviders(<UploadQueue />)
+    const user = await choose([new File([new Uint8Array(2 * 1024 * 1024 + 1)], 'huge.jpg', { type: 'image/jpeg' }), file('ok.jpg')])
+    await user.type(screen.getByLabelText('Alt text for ok.jpg'), 'Alt')
+    await user.click(screen.getByRole('button', { name: /^upload 1 file/i }))
+    await waitFor(() => expect(calls.completed).toHaveLength(1))
+    expect(calls.authorised.map((a) => a.filename)).toEqual(['ok.jpg'])
+  })
+})
+
 describe('UploadQueue', () => {
   it('upload button disabled until alt text entered', async () => {
     const calls = mockUploadFlow()
@@ -51,7 +73,7 @@ describe('UploadQueue', () => {
 
   it.each([
     ['INVALID_IMAGE', 400, 'not a valid image'],
-    ['PAYLOAD_TOO_LARGE', 413, 'This image is larger than 25 MB'],
+    ['PAYLOAD_TOO_LARGE', 413, 'This image is larger than 2 MB'],
     ['UNSUPPORTED_MEDIA_TYPE', 415, 'Only JPEG, PNG, WebP, AVIF, MP4, WebM or MOV files'],
     ['VALIDATION', 400, 'Alt text is required'],
     ['INVALID_VIDEO', 400, 'This file is not a valid video.'],
@@ -116,7 +138,7 @@ describe('UploadQueue', () => {
     const user = await choose([file()])
     await user.type(screen.getByLabelText('Alt text for hero.jpg'), 'Alt')
     await user.click(screen.getByRole('button', { name: /^upload 1 file/i }))
-    expect(await screen.findByRole('alert')).toHaveTextContent('This image is larger than 25 MB.')
+    expect(await screen.findByRole('alert')).toHaveTextContent('This image is larger than 2 MB.')
   })
 
   it('names the 200 MB video limit for a rejected video', async () => {
@@ -134,7 +156,7 @@ describe('UploadQueue', () => {
       'accept',
       'image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm,video/quicktime',
     )
-    expect(screen.getByText('JPEG, PNG, WebP or AVIF up to 25 MB, or MP4, WebM or MOV up to 200 MB')).toBeInTheDocument()
+    expect(screen.getByText('JPEG, PNG, WebP or AVIF. Keep upload size up to 2 MB and 4000 px on the longer side. MP4, WebM or MOV up to 200 MB.')).toBeInTheDocument()
   })
 
   it('lets the caller narrow accept and hint', () => {

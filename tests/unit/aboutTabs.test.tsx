@@ -9,7 +9,6 @@ const replace = vi.fn()
 vi.mock('next/navigation', () => ({ usePathname: () => '/about', useRouter: () => ({ replace }) }))
 vi.mock('@/components/about/GalleryTab', () => ({ GalleryTab: () => <p>gallery panel</p> }))
 vi.mock('@/components/about/ProprietorTab', () => ({ ProprietorTab: () => <p>proprietor panel</p> }))
-vi.mock('@/components/about/ServicesTab', () => ({ ServicesTab: () => <p>services panel</p> }))
 vi.mock('@/components/about/PublicationsTab', () => ({ PublicationsTab: () => <p>publications panel</p> }))
 
 const about = {} as PublicAbout
@@ -19,10 +18,16 @@ describe('AboutTabs keyboard navigation', () => {
   beforeEach(() => replace.mockClear())
   afterEach(cleanup)
 
-  it('makes only the active tab tabbable (roving tabindex)', () => {
-    render(<AboutTabs about={about} tab="services" />)
+  it('has no Services tab', () => {
+    render(<AboutTabs about={about} tab="gallery" />)
 
-    expect(screen.getAllByRole('tab').map((tab) => tab.getAttribute('tabindex'))).toEqual(['-1', '-1', '0', '-1'])
+    expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Gallery', 'Proprietor', 'Publications'])
+  })
+
+  it('makes only the active tab tabbable (roving tabindex)', () => {
+    render(<AboutTabs about={about} tab="proprietor" />)
+
+    expect(screen.getAllByRole('tab').map((tab) => tab.getAttribute('tabindex'))).toEqual(['-1', '0', '-1'])
   })
 
   it('moves focus and selection with ArrowRight, switches the panel at once and updates the URL', () => {
@@ -49,9 +54,9 @@ describe('AboutTabs keyboard navigation', () => {
   })
 
   it('jumps to the first and last tab with Home and End', () => {
-    render(<AboutTabs about={about} tab="services" />)
+    render(<AboutTabs about={about} tab="proprietor" />)
 
-    fireEvent.keyDown(tabNamed(/Services/), { key: 'End' })
+    fireEvent.keyDown(tabNamed(/Proprietor/), { key: 'End' })
     expect(document.activeElement).toBe(tabNamed(/Publications/))
 
     fireEvent.keyDown(tabNamed(/Publications/), { key: 'Home' })

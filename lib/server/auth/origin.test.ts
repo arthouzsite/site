@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { assertSameOrigin } from './origin'
+import { assertBrowserSameOrigin, assertSameOrigin } from './origin'
 
 const req = (origin?: string) =>
   new Request('http://localhost:3300/api/x', { method: 'POST', headers: origin === undefined ? {} : { origin } })
@@ -39,5 +39,20 @@ describe('assertSameOrigin', () => {
 
   it('defaults to env.NEXT_PUBLIC_SITE_URL (unset in tests)', () => {
     expect(() => assertSameOrigin(req(PUBLIC_URL))).toThrowError(expect.objectContaining({ code: 'BAD_ORIGIN' }))
+  })
+})
+
+describe('assertBrowserSameOrigin', () => {
+  const reqWith = (headers: Record<string, string>) => new Request('http://localhost:3300/api/x', { method: 'POST', headers })
+
+  it('refuses a request with neither an Origin nor same-origin Sec-Fetch-Site', () => {
+    for (const headers of [{}, { 'sec-fetch-site': 'cross-site' }, { 'sec-fetch-site': 'none' }] as Array<Record<string, string>>) {
+      expect(() => assertBrowserSameOrigin(reqWith(headers))).toThrowError(expect.objectContaining({ status: 403, code: 'BAD_ORIGIN' }))
+    }
+  })
+
+  it('accepts an Origin header (assertSameOrigin vets its value) or Sec-Fetch-Site: same-origin', () => {
+    expect(() => assertBrowserSameOrigin(reqWith({ origin: 'http://localhost:3300' }))).not.toThrow()
+    expect(() => assertBrowserSameOrigin(reqWith({ 'sec-fetch-site': 'same-origin' }))).not.toThrow()
   })
 })

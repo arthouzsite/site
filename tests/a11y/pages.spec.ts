@@ -5,7 +5,7 @@ import { PORT_URL } from '../visual/paths'
 import { findSmallTargets } from './hit-area'
 import { stubRemoteImages } from './stub-remote-images'
 
-const ROUTES = ['/', '/exhibitions', '/exhibitions/tidewater', '/artists', '/artists/vijay-pichumani', '/fairs', '/news', '/services', '/services/art-sales', '/about', '/visit'] as const
+const ROUTES = ['/', '/exhibitions', '/exhibitions/tidewater', '/artists', '/artists/vijay-pichumani', '/fairs', '/fairs/art-dubai-2026', '/news', '/services', '/services/art-sales', '/about', '/visit'] as const
 const WIDTHS = [375, 1440] as const
 const VIEWPORT_HEIGHT = 900
 const BLOCKING_IMPACTS = new Set(['serious', 'critical'])
@@ -66,6 +66,48 @@ test.describe('accessibility', () => {
     expect(await blockingViolations(page)).toEqual([])
     expect(await unexpectedContrastPairs(page)).toEqual([])
   })
+
+  const ENQUIRY_STATES = [
+    { route: '/artists/vijay-pichumani', button: 'Enquire about works →' },
+    { route: '/services/art-sales', button: 'Enquire →' },
+  ] as const
+  for (const width of WIDTHS) {
+    for (const { route, button } of ENQUIRY_STATES) {
+      test(`enquiry dialog on ${route} at ${width}: no axe violations, 44 px targets, no horizontal overflow`, async ({ page }) => {
+        await openRoute(page, route, width)
+        await page.getByRole('button', { name: button }).click()
+        const dialog = page.getByRole('dialog')
+        await expect(dialog).toBeVisible()
+        await expect(dialog.getByRole('textbox', { name: /^Name/ })).toBeFocused()
+        expect(await blockingViolations(page)).toEqual([])
+        expect(await unexpectedContrastPairs(page)).toEqual([])
+        await dialog.getByRole('button', { name: /^Send enquiry/ }).click()
+        await expect(dialog.getByText('Enter your name')).toBeVisible()
+        expect(await blockingViolations(page)).toEqual([])
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+        await page.keyboard.press('Escape')
+        await expect(page.getByRole('dialog')).toHaveCount(0)
+        await expect(page.getByRole('button', { name: button })).toBeFocused()
+      })
+    }
+  }
+
+  for (const width of WIDTHS) {
+    test(`fair gallery overlay on /fairs at ${width}: no axe violations, no horizontal overflow`, async ({ page }) => {
+      await openRoute(page, '/fairs', width)
+      const title = page.locator('h2 a[aria-haspopup="dialog"]').first()
+      // Seed fairs carry no gallery images, so the control only exists when the database has some.
+      test.skip((await title.count()) === 0, 'no fair with gallery images in this database')
+      await title.click()
+      const dialog = page.getByRole('dialog')
+      await expect(dialog).toBeVisible()
+      expect(await blockingViolations(page)).toEqual([])
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+      await page.keyboard.press('Escape')
+      await expect(dialog).toHaveCount(0)
+      await expect(title).toBeFocused()
+    })
+  }
 
   test('Escape closes overlays and returns focus to the trigger', async ({ page }) => {
     await openRoute(page, '/', 375)

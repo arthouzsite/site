@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Button, ImageSlot } from '../../components/ui'
 import type { ImageRatio } from '../../components/ui/ImageSlot'
 import { MediaPicker } from './MediaPicker'
-import type { MediaRef } from './types'
+import { IMAGE_LIMIT_HINT, type MediaRef } from './types'
 
 type Props = {
   value: MediaRef | null
@@ -36,6 +36,7 @@ export function ImageField({ value, onChange, ratio, label, help }: Props) {
         }
       />
       {!value && <Button size="sm" className="self-start" onClick={() => setOpen(true)}>Choose image</Button>}
+      <p className="m-0 text-12 text-muted">{IMAGE_LIMIT_HINT}</p>
       {help && <p className="m-0 text-12 text-muted">{help}</p>}
       {open && <MediaPicker open onClose={() => setOpen(false)} onSelect={pick} />}
     </div>

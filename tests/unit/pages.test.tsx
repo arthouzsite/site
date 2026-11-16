@@ -70,7 +70,7 @@ import {
 
 const settings = {
   heroLayout: 'SPLIT', artistIndexLayout: 'GROUPED',
-  footer: { tagline: 'Tagline', instagramUrl: '', facebookUrl: '', copyrightFrom: 2012 },
+  footer: { tagline: 'Tagline', instagramUrl: '', facebookUrl: '', linkedinUrl: '', youtubeUrl: '', twitterUrl: '', copyrightFrom: 2012 },
   site: { title: 'Art Houz', description: 'Gallery.', ogImage: null },
 }
 
@@ -140,7 +140,7 @@ describe('list and static pages', () => {
     expect(html(await FairsPage())).toContain('India Art Fair')
     expect(html(await NewsPage())).toContain('In the press')
     expect(html(await VisitPage())).toContain('Directions')
-    expect(html(await AboutPage({ searchParams: params({ tab: 'services' }) }))).toContain('Framing')
+    expect(html(await AboutPage({ searchParams: params({ tab: 'services' }) }))).toContain('Statement.')
     expect(html(await AboutPage({ searchParams: params({ tab: ['x'] }) }))).toContain('Statement.')
     expect(fairsMeta()).toHaveProperty('title', 'Fairs')
     expect(newsMeta()).toHaveProperty('title', 'News')
@@ -211,6 +211,8 @@ describe('detail pages', () => {
     const out = html(await ArtistPage({ params: params({ slug: 'parvathi-nayar' }) }))
     expect(out).toContain('Exhibitions with Art Houz')
     expect(out).toContain('Selected works')
+    expect(out).toMatch(/<button type="button" aria-haspopup="dialog"[^>]*>Enquire about works →<\/button>/)
+    expect(out).not.toContain('href="/visit"')
     const meta = await artistMeta({ params: params({ slug: 'parvathi-nayar' }) })
     expect(meta).toMatchObject({ title: 'Parvathi Nayar', description: 'Lede text.' })
     expect(meta.openGraph).toMatchObject({ type: 'website', siteName: 'Art Houz', title: 'Parvathi Nayar', description: 'Lede text.' })
@@ -237,7 +239,7 @@ describe('detail pages', () => {
 
 describe('shell', () => {
   const footerData = {
-    tagline: 'Tagline', copyrightFrom: 2012, instagramUrl: 'https://i.example', facebookUrl: null, locations: [location], degraded: false,
+    tagline: 'Tagline', copyrightFrom: 2012, instagramUrl: 'https://i.example', facebookUrl: null, linkedinUrl: null, youtubeUrl: null, twitterUrl: null, locations: [location], degraded: false,
   }
 
   it('renders the footer with social links and the copyright range', async () => {
@@ -258,6 +260,21 @@ describe('shell', () => {
     const ok = html((await Footer()) as ReactElement)
     expect(ok).toContain('Instagram')
     expect(ok).toContain('Facebook')
+  })
+
+  it('renders all five social links in order, only for those set', async () => {
+    loadFooterData.mockResolvedValue({
+      ...footerData, facebookUrl: 'https://f.example', linkedinUrl: 'https://l.example', youtubeUrl: 'https://y.example', twitterUrl: 'https://t.example',
+    })
+    const out = html((await Footer()) as ReactElement)
+    const order = ['Instagram', 'Facebook', 'LinkedIn', 'YouTube', 'Twitter'].map((label) => out.indexOf(label))
+    expect(order.every((i) => i >= 0)).toBe(true)
+    expect([...order].sort((a, b) => a - b)).toEqual(order)
+    loadFooterData.mockResolvedValue({ ...footerData, youtubeUrl: 'https://y.example', twitterUrl: 'ftp://t.example' })
+    const some = html((await Footer()) as ReactElement)
+    expect(some).toContain('YouTube')
+    expect(some).not.toContain('LinkedIn')
+    expect(some).not.toContain('Twitter')
   })
 
   it('renders a single year and no socials when the range starts this year', async () => {
@@ -297,10 +314,12 @@ describe('shell', () => {
     expect(robots().sitemap).toBe('https://arthouz.test/sitemap.xml')
     apiGet.mockImplementation(async (path) => {
       if (path.startsWith('/public/services')) return publicServiceList
+      if (path === '/public/fairs') return [fair]
       return path.startsWith('/public/artists') ? artistList : { items: [exhibition], cities: [] }
     })
     const entries = await sitemap()
     expect(entries.map((e) => e.url)).toContain('https://arthouz.test/exhibitions/salt-line')
     expect(entries.map((e) => e.url)).toContain('https://arthouz.test/services/art-sales')
+    expect(entries.map((e) => e.url)).toContain('https://arthouz.test/fairs/f1')
   })
 })

@@ -22,7 +22,7 @@ function parseQuery<T>({ path, url }: Match, schema: ZodType<T>): T {
   return parsed.data
 }
 
-/** The thirteen `/api/public/*` routes, as the loaders those routes delegate to. */
+/** The fourteen `/api/public/*` routes, as the loaders those routes delegate to. */
 const ROUTES: readonly PublicRoute[] = [
   { pattern: '/public/home', resolve: () => () => publicReads.getHome() },
   { pattern: '/public/about', resolve: () => () => publicReads.getAbout() },
@@ -45,6 +45,7 @@ const ROUTES: readonly PublicRoute[] = [
   },
   { pattern: '/public/artists/:slug', resolve: ({ slug }) => () => publicReads.getArtist(slug) },
   { pattern: '/public/fairs', resolve: () => () => publicReads.getFairs() },
+  { pattern: '/public/fairs/:slug', resolve: ({ slug }) => () => publicReads.getFair(slug) },
   { pattern: '/public/news', resolve: () => () => publicReads.getNews() },
   { pattern: '/public/services', resolve: () => () => publicReads.getServices() },
   { pattern: '/public/services/:slug', resolve: ({ slug }) => () => publicReads.getService(slug) },

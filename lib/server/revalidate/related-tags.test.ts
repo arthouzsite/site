@@ -24,6 +24,7 @@ const fakePrisma = (overrides: Record<string, unknown> = {}) => {
     artist: model(),
     artwork: model(),
     service: model(),
+    fair: model(),
     ...overrides,
   } as unknown as PrismaClient
 }
@@ -98,6 +99,7 @@ describe('mediaUsageTags', () => {
       artist: { findMany: vi.fn().mockResolvedValue([{ slug: 'cc', exhibitions: [{ exhibition: { slug: 'cc-show' } }] }]) },
       artwork: { findMany: vi.fn().mockResolvedValue([{ artist: { slug: 'dd' } }]) },
       service: { findMany: vi.fn().mockResolvedValue([{ slug: 'art-sales' }]) },
+      fair: { findMany: vi.fn().mockResolvedValue([{ slug: 'art-dubai' }]) },
     })
     const tags = await mediaUsageTags(prisma, [
       { type: 'exhibition', id: 'e1', title: 'Sea' },
@@ -105,6 +107,7 @@ describe('mediaUsageTags', () => {
       { type: 'artist', id: 'a1', title: 'C' },
       { type: 'artwork', id: 'k1', title: 'K' },
       { type: 'fair', id: 'f1', title: 'F' },
+      { type: 'fairGallery', id: 'f2', title: 'G' },
       { type: 'news', id: 'n1', title: 'N' },
       { type: 'service', id: 's1', title: 'S' },
       { type: 'location', id: 'l1', title: 'L' },
@@ -113,7 +116,7 @@ describe('mediaUsageTags', () => {
     expect(tags).toEqual(
       expect.arrayContaining([
         'exhibition:sea', 'artist:aa', 'exhibition:work-show', 'artist:bb', 'artist:cc', 'exhibition:cc-show', 'artist:dd',
-        'fairs', 'news', 'locations', 'settings', 'about', 'services', 'service:art-sales',
+        'fairs', 'fair:art-dubai', 'news', 'locations', 'settings', 'about', 'services', 'service:art-sales',
       ]),
     )
   })

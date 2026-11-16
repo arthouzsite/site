@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { SETTING_DEFAULTS } from '@/lib/shared'
+import { HOME_ARTIST_COUNT, SETTING_DEFAULTS } from '@/lib/shared'
 import { prisma } from '@/lib/server/prisma'
 import { settingsService } from '@/lib/server/settings/settings.service'
 import { buildHome } from './home.service'
@@ -90,11 +90,11 @@ describe('buildHome', () => {
     expect((await service.build(TODAY)).world.map((e) => e.slug)).toEqual(['abroad-new', 'abroad'])
   })
 
-  it('artistsLine respects homeArtistCount', async () => {
+  it('artistsLine is the first ten artists by sort name', async () => {
     const artists = ['a', 'b', 'c', 'd'].map((n) => ({ name: n, slug: n }))
-    const { service, prisma } = build({ artists, settings: { homeArtistCount: 2 } })
-    expect((await service.build(TODAY)).artistsLine).toEqual([{ name: 'a', slug: 'a' }, { name: 'b', slug: 'b' }])
-    expect(prisma.artist.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 2, orderBy: [{ sortName: 'asc' }, { id: 'asc' }] }))
+    const { service, prisma } = build({ artists })
+    expect((await service.build(TODAY)).artistsLine).toEqual(artists)
+    expect(prisma.artist.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: HOME_ARTIST_COUNT, orderBy: [{ sortName: 'asc' }, { id: 'asc' }] }))
   })
 
   it('focus resolves the published artist and the image setting', async () => {

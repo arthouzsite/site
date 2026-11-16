@@ -2,11 +2,14 @@ import { useRef, useState } from 'react'
 import { ApiError } from '../../lib/api'
 import { formatBytes } from '../../lib/format'
 import { Button, Dropzone, Icon, Input } from '../../components/ui'
+import { useToast } from '../../lib/toast'
+import { checkImageFile } from './imageCheck'
 import { MEDIA_ACCEPT, MEDIA_HINT, uploadErrorMessage, type Media } from './types'
 import { useUploadMedia } from './useMedia'
 
 type Status = 'queued' | 'uploading' | 'error'
-type Item = { id: number; file: File; alt: string; progress: number; status: Status; error: string | null }
+/** `isRefused` marks a file that broke an image limit before upload: it stays listed with its reason but is never sent. */
+type Item = { id: number; file: File; alt: string; progress: number; status: Status; error: string | null; isRefused: boolean }
 
 export type UploadRunSummary = { uploaded: Media[]; failed: number }
 
@@ -22,7 +25,11 @@ type Props = {
 let nextItemId = 1
 
 function toItem(file: File): Item {
-  return { id: nextItemId++, file, alt: '', progress: 0, status: 'queued', error: null }
+  return { id: nextItemId++, file, alt: '', progress: 0, status: 'queued', error: null, isRefused: false }
+}
+
+function toRefusedItem(file: File, error: string): Item {
+  return { ...toItem(file), status: 'error', error, isRefused: true }
 }
 
 function describe(err: unknown, file: File, accept: string): string {
@@ -36,6 +43,7 @@ export function UploadQueue({ onUploaded, onRunComplete, accept = MEDIA_ACCEPT, 
   const itemsRef = useRef<Item[]>([])
   const [isRunning, setIsRunning] = useState(false)
   const upload = useUploadMedia()
+  const toast = useToast()
 
   const setItems = (change: (cur: Item[]) => Item[]) => {
     itemsRef.current = change(itemsRef.current)
@@ -45,7 +53,7 @@ export function UploadQueue({ onUploaded, onRunComplete, accept = MEDIA_ACCEPT, 
     setItems((cur) => cur.map((it) => (it.id === id ? { ...it, ...changes } : it)))
   const remove = (id: number) => setItems((cur) => cur.filter((it) => it.id !== id))
 
-  const pending = items.filter((it) => it.status !== 'uploading')
+  const pending = items.filter((it) => it.status !== 'uploading' && !it.isRefused)
   const busy = isRunning || items.some((it) => it.status === 'uploading')
   const ready = pending.length > 0 && !busy && pending.every((it) => it.alt.trim() !== '')
 
@@ -67,7 +75,7 @@ export function UploadQueue({ onUploaded, onRunComplete, accept = MEDIA_ACCEPT, 
     }
   }
 
-  // One at a time: the browser streams each file straight to storage, but the server decodes images (up to 25 MB) during `complete` inside its concurrency slot, so a parallel batch would hit TOO_MANY_UPLOADS.
+  // One at a time: the browser streams each file straight to storage, but the server decodes images (up to 2 MB) during `complete` inside its concurrency slot, so a parallel batch would hit TOO_MANY_UPLOADS.
   // `send` handles its own errors, so a failed file stays in the queue and the rest still upload.
   const startAll = async () => {
     setIsRunning(true)
@@ -77,7 +85,7 @@ export function UploadQueue({ onUploaded, onRunComplete, accept = MEDIA_ACCEPT, 
     try {
       for (;;) {
         // Files added or blanked mid-run wait for the next click: the API rejects an empty alt.
-        const next = itemsRef.current.find((it) => it.status !== 'uploading' && !attempted.has(it.id) && it.alt.trim() !== '')
+        const next = itemsRef.current.find((it) => it.status !== 'uploading' && !it.isRefused && !attempted.has(it.id) && it.alt.trim() !== '')
         if (!next) break
         attempted.add(next.id)
         const media = await send(next)
@@ -90,9 +98,16 @@ export function UploadQueue({ onUploaded, onRunComplete, accept = MEDIA_ACCEPT, 
     onRunComplete?.({ uploaded, failed })
   }
 
+  // Limits are checked in the browser first so a file that can never upload is refused before anyone types its alt text.
+  const addFiles = async (files: File[]) => {
+    const problems = await Promise.all(files.map((file) => checkImageFile(file)))
+    problems.forEach((problem) => problem && toast.error(problem))
+    setItems((cur) => [...cur, ...files.map((file, i) => (problems[i] ? toRefusedItem(file, problems[i]) : toItem(file)))])
+  }
+
   return (
     <div className="flex flex-col gap-3">
-      <Dropzone onFiles={(files) => setItems((cur) => [...cur, ...files.map(toItem)])} accept={accept} hint={hint} />
+      <Dropzone onFiles={(files) => void addFiles(files)} accept={accept} hint={hint} />
       {items.length > 0 && (
         <>
           <ul aria-label="Files to upload" className="m-0 list-none border-t border-line p-0">
@@ -100,11 +115,11 @@ export function UploadQueue({ onUploaded, onRunComplete, accept = MEDIA_ACCEPT, 
               <UploadRow key={it.id} item={it} onAlt={(alt) => patch(it.id, { alt })} onRemove={() => remove(it.id)} />
             ))}
           </ul>
-          <div className="flex justify-end">
+          {pending.length > 0 && <div className="flex justify-end">
             <Button variant="primary" disabled={!ready} onClick={() => void startAll()}>
               Upload {pending.length} {pending.length === 1 ? 'file' : 'files'}
             </Button>
-          </div>
+          </div>}
         </>
       )}
     </div>
@@ -128,8 +143,12 @@ function UploadRow({ item, onAlt, onRemove }: RowProps) {
           <span className="text-12 text-muted">{formatBytes(file.size)}</span>
           {status === 'uploading' && <span className="text-12 text-muted">{percent}%</span>}
         </div>
-        <label htmlFor={altId} className="text-12 font-medium tracking-label text-body">Alt text for {file.name}</label>
-        <Input id={altId} value={alt} disabled={status === 'uploading'} onChange={(e) => onAlt(e.target.value)} aria-required="true" />
+        {!item.isRefused && (
+          <>
+            <label htmlFor={altId} className="text-12 font-medium tracking-label text-body">Alt text for {file.name}</label>
+            <Input id={altId} value={alt} disabled={status === 'uploading'} onChange={(e) => onAlt(e.target.value)} aria-required="true" />
+          </>
+        )}
         {status === 'uploading' && (
           <div
             role="progressbar"

@@ -76,7 +76,6 @@ describe('DashboardPage', () => {
     const home = within(await screen.findByRole('region', { name: 'On the home page now' }))
     expect(await home.findByText('Tidewater (auto)')).toBeInTheDocument()
     expect(home.getByText('Full-bleed')).toBeInTheDocument()
-    expect(home.getByText('22 artists')).toBeInTheDocument()
     expect(home.getByRole('link', { name: 'Change hero' })).toHaveAttribute('href', '/settings')
     const quick = within(screen.getByRole('region', { name: 'Quick actions' }))
     expect(quick.getByRole('link', { name: 'New exhibition' })).toHaveAttribute('href', '/exhibitions/new')

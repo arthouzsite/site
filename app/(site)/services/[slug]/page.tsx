@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
+import { notFound, unstable_rethrow } from 'next/navigation'
+import { EnquiryTrigger } from '@/components/enquiry/EnquiryTrigger'
 import { ServiceContact } from '@/components/services/ServiceContact'
 import { Container } from '@/components/site/Container'
 import { ImageSlot } from '@/components/site/ImageSlot'
@@ -7,6 +8,7 @@ import { PrimaryButton } from '@/components/site/PrimaryButton'
 import { ApiError } from '@/lib/api'
 import { paragraphs } from '@/lib/format'
 import { getService } from '@/lib/services'
+import { getLocations } from '@/lib/site-data'
 import { detailMetadata } from '@/lib/site-metadata'
 import { PageTitle } from '@/components/site/PageTitle'
 import { BackLink } from '@/components/site/BackLink'
@@ -19,6 +21,21 @@ const IMAGE_SIZES = '(min-width: 1024px) 45vw, 100vw'
 const HTTP_URL = /^https?:\/\//i
 /** Hrefs a CTA may use: web, mail, phone, or a same-site path (not protocol-relative). */
 const SAFE_CTA_HREF = /^(https?:|mailto:|tel:|\/(?![/\\]))/i
+
+/**
+ * Cities for the enquiry form's location select. A failed read or an empty list returns [] so the page falls back
+ * to the Visit link instead of showing a form nobody can submit (or an error page).
+ */
+async function loadEnquiryLocations(): Promise<string[]> {
+  try {
+    return (await getLocations()).map((location) => location.city)
+  } catch (error) {
+    // Next's own control-flow errors (build-time bail-outs) are not failures.
+    unstable_rethrow(error)
+    console.error(`[web] locations unavailable for the enquiry form, linking to the Visit page: ${error instanceof Error ? error.message : String(error)}`)
+    return []
+  }
+}
 
 async function loadService(slug: string) {
   try {
@@ -36,7 +53,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ServicePage({ params }: Props) {
   const service = await loadService((await params).slug)
+  // A service without its own link opens the enquiry form; one with a custom link keeps linking to it.
+  const hasCustomCta = service.ctaHref.trim() !== ''
   const ctaHref = SAFE_CTA_HREF.test(service.ctaHref) ? service.ctaHref : DEFAULT_CTA_HREF
+  const locations = hasCustomCta ? [] : await loadEnquiryLocations()
+  const showsForm = !hasCustomCta && locations.length > 0
   return (
     <main>
       <Container className="pt-[clamp(28px,4vw,48px)] pb-[clamp(32px,4vw,56px)]">
@@ -55,9 +76,13 @@ export default async function ServicePage({ params }: Props) {
             </p>
           ))}
           <ServiceContact contact={service.contact} />
-          <PrimaryButton href={ctaHref} external={HTTP_URL.test(ctaHref)}>
-            {service.ctaLabel}
-          </PrimaryButton>
+          {showsForm ? (
+            <EnquiryTrigger label={service.ctaLabel} target={{ kind: 'SERVICE', slug: service.slug, title: service.title, locations }} />
+          ) : (
+            <PrimaryButton href={ctaHref} external={HTTP_URL.test(ctaHref)}>
+              {service.ctaLabel}
+            </PrimaryButton>
+          )}
         </div>
       </Container>
     </main>

@@ -22,6 +22,12 @@ function listHandler() {
 }
 
 describe('MediaPicker', () => {
+  it('shows the image limits on the library tab', async () => {
+    listHandler()
+    renderWithProviders(<MediaPicker open onClose={() => {}} onSelect={() => {}} />)
+    expect(await screen.findByText('Keep upload size up to 2 MB and 4000 px on the longer side')).toBeInTheDocument()
+  })
+
   it('picker returns the selected MediaRef', async () => {
     listHandler()
     const onSelect = vi.fn()
@@ -84,7 +90,7 @@ describe('MediaPicker upload tab', () => {
   it('offers images only', async () => {
     await openUpload()
     expect(screen.getByLabelText(/choose files/i)).toHaveAttribute('accept', 'image/jpeg,image/png,image/webp,image/avif')
-    expect(screen.getByText('JPEG, PNG, WebP or AVIF up to 25 MB')).toBeInTheDocument()
+    expect(screen.getByText('JPEG, PNG, WebP or AVIF. Keep upload size up to 2 MB and 4000 px on the longer side.')).toBeInTheDocument()
   })
 
   it('refuses to select an uploaded video and explains why', async () => {

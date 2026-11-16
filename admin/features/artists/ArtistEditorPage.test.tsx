@@ -7,7 +7,7 @@ import ArtistEditorPage from './ArtistEditorPage'
 import { makeArtist, makeArtwork, renderRoutes } from './testUtils'
 
 type Call = { method: string; path: string; body: unknown }
-const artist = makeArtist({ isFeatured: true, featuredOrder: 2 })
+const artist = makeArtist()
 const routes = [
   { path: '/artists/new', element: <ArtistEditorPage /> },
   { path: '/artists/:id', element: <ArtistEditorPage /> },
@@ -25,9 +25,6 @@ function setup(initial: string, opts: { homeFocusArtistId?: string | null } = {}
     http.get(`${API_URL}/artists/a9`, () => HttpResponse.json(envelope(makeArtist({ id: 'a9', name: 'Fresh Artist' })))),
     http.get(`${API_URL}/artists/a1/artworks`, () => HttpResponse.json(envelope([makeArtwork()]))),
     http.get(`${API_URL}/artists/a9/artworks`, () => HttpResponse.json(envelope([]))),
-    http.get(`${API_URL}/artists`, () =>
-      HttpResponse.json({ ...envelope([makeArtist({ id: 'a0', featuredOrder: 1, isFeatured: true, name: 'Other' }), artist]), meta: { total: 2, page: 1, limit: 100 } }),
-    ),
     http.get(`${API_URL}/exhibitions`, ({ request }) => {
       exhibitionQueries.push(new URL(request.url).searchParams)
       return HttpResponse.json({
@@ -48,10 +45,6 @@ function setup(initial: string, opts: { homeFocusArtistId?: string | null } = {}
     http.patch(`${API_URL}/artists/a1/publish`, async ({ request }) => {
       await record('PATCH', '/artists/a1/publish', request)
       return HttpResponse.json(envelope({ ...artist, isPublished: false }))
-    }),
-    http.patch(`${API_URL}/artists/a1/feature`, async ({ request }) => {
-      await record('PATCH', '/artists/a1/feature', request)
-      return HttpResponse.json(envelope({ ...artist, isFeatured: false }))
     }),
   )
   return { calls, exhibitionQueries, ...renderRoutes(routes, initial) }
@@ -89,7 +82,7 @@ describe('ArtistEditorPage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('There is a problem')
   })
 
-  it('publish and feature are independent mutations, locked while the form is dirty', async () => {
+  it('publish is an independent mutation, locked while the form is dirty', async () => {
     const { calls } = setup('/artists/a1')
     const user = userEvent.setup()
     const published = await screen.findByRole('switch', { name: 'Published' })
@@ -98,7 +91,7 @@ describe('ArtistEditorPage', () => {
     await waitFor(() => expect(calls).toEqual([{ method: 'PATCH', path: '/artists/a1/publish', body: { isPublished: false } }]))
     await user.type(screen.getByLabelText('Medium'), ' on wood')
     expect(screen.getByRole('switch', { name: 'Published' })).toBeDisabled()
-    expect(screen.getByRole('switch', { name: 'Featured' })).toBeDisabled()
+    expect(screen.queryByRole('switch', { name: 'Featured' })).not.toBeInTheDocument()
   })
 
   it('flips Published at once and keeps the new state when the server agrees', async () => {
@@ -119,27 +112,22 @@ describe('ArtistEditorPage', () => {
     expect(screen.getByRole('switch', { name: 'Published' })).not.toBeChecked()
   })
 
-  it('rolls Featured back and reports the error when the server refuses', async () => {
+  it('rolls Published back and reports the error when the server refuses', async () => {
     setup('/artists/a1')
     server.use(
-      http.patch(`${API_URL}/artists/a1/feature`, async () => {
+      http.patch(`${API_URL}/artists/a1/publish`, async () => {
         await delay(150)
         return HttpResponse.json(errorEnvelope('INTERNAL', 'Database unavailable'), { status: 500 })
       }),
     )
     const user = userEvent.setup()
-    const featured = await screen.findByRole('switch', { name: 'Featured' })
-    await waitFor(() => expect(featured).toBeEnabled())
-    expect(featured).toBeChecked()
-    await user.click(featured)
-    expect(screen.getByRole('switch', { name: 'Featured' })).not.toBeChecked()
+    const published = await screen.findByRole('switch', { name: 'Published' })
+    await waitFor(() => expect(published).toBeEnabled())
+    expect(published).toBeChecked()
+    await user.click(published)
+    expect(screen.getByRole('switch', { name: 'Published' })).not.toBeChecked()
     expect(await screen.findByText('Database unavailable')).toBeInTheDocument()
-    expect(screen.getByRole('switch', { name: 'Featured' })).toBeChecked()
-  })
-
-  it('shows the featured position', async () => {
-    setup('/artists/a1')
-    expect(await screen.findByText('2 of 2')).toBeInTheDocument()
+    expect(screen.getByRole('switch', { name: 'Published' })).toBeChecked()
   })
 
   it('lists the exhibitions returned for this artist id', async () => {

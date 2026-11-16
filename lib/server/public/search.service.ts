@@ -1,7 +1,8 @@
 import type { PublicSearch } from '@/lib/shared'
 import type { Prisma } from '@/lib/server/generated/prisma/client'
 import { prisma } from '@/lib/server/prisma'
-import { SEARCH_ARTIST_LIMIT, SEARCH_NEWS_LIMIT } from './public.constants'
+import { sortByTitle } from '@/lib/server/services/services.order'
+import { SEARCH_ARTIST_LIMIT, SEARCH_FAIR_LIMIT, SEARCH_NEWS_LIMIT } from './public.constants'
 
 type Group = PublicSearch['groups'][number]
 
@@ -23,7 +24,7 @@ function exhibitionWhere(q: string): Prisma.ExhibitionWhereInput {
 export async function search(rawQuery: string): Promise<PublicSearch> {
   const q = rawQuery.trim()
   if (!q) return { groups: [] }
-  const [artists, exhibitions, news, services] = await Promise.all([
+  const [artists, exhibitions, fairs, news, services] = await Promise.all([
     prisma.artist.findMany({
       where: { isPublished: true, name: matches(q) },
       select: { name: true, slug: true },
@@ -35,6 +36,12 @@ export async function search(rawQuery: string): Promise<PublicSearch> {
       select: { title: true, slug: true },
       orderBy: [{ startDate: 'desc' }, { id: 'asc' }],
     }),
+    prisma.fair.findMany({
+      where: { isPublished: true, OR: [{ title: matches(q) }, { city: matches(q) }, { venue: matches(q) }] },
+      select: { title: true, slug: true },
+      orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
+      take: SEARCH_FAIR_LIMIT,
+    }),
     prisma.news.findMany({
       where: { isPublished: true, OR: [{ title: matches(q) }, { excerpt: matches(q) }] },
       select: { title: true },
@@ -43,15 +50,15 @@ export async function search(rawQuery: string): Promise<PublicSearch> {
     }),
     prisma.service.findMany({
       where: { isPublished: true, OR: [{ title: matches(q) }, { summary: matches(q) }] },
-      select: { title: true, slug: true },
-      orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
+      select: { id: true, title: true, slug: true },
     }),
   ])
   const groups: Group[] = [
     { label: 'Artists', items: artists.map((a) => ({ label: a.name, href: `/artists/${a.slug}` })) },
     { label: 'Exhibitions', items: exhibitions.map((e) => ({ label: e.title, href: `/exhibitions/${e.slug}` })) },
+    { label: 'Fairs', items: fairs.map((f) => ({ label: f.title, href: `/fairs/${f.slug}` })) },
     { label: 'News', items: news.map((n) => ({ label: n.title, href: '/news' })) },
-    { label: 'Services', items: services.map((s) => ({ label: s.title, href: `/services/${s.slug}` })) },
+    { label: 'Services', items: sortByTitle(services).map((s) => ({ label: s.title, href: `/services/${s.slug}` })) },
   ]
   return { groups: groups.filter((g) => g.items.length > 0) }
 }

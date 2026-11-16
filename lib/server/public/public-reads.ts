@@ -1,5 +1,5 @@
 import type {
-  PublicAbout, PublicArtistDetail, PublicArtistList, PublicExhibitionDetail, PublicExhibitionList, PublicFair,
+  PublicAbout, PublicArtistDetail, PublicArtistList, PublicExhibitionDetail, PublicExhibitionList, PublicFair, PublicFairDetail,
   PublicHome, PublicLocation, PublicNews, PublicSearch, PublicService, PublicSettings,
 } from '@/lib/shared'
 import { today } from '@/lib/server/clock'
@@ -22,6 +22,7 @@ export const publicReads = {
   getArtists: (query: Partial<PublicQ> = {}): Promise<PublicArtistList> => pages.listArtists(query.q ?? ''),
   getArtist: (slug: string): Promise<PublicArtistDetail> => pages.getArtist(slug),
   getFairs: (): Promise<PublicFair[]> => pages.listFairs(),
+  getFair: (slug: string): Promise<PublicFairDetail> => pages.getFair(slug),
   getNews: (): Promise<PublicNews[]> => pages.listNews(),
   getServices: (): Promise<PublicService[]> => pages.listServices(),
   getService: (slug: string): Promise<PublicService> => pages.getService(slug),

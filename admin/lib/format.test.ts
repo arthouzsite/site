@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { formatBytes, formatDate, initials } from './format'
+import { formatBytes, formatDate, formatDateTime, initials } from './format'
 
 describe('format', () => {
   it('formats dates in Asia/Kolkata and rejects invalid ones', () => {
     expect(formatDate('2026-10-30T00:00:00.000Z')).toBe('30 Oct 2026')
     expect(formatDate('nope')).toBe('')
+  })
+  it('formats date and time in Asia/Kolkata', () => {
+    expect(formatDateTime('2026-10-30T10:00:00.000Z')).toMatch(/^30 Oct 2026,? 3:30\s?pm$/i)
+    expect(formatDateTime('nope')).toBe('')
   })
   it('derives initials', () => {
     expect(initials('Priya Raman')).toBe('PR')

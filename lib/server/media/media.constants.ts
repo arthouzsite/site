@@ -1,4 +1,4 @@
-export const MAX_IMAGE_UPLOAD_BYTES = 25 * 1024 * 1024
+export { MAX_IMAGE_UPLOAD_BYTES, MAX_IMAGE_DIMENSION_PX } from '@/lib/shared'
 export const MAX_VIDEO_UPLOAD_BYTES = 200 * 1024 * 1024
 export const THUMB_WIDTH = 480
 export const THUMB_QUALITY = 80

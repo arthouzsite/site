@@ -25,27 +25,13 @@ describe('ServicesPage', () => {
     expect(screen.getByRole('switch', { name: 'Published: Art sales' })).toBeChecked()
   })
 
-  it('move down PUTs the full order and the first/last moves are disabled', async () => {
-    let body: unknown
-    server.use(
-      http.get(`${API_URL}/services`, () => HttpResponse.json(withMeta(services))),
-      http.put(`${API_URL}/services/order`, async ({ request }) => {
-        body = await request.json()
-        return HttpResponse.json(envelope(null))
-      }),
-    )
+  it('has no Order column or move buttons', async () => {
+    server.use(http.get(`${API_URL}/services`, () => HttpResponse.json(withMeta(services))))
     renderRoutes(routes, '/services')
-    expect(await screen.findByRole('button', { name: 'Move Art sales up' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: 'Move Art for rent down' })).toBeDisabled()
-    await userEvent.click(screen.getByRole('button', { name: 'Move Art sales down' }))
-    await waitFor(() => expect(body).toEqual({ ids: ['s2', 's1'] }))
-  })
-
-  it('disables reordering while a search narrows the list', async () => {
-    server.use(http.get(`${API_URL}/services`, () => HttpResponse.json(withMeta([services[1]!]))))
-    renderRoutes(routes, '/services?q=rent')
-    expect(await screen.findByRole('button', { name: 'Move Art for rent up' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: 'Move Art for rent down' })).toBeDisabled()
+    await screen.findByRole('link', { name: 'Art sales' })
+    expect(screen.queryByRole('columnheader', { name: 'Order' })).not.toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'S.No' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Move / })).not.toBeInTheDocument()
   })
 
   it('toggles publish for one row and reports a failure', async () => {

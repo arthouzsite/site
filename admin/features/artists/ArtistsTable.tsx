@@ -6,9 +6,9 @@ import { Button, DataTable, Icon } from '../../components/ui'
 import { formatDate } from '../../lib/format'
 import type { AdminArtist } from './types'
 import { ToggleCell } from './ToggleCell'
-import { useFeatureArtist, usePublishArtist } from './useArtists'
+import { usePublishArtist } from './useArtists'
 
-type Props = { artists: AdminArtist[]; featuredCount: number; onDelete: (artist: AdminArtist) => void }
+type Props = { artists: AdminArtist[]; onDelete: (artist: AdminArtist) => void }
 
 function Portrait({ artist }: { artist: AdminArtist }) {
   const src = artist.portraitImage?.thumbUrl
@@ -19,12 +19,10 @@ function Portrait({ artist }: { artist: AdminArtist }) {
   )
 }
 
-export function ArtistsTable({ artists, featuredCount, onDelete }: Props) {
+export function ArtistsTable({ artists, onDelete }: Props) {
   const publish = usePublishArtist()
-  const feature = useFeatureArtist()
-  const busy = publish.isPending || feature.isPending
+  const busy = publish.isPending
   const { mutate: setPublished } = publish
-  const { mutate: setFeatured } = feature
 
   const columns = useMemo<ColumnDef<AdminArtist, unknown>[]>(
     () => [
@@ -42,21 +40,6 @@ export function ArtistsTable({ artists, featuredCount, onDelete }: Props) {
       { id: 'medium', header: 'Medium', cell: ({ row }) => <span className="text-13 text-muted">{row.original.medium}</span> },
       { id: 'base', header: 'Base', cell: ({ row }) => <span className="text-13 text-muted">{row.original.base}</span> },
       { id: 'works', header: () => <span className="block text-right">Works</span>, cell: ({ row }) => <span className="block text-right tabular-nums">{row.original.artworkCount}</span> },
-      {
-        id: 'featured',
-        header: 'Featured',
-        cell: ({ row }) => (
-          <span className="flex items-center">
-            <ToggleCell
-              label={`Featured: ${row.original.name}`}
-              checked={row.original.isFeatured}
-              disabled={busy}
-              onChange={(e) => setFeatured({ id: row.original.id, isFeatured: e.target.checked })}
-            />
-            {row.original.isFeatured && <span className="text-12 tabular-nums text-rust">{row.original.featuredOrder} of {featuredCount}</span>}
-          </span>
-        ),
-      },
       {
         id: 'published',
         header: 'Published',
@@ -85,7 +68,7 @@ export function ArtistsTable({ artists, featuredCount, onDelete }: Props) {
         ),
       },
     ],
-    [busy, setFeatured, setPublished, featuredCount, onDelete],
+    [busy, setPublished, onDelete],
   )
 
   return <DataTable label="Artists" data={artists} columns={columns} getRowId={(a) => a.id} empty="No artists match these filters." />

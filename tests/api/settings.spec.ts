@@ -63,7 +63,7 @@ describe('settings', () => {
     expect(putRes.body.error.code).toBe('NOT_FOUND')
   })
 
-  it('GET /settings returns all 11 keys with defaults when the table is empty', async () => {
+  it('GET /settings returns all 10 keys with defaults when the table is empty', async () => {
     const res = await editor.get('/api/settings')
     expect(res.status).toBe(200)
     expect(Object.keys(res.body.data).sort()).toEqual([...SETTING_KEYS].sort())
@@ -71,9 +71,9 @@ describe('settings', () => {
   })
 
   it('GET /settings/:key falls back to default and unauthenticated -> 401', async () => {
-    const res = await admin.get('/api/settings/homeArtistCount')
+    const res = await admin.get('/api/settings/artistIndexLayout')
     expect(res.status).toBe(200)
-    expect(res.body.data).toBe(SETTING_DEFAULTS.homeArtistCount)
+    expect(res.body.data).toBe(SETTING_DEFAULTS.artistIndexLayout)
     expect((await call('GET', '/api/settings')).status).toBe(401)
   })
 

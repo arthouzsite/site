@@ -1,5 +1,6 @@
 import type {
   PublicAbout, PublicArtistDetail, PublicArtistList, PublicExhibitionDetail, PublicExhibitionList, PublicFair,
+  PublicFairDetail,
   PublicLocation, PublicNews, PublicService, PublicSettings,
 } from '@/lib/shared'
 import { indexLetter, resolveExhibitionStatus } from '@/lib/shared'
@@ -7,14 +8,15 @@ import { today } from '@/lib/server/clock'
 import { notFound } from '@/lib/server/http/errors'
 import { prisma } from '@/lib/server/prisma'
 import { settingsService } from '@/lib/server/settings/settings.service'
+import { sortByTitle } from '@/lib/server/services/services.order'
 import { resolveImages, toPublicImage } from './public.images'
 import {
-  PUBLIC_ARTIST_INCLUDE, PUBLIC_EXHIBITION_DETAIL_INCLUDE, PUBLIC_EXHIBITION_INCLUDE, PUBLIC_NEWS_INCLUDE,
-  toPublicArtist, toPublicExhibition, toPublicExhibitionDetail, toPublicFair, toPublicLocation, toPublicNews, toPublicService,
+  PUBLIC_ARTIST_INCLUDE, PUBLIC_FAIR_INCLUDE, PUBLIC_EXHIBITION_DETAIL_INCLUDE, PUBLIC_EXHIBITION_INCLUDE, PUBLIC_NEWS_INCLUDE,
+  toPublicArtist, toPublicExhibition, toPublicExhibitionDetail, toPublicFair, toPublicFairDetail, toPublicLocation, toPublicNews, toPublicService,
 } from './public.mapper'
 import type { PublicExhibitionsQuery } from './public.queries'
 import type {
-  AboutGallerySetting, AboutProprietorSetting, AboutPublicationsSetting, AboutServicesSetting, ArtistIndexLayout,
+  AboutGallerySetting, AboutProprietorSetting, AboutPublicationsSetting, ArtistIndexLayout,
   FooterSetting, HeroLayout, SiteSetting,
 } from './public.settings'
 
@@ -56,12 +58,7 @@ export async function getExhibition(slug: string): Promise<PublicExhibitionDetai
 }
 
 export async function listArtists(q: string): Promise<PublicArtistList> {
-  const [featured, flat, layout] = await Promise.all([
-    prisma.artist.findMany({
-      where: { isPublished: true, isFeatured: true },
-      include: PUBLIC_ARTIST_INCLUDE,
-      orderBy: [{ featuredOrder: 'asc' }, { id: 'asc' }],
-    }),
+  const [flat, layout] = await Promise.all([
     prisma.artist.findMany({
       where: { isPublished: true, ...(q ? { name: { contains: q, mode: 'insensitive' } } : {}) },
       include: PUBLIC_ARTIST_INCLUDE,
@@ -71,7 +68,6 @@ export async function listArtists(q: string): Promise<PublicArtistList> {
   ])
   const flatDtos = flat.map(toPublicArtist)
   return {
-    featured: featured.map(toPublicArtist),
     groups: groupByLetter(flatDtos),
     flat: flatDtos,
     layout: layout as ArtistIndexLayout,
@@ -108,19 +104,24 @@ export async function getArtist(slug: string): Promise<PublicArtistDetail> {
 export async function listFairs(): Promise<PublicFair[]> {
   const rows = await prisma.fair.findMany({
     where: { isPublished: true },
-    include: { image: true },
+    include: PUBLIC_FAIR_INCLUDE,
     orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
   })
   return rows.map(toPublicFair)
+}
+
+export async function getFair(slug: string): Promise<PublicFairDetail> {
+  const row = await prisma.fair.findFirst({ where: { slug, isPublished: true }, include: PUBLIC_FAIR_INCLUDE })
+  if (!row) throw notFound(NOT_FOUND)
+  return toPublicFairDetail(row)
 }
 
 export async function listServices(): Promise<PublicService[]> {
   const rows = await prisma.service.findMany({
     where: { isPublished: true },
     include: { image: true },
-    orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
   })
-  return rows.map(toPublicService)
+  return sortByTitle(rows).map(toPublicService)
 }
 
 export async function getService(slug: string): Promise<PublicService> {
@@ -150,18 +151,15 @@ export async function getAbout(): Promise<PublicAbout> {
   const all = await settingsService.getAll()
   const gallery = all['about.gallery'] as AboutGallerySetting
   const proprietor = all['about.proprietor'] as AboutProprietorSetting
-  const services = all['about.services'] as AboutServicesSetting
   const publications = all['about.publications'] as AboutPublicationsSetting
-  const images = await resolveImages([gallery, proprietor, services, publications].map((s) => s.imageId))
+  const images = await resolveImages([gallery, proprietor, publications].map((s) => s.imageId))
   const image = (id: string | null) => (id ? (images.get(id) ?? null) : null)
   const { imageId: g, ...galleryRest } = gallery
   const { imageId: p, ...proprietorRest } = proprietor
-  const { imageId: s, ...servicesRest } = services
   const { imageId: b, ...publicationsRest } = publications
   return {
     gallery: { ...galleryRest, image: image(g) },
     proprietor: { ...proprietorRest, image: image(p) },
-    services: { ...servicesRest, image: image(s) },
     publications: { ...publicationsRest, image: image(b) },
   }
 }

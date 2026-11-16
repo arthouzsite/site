@@ -16,8 +16,6 @@ export function makeArtist(over: Partial<AdminArtist> = {}): AdminArtist {
     lede: 'A lede.',
     bio: 'A bio.',
     portraitImageId: null,
-    isFeatured: false,
-    featuredOrder: 0,
     isPublished: true,
     createdAt: '2026-10-01T10:00:00.000Z',
     updatedAt: '2026-10-28T10:00:00.000Z',

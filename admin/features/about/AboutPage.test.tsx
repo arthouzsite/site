@@ -49,21 +49,28 @@ describe('AboutPage', () => {
   })
 
   it('lets an EDITOR save an About section', async () => {
-    const puts = setup('/about?tab=services', 'EDITOR')
+    const puts = setup('/about?tab=publications', 'EDITOR')
     const user = userEvent.setup()
-    await user.type(await screen.findByRole('textbox', { name: 'Title' }), 'Framing')
+    await user.type(await screen.findByRole('textbox', { name: 'Title' }), 'Arts')
     await user.click(screen.getByRole('button', { name: 'Save section' }))
-    await waitFor(() => expect(puts[0]?.key).toBe('about.services'))
+    await waitFor(() => expect(puts[0]?.key).toBe('about.publications'))
   })
 
   it('saves a section to its own setting and clears the unsaved mark', async () => {
-    const puts = setup('/about?tab=services')
+    const puts = setup('/about?tab=proprietor')
     const user = userEvent.setup()
-    expect(await screen.findByRole('tab', { name: 'Services' })).toHaveAttribute('aria-selected', 'true')
-    await user.type(screen.getByRole('textbox', { name: 'Title' }), 'Framing')
+    expect(await screen.findByRole('tab', { name: 'Proprietor' })).toHaveAttribute('aria-selected', 'true')
+    await user.type(screen.getByRole('textbox', { name: 'Name' }), 'Vincent')
     await user.click(screen.getByRole('button', { name: 'Save section' }))
-    await waitFor(() => expect(puts).toEqual([{ key: 'about.services', value: { title: 'Framing', body: '', ctaLabel: '', imageId: null } }]))
-    expect(await screen.findByRole('tab', { name: 'Services' })).toBeInTheDocument()
+    await waitFor(() => expect(puts).toEqual([{ key: 'about.proprietor', value: { eyebrow: '', name: 'Vincent', quote: '', body: '', imageId: null } }]))
+    expect(await screen.findByRole('tab', { name: 'Proprietor' })).toBeInTheDocument()
+  })
+
+  it('has no Services tab; ?tab=services falls back to Gallery', async () => {
+    setup('/about?tab=services')
+    expect(await screen.findByRole('tab', { name: 'Gallery' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.queryByRole('tab', { name: 'Services' })).not.toBeInTheDocument()
+    expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual(['Gallery', 'Proprietor', 'Publications'])
   })
 
   it('rejects an invalid publications URL and saves an empty one as null', async () => {

@@ -56,13 +56,12 @@ describe('artists', () => {
     expect(a.body.data.portraitImage).toMatchObject({ id: m.id, url: 'https://m.test/p1' })
   })
 
-  it('GET returns one artist; PATCH renames slug, never touches isPublished/isFeatured/featuredOrder', async () => {
+  it('GET returns one artist; PATCH renames slug, never touches isPublished', async () => {
     const a = await make('Old Name')
     expect((await client.patch(`/api/artists/${a.id}/publish`, { isPublished: true })).status).toBe(200)
-    expect((await client.patch(`/api/artists/${a.id}/feature`, { isFeatured: true })).status).toBe(200)
-    const res = await client.patch(`/api/artists/${a.id}`, { name: 'New Name', isPublished: false, isFeatured: false, featuredOrder: 9 })
+    const res = await client.patch(`/api/artists/${a.id}`, { name: 'New Name', isPublished: false })
     expect(res.status).toBe(200)
-    expect(res.body.data).toMatchObject({ slug: 'new-name', isPublished: true, isFeatured: true, featuredOrder: 1 })
+    expect(res.body.data).toMatchObject({ slug: 'new-name', isPublished: true })
     const got = await client.get(`/api/artists/${a.id}`)
     expect(got.status).toBe(200)
     expect(got.body.data).toMatchObject({ id: a.id, slug: 'new-name' })
@@ -99,42 +98,13 @@ describe('artists', () => {
     expect(bad.body.error.fields.letter).toBeDefined()
   })
 
-  it('list filters q, featured, published', async () => {
+  it('list filters q and published, ordered A-Z by sort name', async () => {
     const a = await make('Alpha')
     await make('Beta')
     await client.patch(`/api/artists/${a.id}/publish`, { isPublished: true })
-    await client.patch(`/api/artists/${a.id}/feature`, { isFeatured: true })
     expect((await client.get('/api/artists?q=bet')).body.data).toHaveLength(1)
-    expect((await client.get('/api/artists?featured=true')).body.data.map((x: { id: string }) => x.id)).toEqual([a.id])
+    expect((await client.get('/api/artists')).body.data.map((x: { name: string }) => x.name)).toEqual(['Alpha', 'Beta'])
     expect((await client.get('/api/artists?published=false')).body.data.map((x: { name: string }) => x.name)).toEqual(['Beta'])
-  })
-
-  it('featured-order persists featuredOrder 1..n, sets isFeatured, unfeatures others', async () => {
-    const [a, b, c] = [await make('A'), await make('B'), await make('C')]
-    await client.patch(`/api/artists/${c.id}/feature`, { isFeatured: true })
-    const res = await client.put('/api/artists/featured-order', { ids: [b.id, a.id, b.id] })
-    expect(res.status).toBe(200)
-    const rows = await prisma.artist.findMany({ orderBy: { name: 'asc' } })
-    expect(rows.map((r) => [r.name, r.isFeatured, r.featuredOrder])).toEqual([['A', true, 2], ['B', true, 1], ['C', false, 0]])
-  })
-
-  it('featured-order unknown id -> 400 UNKNOWN_ARTIST with missingIds; non-uuid -> 400', async () => {
-    const res = await client.put('/api/artists/featured-order', { ids: [GHOST_ID] })
-    expect(res.status).toBe(400)
-    expect(res.body.error).toMatchObject({ code: 'UNKNOWN_ARTIST', details: { missingIds: [GHOST_ID] } })
-    expect((await client.put('/api/artists/featured-order', { ids: ['nope'] })).status).toBe(400)
-  })
-
-  it('feature toggle appends to end, unfeature removes and compacts', async () => {
-    const [a, b, c] = [await make('A'), await make('B'), await make('C')]
-    for (const x of [a, b, c]) expect((await client.patch(`/api/artists/${x.id}/feature`, { isFeatured: true })).status).toBe(200)
-    const order = async () => (await prisma.artist.findMany({ orderBy: { name: 'asc' } })).map((r) => [r.isFeatured, r.featuredOrder])
-    expect(await order()).toEqual([[true, 1], [true, 2], [true, 3]])
-    await client.patch(`/api/artists/${a.id}/feature`, { isFeatured: false })
-    expect(await order()).toEqual([[false, 0], [true, 1], [true, 2]])
-    await client.patch(`/api/artists/${a.id}/feature`, { isFeatured: true })
-    expect(await order()).toEqual([[true, 3], [true, 1], [true, 2]])
-    expect((await client.patch(`/api/artists/${a.id}/feature`, { isFeatured: 'yes' })).status).toBe(400)
   })
 
   it('publish toggles and revalidates', async () => {

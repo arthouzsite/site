@@ -6,10 +6,9 @@ import { useDebouncedValue } from '../media/useDebouncedValue'
 import { ArtistsTable } from './ArtistsTable'
 import { ArtistsToolbar } from './ArtistsToolbar'
 import { DeleteArtistFlow } from './DeleteArtistFlow'
-import { FeaturedOrderCard } from './FeaturedOrderCard'
 import { LetterStrip } from './LetterStrip'
 import { ARTISTS_PAGE_SIZE, type AdminArtist } from './types'
-import { useArtistList, useFeaturedArtists } from './useArtists'
+import { useArtistList } from './useArtists'
 
 const SEARCH_DEBOUNCE_MS = 250
 
@@ -17,14 +16,12 @@ export default function ArtistsListPage() {
   const [params, setParams] = useSearchParams()
   const q = params.get('q') ?? ''
   const letter = params.get('letter') ?? ''
-  const featured = params.get('featured') ?? ''
   const published = params.get('published') ?? ''
   const page = Math.max(1, Number(params.get('page')) || 1)
   const [search, setSearch] = useState(q)
   const [toDelete, setToDelete] = useState<AdminArtist | null>(null)
   const debounced = useDebouncedValue(search.trim(), SEARCH_DEBOUNCE_MS)
-  const list = useArtistList({ q, letter, featured, published, page, limit: ARTISTS_PAGE_SIZE })
-  const featuredCount = useFeaturedArtists().data?.length ?? 0
+  const list = useArtistList({ q, letter, published, page, limit: ARTISTS_PAGE_SIZE })
 
   const update = (changes: Record<string, string | null>) =>
     setParams((cur) => {
@@ -55,18 +52,15 @@ export default function ArtistsListPage() {
           </Link>
         }
       />
-      <FeaturedOrderCard />
       <ArtistsToolbar
         search={search}
         onSearch={setSearch}
-        featured={featured}
-        onFeatured={(v) => update({ featured: v || null })}
         published={published}
         onPublished={(v) => update({ published: v || null })}
       />
       <LetterStrip value={letter} onChange={(l) => update({ letter: l || null })} />
       {list.isError && <p role="alert" className="m-0 text-13 text-danger">Could not load artists. Try again.</p>}
-      <ArtistsTable artists={list.data?.items ?? []} featuredCount={featuredCount} onDelete={setToDelete} />
+      <ArtistsTable artists={list.data?.items ?? []} onDelete={setToDelete} />
       {list.data && <Pager page={page} limit={ARTISTS_PAGE_SIZE} total={total} onPage={(p) => update({ page: String(p) })} />}
       <DeleteArtistFlow artist={toDelete} onClose={() => setToDelete(null)} />
     </div>

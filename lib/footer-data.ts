@@ -10,6 +10,9 @@ export type FooterData = {
   readonly copyrightFrom: number
   readonly instagramUrl: string | null
   readonly facebookUrl: string | null
+  readonly linkedinUrl: string | null
+  readonly youtubeUrl: string | null
+  readonly twitterUrl: string | null
   readonly locations: readonly PublicLocation[]
   /** True when the API failed and the shell is rendering static defaults. */
   readonly degraded: boolean
@@ -20,6 +23,9 @@ const FALLBACK: FooterData = {
   copyrightFrom: DEFAULT_COPYRIGHT_FROM,
   instagramUrl: null,
   facebookUrl: null,
+  linkedinUrl: null,
+  youtubeUrl: null,
+  twitterUrl: null,
   locations: [],
   degraded: true,
 }
@@ -33,12 +39,15 @@ function describe(error: unknown): string {
 export async function loadFooterData(): Promise<FooterData> {
   try {
     const [settings, locations] = await Promise.all([getSettings(), getLocations()])
-    const { tagline, copyrightFrom, instagramUrl, facebookUrl } = settings.footer
+    const { tagline, copyrightFrom, instagramUrl, facebookUrl, linkedinUrl, youtubeUrl, twitterUrl } = settings.footer
     return {
       tagline: tagline || SITE_TAGLINE,
       copyrightFrom,
       instagramUrl: instagramUrl || null,
       facebookUrl: facebookUrl || null,
+      linkedinUrl: linkedinUrl || null,
+      youtubeUrl: youtubeUrl || null,
+      twitterUrl: twitterUrl || null,
       locations,
       degraded: false,
     }

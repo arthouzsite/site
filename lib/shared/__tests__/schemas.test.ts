@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import {
-  SETTING_DEFAULTS, SETTING_KEYS, artistInputSchema, artworkInputSchema, exhibitionInputSchema,
+  FAIR_GALLERY_MAX_IMAGES, SETTING_DEFAULTS, SETTING_KEYS, artistInputSchema, artworkInputSchema, exhibitionInputSchema,
   exhibitionWorkInputSchema, fairInputSchema, locationInputSchema, loginSchema, mediaPatchSchema,
   newsInputSchema, publicExhibitionSchema, publicHomeSchema, publicImageSchema, publicSearchSchema, publishSchema,
   reorderSchema, settingSchemas, urlSchema, userInputSchema,
@@ -28,7 +28,7 @@ describe('schemas', () => {
   test('exhibition work', () =>
     expect(exhibitionWorkInputSchema.safeParse({ imageId: id, title: 't', year: '2020', artistId: id, medium: 'oil' }).success).toBe(true))
   test('artist, artwork, fair, location, media, user, login, publish, reorder', () => {
-    expect(artistInputSchema.safeParse({ name: 'K.M. Adimoolam', sortName: 'Adimoolam', medium: 'Painting', base: 'Chennai', lede: 'l', bio: 'b', portraitImageId: id, isFeatured: false }).success).toBe(true)
+    expect(artistInputSchema.safeParse({ name: 'K.M. Adimoolam', sortName: 'Adimoolam', medium: 'Painting', base: 'Chennai', lede: 'l', bio: 'b', portraitImageId: id }).success).toBe(true)
     expect(artworkInputSchema.safeParse({ artistId: id, title: 't', year: '2020', medium: 'oil', size: '1x1', imageId: id }).success).toBe(true)
     expect(fairInputSchema.safeParse({ title: 't', venue: 'v', city: 'c', dateLabel: 'March 2026', booth: 'A1', text: 't', imageId: id }).success).toBe(true)
     expect(locationInputSchema.safeParse({ city: 'c', address: 'a', phone: '+91 1', tel: '+914412345678', days: 'Mon', hours: '10', mapUrl: 'https://maps.example.com', imageId: id }).success).toBe(true)
@@ -69,6 +69,22 @@ describe('schemas', () => {
     expect(parse('javascript:alert(1)')).toBe(false)
     expect(parse('', 'not a url')).toBe(false)
   })
+  test('footer accepts LinkedIn, YouTube and Twitter links under the same rules', () => {
+    const base = { tagline: '', copyrightFrom: 2012, instagramUrl: '', facebookUrl: '' }
+    const parse = (extra: object) => settingSchemas.footer.safeParse({ ...base, ...extra })
+    expect(parse({ linkedinUrl: 'https://www.linkedin.com/company/arthouz', youtubeUrl: 'https://youtube.com/@arthouz', twitterUrl: 'https://twitter.com/arthouz' }).success).toBe(true)
+    expect(parse({ linkedinUrl: '', youtubeUrl: '', twitterUrl: '' }).success).toBe(true)
+    expect(parse({ linkedinUrl: 'linkedin.com/x' }).success).toBe(false)
+    expect(parse({ youtubeUrl: 'javascript:alert(1)' }).success).toBe(false)
+    expect(parse({ twitterUrl: 'not a url' }).success).toBe(false)
+  })
+  test('a stored footer without the new keys still parses, with them empty', () => {
+    const stored = { tagline: 'T', copyrightFrom: 2012, instagramUrl: 'https://i.example', facebookUrl: '' }
+    const result = settingSchemas.footer.safeParse(stored)
+    expect(result.success).toBe(true)
+    expect(result.data).toEqual({ ...stored, linkedinUrl: '', youtubeUrl: '', twitterUrl: '' })
+    expect(SETTING_DEFAULTS.footer).toMatchObject({ linkedinUrl: '', youtubeUrl: '', twitterUrl: '' })
+  })
   test('settingSchemas.heroLayout accepts FULL_BLEED|SPLIT only', () => {
     expect(settingSchemas.heroLayout.safeParse('FULL_BLEED').success).toBe(true)
     expect(settingSchemas.heroLayout.safeParse('SPLIT').success).toBe(true)
@@ -77,14 +93,11 @@ describe('schemas', () => {
   test('home settings', () => {
     expect(settingSchemas.homeHeroExhibitionId.safeParse(null).success).toBe(true)
     expect(settingSchemas.homeHeroExhibitionId.safeParse('nope').success).toBe(false)
-    expect(settingSchemas.homeArtistCount.safeParse(0).success).toBe(false)
-    expect(settingSchemas.homeArtistCount.safeParse(22).success).toBe(true)
   })
   test('every setting key has a schema and default that validates', () => {
     for (const key of SETTING_KEYS) {
       expect(settingSchemas[key].safeParse(SETTING_DEFAULTS[key]).success, key).toBe(true)
     }
-    expect(SETTING_DEFAULTS.homeArtistCount).toBe(22)
     expect(SETTING_DEFAULTS.heroLayout).toBe('FULL_BLEED')
     expect(SETTING_DEFAULTS.artistIndexLayout).toBe('GROUPED')
   })
@@ -103,7 +116,8 @@ describe('schemas', () => {
     }).success).toBe(true)
     expect(publicSearchSchema.safeParse({ groups: [] }).success).toBe(true)
     expect(publicSearchSchema.safeParse({ groups: [{ label: 'News', items: [{ label: 'x', href: '/news' }] }] }).success).toBe(true)
-    expect(publicSearchSchema.safeParse({ groups: [{ label: 'Fairs', items: [] }] }).success).toBe(false)
+    expect(publicSearchSchema.safeParse({ groups: [{ label: 'Fairs', items: [] }] }).success).toBe(true)
+    expect(publicSearchSchema.safeParse({ groups: [{ label: 'Pavilions', items: [] }] }).success).toBe(false)
     expect(publicHomeSchema.safeParse({}).success).toBe(false)
   })
 })
@@ -114,5 +128,27 @@ describe('publicImageSchema', () => {
     expect(publicImageSchema.safeParse(image).success).toBe(true)
     expect(publicImageSchema.safeParse({ ...image, width: 0 }).success).toBe(false)
     expect(publicImageSchema.safeParse({ ...image, height: -5 }).success).toBe(false)
+  })
+})
+
+describe('fair gallery schema', () => {
+  const ids = (n: number) => Array.from({ length: n }, (_, i) => `3f2b8c1e-8a52-4f0e-9d3b-${String(i).padStart(12, '0')}`)
+  const parse = (galleryImageIds?: unknown) => fairInputSchema.safeParse({ title: 't', galleryImageIds })
+
+  test('the limit is 15', () => expect(FAIR_GALLERY_MAX_IMAGES).toBe(15))
+  test('accepts none, omitted and exactly the limit', () => {
+    expect(parse().success).toBe(true)
+    expect(parse([]).success).toBe(true)
+    expect(parse(ids(FAIR_GALLERY_MAX_IMAGES)).success).toBe(true)
+  })
+  test('rejects one past the limit with a plain message on galleryImageIds', () => {
+    const r = parse(ids(FAIR_GALLERY_MAX_IMAGES + 1))
+    expect(r.success).toBe(false)
+    expect(r.error?.issues[0]?.path).toEqual(['galleryImageIds'])
+    expect(r.error?.issues[0]?.message).toBe('A fair gallery holds at most 15 images')
+  })
+  test('rejects duplicates and non-uuid ids', () => {
+    expect(parse([ids(1)[0], ids(1)[0]]).success).toBe(false)
+    expect(parse(['nope']).success).toBe(false)
   })
 })

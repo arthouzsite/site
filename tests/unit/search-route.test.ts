@@ -55,7 +55,7 @@ describe('GET /api/search', () => {
   it('answers 502 (and logs) when the search fails or returns data outside the contract', async () => {
     const log = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-    search.mockResolvedValueOnce({ groups: [{ label: 'Fairs', items: [] }] })
+    search.mockResolvedValueOnce({ groups: [{ label: 'Pavilions', items: [] }] })
     const invalid = await GET(request('?q=pich'))
     search.mockRejectedValueOnce(new Error('database down'))
     const down = await GET(request('?q=pich'))

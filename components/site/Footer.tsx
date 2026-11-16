@@ -20,6 +20,9 @@ export async function Footer() {
   const socials = [
     { label: 'Instagram ↗', href: data.instagramUrl },
     { label: 'Facebook ↗', href: data.facebookUrl },
+    { label: 'LinkedIn ↗', href: data.linkedinUrl },
+    { label: 'YouTube ↗', href: data.youtubeUrl },
+    { label: 'Twitter ↗', href: data.twitterUrl },
   ].filter((social): social is { label: string; href: string } => social.href !== null && HTTP_URL.test(social.href))
 
   return (
@@ -48,7 +51,7 @@ export async function Footer() {
         <div className="mt-14 flex flex-wrap justify-between gap-4 border-t border-line-dark-18 pt-6 text-[13px] text-meta">
           <div>© {years} Art Houz. All rights reserved.</div>
           {socials.length > 0 && (
-            <div className="flex gap-6">
+            <div className="flex flex-wrap gap-x-6 gap-y-2">
               {socials.map((social) => (
                 <a key={social.label} href={social.href} target="_blank" rel="noopener noreferrer" className={`hit-44 ${DARK_LINK}`}>
                   {decorateArrows(social.label)}

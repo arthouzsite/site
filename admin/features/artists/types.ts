@@ -11,8 +11,6 @@ export type AdminArtist = {
   lede: string
   bio: string
   portraitImageId: string | null
-  isFeatured: boolean
-  featuredOrder: number
   isPublished: boolean
   createdAt: string
   updatedAt: string
@@ -52,11 +50,9 @@ export type ArtistInUseDetails = {
 export type ArtistListParams = {
   q: string
   letter: string
-  featured: string
   published: string
   page: number
   limit: number
 }
 
 export const ARTISTS_PAGE_SIZE = 20
-export const FEATURED_LIMIT = 100

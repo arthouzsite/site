@@ -15,10 +15,8 @@ vi.mock('next/navigation', () => ({ usePathname: () => '/', useRouter: () => ({ 
 import { GalleryTab } from '@/components/about/GalleryTab'
 import { ProprietorTab } from '@/components/about/ProprietorTab'
 import { PublicationsTab } from '@/components/about/PublicationsTab'
-import { ServicesTab } from '@/components/about/ServicesTab'
 import { ABOUT_TABS, DEFAULT_ABOUT_TAB, parseAboutTab } from '@/components/about/tabs'
 import { ArtistExhibitions } from '@/components/artists/ArtistExhibitions'
-import { FeaturedGrid } from '@/components/artists/FeaturedGrid'
 import { FlowingIndex } from '@/components/artists/FlowingIndex'
 import { GroupedIndex } from '@/components/artists/GroupedIndex'
 import { SelectedWorks } from '@/components/artists/SelectedWorks'
@@ -75,13 +73,10 @@ describe('about tabs', () => {
     expect(html(<PublicationsTab publications={{ ...about.publications, externalUrl: null }} />)).not.toContain('View more')
   })
 
-  it('renders the services call to action', () => {
-    expect(html(<ServicesTab services={about.services} />)).toContain('Enquire')
-  })
-
   it('resolves tab keys and falls back to the gallery', () => {
-    expect(ABOUT_TABS).toHaveLength(4)
-    expect(parseAboutTab('services')).toBe('services')
+    expect(ABOUT_TABS).toHaveLength(3)
+    expect(parseAboutTab('proprietor')).toBe('proprietor')
+    expect(parseAboutTab('services')).toBe(DEFAULT_ABOUT_TAB)
     expect(parseAboutTab('nope')).toBe(DEFAULT_ABOUT_TAB)
     expect(parseAboutTab(null)).toBe(DEFAULT_ABOUT_TAB)
   })
@@ -92,8 +87,7 @@ describe('artist components', () => {
     expect(html(<ArtistExhibitions exhibitions={artistDetail.exhibitions} />)).toContain('href="/exhibitions/salt-line"')
   })
 
-  it('renders the featured grid, flowing index and grouped index', () => {
-    expect(html(<FeaturedGrid artists={[artist]} />)).toContain('/artists/parvathi-nayar')
+  it('renders the flowing index and grouped index', () => {
     const flowing = html(<FlowingIndex artists={[artist, { ...artist, id: 'a2', slug: 'b', name: 'B' }]} />)
     expect(flowing).toContain('·')
     expect(flowing.match(/<a [^>]*>/g)?.every((anchor) => anchor.includes('hit-44'))).toBe(true)

@@ -1,5 +1,5 @@
 import type { PublicExhibition, PublicHome } from '@/lib/shared'
-import { resolveExhibitionStatus } from '@/lib/shared'
+import { HOME_ARTIST_COUNT, resolveExhibitionStatus } from '@/lib/shared'
 import { prisma } from '@/lib/server/prisma'
 import { settingsService } from '@/lib/server/settings/settings.service'
 import { HOME_COUNTRY, HOME_NEWS_COUNT, HOME_RECENT_COUNT } from './public.constants'
@@ -30,7 +30,7 @@ export async function buildHome(today: Date): Promise<PublicHome> {
       where: { isPublished: true },
       select: { name: true, slug: true },
       orderBy: [{ sortName: 'asc' }, { id: 'asc' }],
-      take: settings.homeArtistCount as number,
+      take: HOME_ARTIST_COUNT,
     }),
     prisma.location.findMany({ include: { image: true }, orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] }),
     prisma.news.findMany({

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { addServicesMenuSubs, addServicesNav, fixImageSlotFrameSize, hidePublicationsLink, reorderArtists, reorderNews } from '@/tests/visual/normalise'
+import { addServicesMenuSubs, addServicesNav, removeAboutServicesTab, removeFeaturedArtistsGrid, trimHomeArtistsLine, fixImageSlotFrameSize, hidePublicationsLink, reorderArtists, reorderNews } from '@/tests/visual/normalise'
 import { REFERENCE_FILE } from '@/tests/visual/paths'
 
 const PROTOTYPE = readFileSync(REFERENCE_FILE, 'utf8')
@@ -105,3 +105,49 @@ describe('services navigation patches', () => {
   })
 })
 
+
+describe('(j) About tabs patch', () => {
+  it('drops the Services tab from the prototype tab list, leaving the others in order', () => {
+    const source = "const tabs = [['gallery', 'Gallery'], ['proprietor', 'Proprietor'], ['services', 'Services'], ['publications', 'Publications']];"
+
+    expect(removeAboutServicesTab(source)).toBe("const tabs = [['gallery', 'Gallery'], ['proprietor', 'Proprietor'], ['publications', 'Publications']];")
+  })
+
+  it('throws when the tab list is not found exactly once', () => {
+    expect(() => removeAboutServicesTab('nothing')).toThrow(/About services tab/)
+  })
+
+  it('applies to the checked-in prototype', () => {
+    expect(removeAboutServicesTab(PROTOTYPE)).not.toContain("['services', 'Services']")
+  })
+})
+
+describe('(k) featured artists grid patch', () => {
+  const grid = '    <div style="display:grid;gap:1px">\n      <sc-for list="{{ featured }}" as="a">\n        <a>{{ a.name }}</a>\n      </sc-for>\n    </div>\n'
+
+  it('removes the grid and leaves the surrounding markup', () => {
+    expect(removeFeaturedArtistsGrid(`<h1>Artists</h1>\n${grid}<h2>Index</h2>`)).toBe('<h1>Artists</h1>\n<h2>Index</h2>')
+  })
+
+  it('throws when the grid is not found exactly once', () => {
+    expect(() => removeFeaturedArtistsGrid('nothing')).toThrow(/artists featured grid/)
+  })
+
+  it('applies to the checked-in prototype', () => {
+    const patched = removeFeaturedArtistsGrid(PROTOTYPE)
+    expect(patched).not.toContain('list="{{ featured }}"')
+    expect(patched).toContain('Index A–Z')
+  })
+})
+
+describe('(l) home artists line', () => {
+  it('cuts the checked-in prototype to the first ten artists', () => {
+    const patched = trimHomeArtistsLine(PROTOTYPE)
+    expect(patched).toContain('flat(AH_ARTISTS.slice(0, 10)).map((a, i) => i === 9 ?')
+    expect(patched).not.toContain('AH_ARTISTS.slice(0, 22)')
+  })
+
+  it('throws when the slice is not found', () => {
+    expect(() => trimHomeArtistsLine('nothing')).toThrow(/home artists line/)
+  })
+})

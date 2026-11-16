@@ -11,8 +11,6 @@ export const artistInputSchema = z.object({
   lede: optionalText(1000),
   bio: optionalText(20000),
   portraitImageId: nullableIdSchema,
-  isFeatured: z.boolean().default(false),
-  featuredOrder: z.number().int().default(0),
   isPublished: z.boolean().default(false),
 })
 

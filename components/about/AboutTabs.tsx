@@ -6,15 +6,12 @@ import { useState, type KeyboardEvent } from 'react'
 import { GalleryTab } from './GalleryTab'
 import { ProprietorTab } from './ProprietorTab'
 import { PublicationsTab } from './PublicationsTab'
-import { ServicesTab } from './ServicesTab'
 import { ABOUT_TABS, DEFAULT_ABOUT_TAB, type AboutTabKey } from './tabs'
 
 function Panel({ tab, about }: { tab: AboutTabKey; about: PublicAbout }) {
   switch (tab) {
     case 'proprietor':
       return <ProprietorTab proprietor={about.proprietor} />
-    case 'services':
-      return <ServicesTab services={about.services} />
     case 'publications':
       return <PublicationsTab publications={about.publications} />
     default:

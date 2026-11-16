@@ -15,8 +15,8 @@ describe('artistListQuerySchema', () => {
     expect(artistListQuerySchema.parse({ page: '2', limit: '10', q: '  ab ' })).toEqual({ page: 2, limit: 10, q: 'ab' })
   })
 
-  it('rejects non-boolean featured and page below 1', () => {
-    expect(artistListQuerySchema.safeParse({ featured: 'yes' }).success).toBe(false)
+  it('rejects non-boolean published and page below 1', () => {
+    expect(artistListQuerySchema.safeParse({ published: 'yes' }).success).toBe(false)
     expect(artistListQuerySchema.safeParse({ page: '0' }).success).toBe(false)
   })
 })
@@ -35,9 +35,8 @@ describe('artistListWhere', () => {
     expect(clause?.NOT.OR).toHaveLength(26)
   })
 
-  it('combines featured, published and q filters', () => {
-    expect(artistListWhere({ featured: 'true', published: 'false', q: 'ab' }).AND).toEqual([
-      { isFeatured: true },
+  it('combines published and q filters', () => {
+    expect(artistListWhere({ published: 'false', q: 'ab' }).AND).toEqual([
       { isPublished: false },
       { OR: [{ name: { contains: 'ab', mode: 'insensitive' } }, { sortName: { contains: 'ab', mode: 'insensitive' } }] },
     ])

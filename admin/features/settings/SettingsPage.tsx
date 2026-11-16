@@ -2,7 +2,6 @@ import { useMemo, useRef, useState } from 'react'
 import { Button } from '../../components/ui/Button'
 import { PageHead } from '../../components/PageHead'
 import { ArtistIndexCards } from './ArtistIndexCards'
-import { ArtistsLineCard } from './ArtistsLineCard'
 import { CardRegistryContext, type CardHandle, type CardRegistry } from './cardRegistry'
 import { FocusArtistCard } from './FocusArtistCard'
 import { FooterCard } from './FooterCard'
@@ -54,7 +53,6 @@ export default function SettingsPage() {
             {!canEdit && <p className="m-0 text-13 text-muted">Only administrators can change these settings.</p>}
             <HeroLayoutCards settings={settings.data} readOnly={!canEdit} />
             <FocusArtistCard settings={settings.data} readOnly={!canEdit} />
-            <ArtistsLineCard settings={settings.data} readOnly={!canEdit} />
             <ArtistIndexCards settings={settings.data} readOnly={!canEdit} />
             <FooterCard settings={settings.data} readOnly={!canEdit} />
             <SiteCard settings={settings.data} readOnly={!canEdit} />

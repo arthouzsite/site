@@ -6,12 +6,10 @@ import { useSettings } from '../settings/useSettings'
 import { GalleryTab } from './GalleryTab'
 import { ProprietorTab } from './ProprietorTab'
 import { PublicationsTab } from './PublicationsTab'
-import { ServicesTab } from './ServicesTab'
 
 const TABS = [
   { id: 'gallery', label: 'Gallery' },
   { id: 'proprietor', label: 'Proprietor' },
-  { id: 'services', label: 'Services' },
   { id: 'publications', label: 'Publications' },
 ]
 const DEFAULT_TAB = 'gallery'
@@ -38,7 +36,6 @@ export default function AboutPage() {
         <Tabs tabs={tabs} value={tab} label="About sections" onChange={(id) => setParams({ tab: id }, { replace: true })}>
           <GalleryTab settings={data} active={tab === 'gallery'} onDirtyChange={markDirty} />
           <ProprietorTab settings={data} active={tab === 'proprietor'} onDirtyChange={markDirty} />
-          <ServicesTab settings={data} active={tab === 'services'} onDirtyChange={markDirty} />
           <PublicationsTab settings={data} active={tab === 'publications'} onDirtyChange={markDirty} />
         </Tabs>
       )}

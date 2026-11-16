@@ -38,6 +38,11 @@ model User {
   uploads Media[]
 }
 
+enum EnquiryKind {
+  SERVICE
+  ARTIST
+}
+
 enum MediaKind {
   IMAGE
   VIDEO
@@ -65,6 +70,7 @@ model Media {
   artworks        Artwork[]
   exhibitionWorks ExhibitionWork[]
   fairs           Fair[]
+  fairImages      FairImage[]
   services        Service[]
   news            News[]
   locations       Location[]
@@ -154,6 +160,7 @@ model Artist {
   artworks        Artwork[]
   exhibitions     ExhibitionArtist[]
   exhibitionWorks ExhibitionWork[]
+  enquiries       Enquiry[]
 
   @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "Artist_name_trgm_idx")
 }
@@ -193,7 +200,23 @@ model Fair {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  image Media? @relation(fields: [imageId], references: [id], onDelete: Restrict)
+  image   Media?       @relation(fields: [imageId], references: [id], onDelete: Restrict)
+  gallery FairImage[]
+}
+
+model FairImage {
+  id        String   @id @default(uuid())
+  fairId    String
+  mediaId   String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  fair  Fair  @relation(fields: [fairId], references: [id], onDelete: Cascade)
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Restrict)
+
+  @@unique([fairId, mediaId])
+  @@index([fairId, sortOrder])
+  @@index([mediaId])
 }
 
 model Service {
@@ -213,7 +236,8 @@ model Service {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  image Media? @relation(fields: [imageId], references: [id], onDelete: Restrict)
+  image     Media?    @relation(fields: [imageId], references: [id], onDelete: Restrict)
+  enquiries Enquiry[]
 }
 
 model News {
@@ -252,6 +276,34 @@ model Location {
   updatedAt DateTime @updatedAt
 
   image Media? @relation(fields: [imageId], references: [id], onDelete: Restrict)
+}
+
+/// A public enquiry about a service or an artist. `subject` snapshots the title/name so the row stays readable
+/// after the service or artist is deleted (the relation is then set to null).
+model Enquiry {
+  id        String       @id @default(uuid())
+  kind      EnquiryKind
+  serviceId String?
+  artistId  String?
+  subject   String
+  name      String
+  email     String
+  mobile    String
+  message   String       @default("")
+  dateFrom  DateTime?    @db.Date
+  dateTo    DateTime?    @db.Date
+  purpose   String?
+  location  String?
+  isHandled Boolean      @default(false)
+  createdAt DateTime     @default(now())
+
+  service Service? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  artist  Artist?  @relation(fields: [artistId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([kind, createdAt])
+  @@index([serviceId])
+  @@index([artistId])
 }
 
 model Setting {

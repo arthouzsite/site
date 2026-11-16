@@ -119,25 +119,16 @@ describe('servicesService', () => {
     expect(revalidateSite).toHaveBeenCalledTimes(1)
   })
 
-  it('reorder writes each index as sortOrder and revalidates every service', async () => {
-    const update = vi.fn().mockResolvedValue({})
-    const findMany = vi
-      .fn()
-      .mockResolvedValueOnce([{ id: 'a', slug: 'sa' }, { id: 'b', slug: 'sb' }])
-      .mockResolvedValueOnce([])
-    arrange({ findMany, count: vi.fn().mockResolvedValue(0), update })
+  it('list sorts A-Z ignoring case and paginates after sorting', async () => {
+    const rows = [row({ id: '1', title: 'framing' }), row({ id: '2', title: 'Art sales' }), row({ id: '3', title: 'Gallery' })]
+    arrange({ findMany: vi.fn().mockResolvedValue(rows) })
 
-    await servicesService.reorder(['b', 'a'])
+    const page = await servicesService.list({ page: 2, limit: 2 })
 
-    expect(update.mock.calls.map(([arg]) => [arg.where.id, arg.data.sortOrder])).toEqual([['b', 0], ['a', 1]])
-    expect(tagSlugs()).toEqual(expect.arrayContaining(['sa', 'sb']))
-    expect(revalidateSite).toHaveBeenCalledTimes(1)
-  })
-
-  it('reorder with a missing id is INVALID_ORDER', async () => {
-    arrange({ findMany: vi.fn().mockResolvedValue([{ id: 'a', slug: 'sa' }, { id: 'b', slug: 'sb' }]) })
-
-    await expect(servicesService.reorder(['a'])).rejects.toMatchObject({ code: 'INVALID_ORDER' })
+    expect(page.data.map((s: { title: string }) => s.title)).toEqual(['Gallery'])
+    expect(page.meta).toMatchObject({ total: 3 })
+    const all = await servicesService.list({ limit: 10 })
+    expect(all.data.map((s: { title: string }) => s.title)).toEqual(['Art sales', 'framing', 'Gallery'])
   })
 
   it('remove deletes and revalidates; unknown id is 404', async () => {
@@ -159,7 +150,7 @@ describe('servicesService', () => {
     const where = findMany.mock.calls[0]?.[0].where
     expect(JSON.stringify(where)).toContain('"title":{"contains":"rent"')
     expect(JSON.stringify(where)).toContain('"summary":{"contains":"rent"')
-    expect(findMany.mock.calls[0]?.[0]).toMatchObject({ skip: 10, take: 10 })
+    expect(findMany.mock.calls[0]?.[0]).not.toHaveProperty('skip')
     expect(res.meta).toMatchObject({ page: 2, limit: 10, total: 0 })
   })
 })

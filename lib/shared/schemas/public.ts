@@ -25,7 +25,11 @@ export const publicArtistSchema = z.object({
 export const publicFairSchema = z.object({
   id: z.string(), slug: z.string(), title: z.string(), where: z.string(),
   booth: z.string(), text: z.string(), image,
+  // Defaulted so a list payload cached before galleries were added still parses.
+  gallery: z.array(publicImageSchema).default([]),
 })
+
+export const publicFairDetailSchema = publicFairSchema.extend({ gallery: z.array(publicImageSchema) })
 
 export const publicServiceSchema = z.object({
   slug: z.string(), title: z.string(), summary: z.string(), body: z.string(), image,
@@ -73,7 +77,6 @@ export const publicExhibitionListSchema = z.object({
 })
 
 export const publicArtistListSchema = z.object({
-  featured: z.array(publicArtistSchema),
   groups: z.array(z.object({ letter: z.string(), items: z.array(publicArtistSchema) })),
   flat: z.array(publicArtistSchema),
   layout: z.enum(ARTIST_INDEX_LAYOUTS),
@@ -83,7 +86,10 @@ export const publicSettingsSchema = z.object({
   heroLayout: z.enum(HERO_LAYOUTS),
   artistIndexLayout: z.enum(ARTIST_INDEX_LAYOUTS),
   footer: z.object({
-    tagline: z.string(), instagramUrl: z.string(), facebookUrl: z.string(), copyrightFrom: z.number(),
+    tagline: z.string(), instagramUrl: z.string(), facebookUrl: z.string(),
+    // Defaulted: a settings payload cached before these links existed must still parse after a deploy.
+    linkedinUrl: z.string().default(''), youtubeUrl: z.string().default(''), twitterUrl: z.string().default(''),
+    copyrightFrom: z.number(),
   }),
   site: z.object({ title: z.string(), description: z.string(), ogImage: image }),
 })
@@ -91,7 +97,6 @@ export const publicSettingsSchema = z.object({
 export const publicAboutSchema = z.object({
   gallery: z.object({ statement: z.string(), body: z.string(), locationsLabel: z.string(), image }),
   proprietor: z.object({ eyebrow: z.string(), name: z.string(), quote: z.string(), body: z.string(), image }),
-  services: z.object({ title: z.string(), body: z.string(), ctaLabel: z.string(), image }),
   publications: z.object({ title: z.string(), body: z.string(), externalUrl: z.string().nullable(), image }),
 })
 
@@ -112,7 +117,7 @@ export const publicHomeSchema = z.object({
 
 export const publicSearchSchema = z.object({
   groups: z.array(z.object({
-    label: z.enum(['Artists', 'Exhibitions', 'News', 'Services']),
+    label: z.enum(['Artists', 'Exhibitions', 'Fairs', 'News', 'Services']),
     items: z.array(z.object({ label: z.string(), href: z.string() })),
   })),
 })
@@ -123,6 +128,7 @@ export type PublicExhibitionDetail = z.infer<typeof publicExhibitionDetailSchema
 export type PublicArtist = z.infer<typeof publicArtistSchema>
 export type PublicArtistDetail = z.infer<typeof publicArtistDetailSchema>
 export type PublicFair = z.infer<typeof publicFairSchema>
+export type PublicFairDetail = z.infer<typeof publicFairDetailSchema>
 export type PublicService = z.infer<typeof publicServiceSchema>
 export type PublicServiceList = z.infer<typeof publicServiceListSchema>
 export type PublicNews = z.infer<typeof publicNewsSchema>

@@ -30,6 +30,16 @@ describe('loadFooterData', () => {
     expect(data.locations).toHaveLength(1)
   })
 
+  it('maps the new social links, treating missing or empty ones as null', async () => {
+    apiGet.mockImplementation(async (path: string) =>
+      path === '/public/settings'
+        ? { footer: { tagline: 'Tag', copyrightFrom: 2012, instagramUrl: '', facebookUrl: '', linkedinUrl: 'https://l.example', youtubeUrl: '' } }
+        : [],
+    )
+    const data = await loadFooterData()
+    expect(data).toMatchObject({ linkedinUrl: 'https://l.example', youtubeUrl: null, twitterUrl: null })
+  })
+
   it.each([
     ['a network failure', new TypeError('fetch failed'), 'fetch failed'],
     ['an ApiError', new ApiError('INTERNAL', 'Database unavailable', 500), 'Database unavailable'],
@@ -39,7 +49,7 @@ describe('loadFooterData', () => {
 
     const data = await loadFooterData()
 
-    expect(data).toEqual({ tagline: SITE_TAGLINE, copyrightFrom: 2026, instagramUrl: null, facebookUrl: null, locations: [], degraded: true })
+    expect(data).toEqual({ tagline: SITE_TAGLINE, copyrightFrom: 2026, instagramUrl: null, facebookUrl: null, linkedinUrl: null, youtubeUrl: null, twitterUrl: null, locations: [], degraded: true })
     expect(log).toHaveBeenCalledWith(expect.stringContaining(logged))
   })
 })

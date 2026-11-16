@@ -1,8 +1,8 @@
-import { slugify, tagsFor, type FairInput } from '@/lib/shared'
+import { FAIR_GALLERY_MAX_IMAGES, slugify, tagsFor, type FairInput } from '@/lib/shared'
 import { assertExactOrder } from '@/lib/server/common/exact-order'
-import { assertMediaExists } from '@/lib/server/common/media-exists'
+import { assertMediaExists, assertMediaIdsExist } from '@/lib/server/common/media-exists'
 import { uniqueSlug } from '@/lib/server/common/slugs'
-import { notFound } from '@/lib/server/http/errors'
+import { badRequest, notFound } from '@/lib/server/http/errors'
 import { withMeta } from '@/lib/server/http/route'
 import { prisma } from '@/lib/server/prisma'
 import { revalidateSite } from '@/lib/server/revalidate'
@@ -16,6 +16,17 @@ function writableFields(input: FairInput, slug: string) {
   const { title, venue, city, dateLabel, booth, text, imageId } = input
   return { title, venue, city, dateLabel, booth, text, imageId, slug }
 }
+
+// Re-checked here because the schema is only one of the ways in; a gallery past the limit never reaches the database.
+async function assertGallery(ids: readonly string[] | undefined): Promise<void> {
+  if (!ids) return
+  if (ids.length > FAIR_GALLERY_MAX_IMAGES) {
+    throw badRequest('GALLERY_LIMIT', `A fair gallery holds at most ${FAIR_GALLERY_MAX_IMAGES} images`)
+  }
+  await assertMediaIdsExist(prisma, ids, 'gallery image')
+}
+
+const galleryRows = (ids: readonly string[]) => ids.map((mediaId, sortOrder) => ({ mediaId, sortOrder }))
 
 async function find(id: string) {
   const row = await prisma.fair.findUnique({ where: { id }, include: FAIR_INCLUDE })
@@ -41,10 +52,15 @@ async function get(id: string) {
 
 async function create(input: FairInput) {
   await assertMediaExists(prisma, input.imageId)
+  await assertGallery(input.galleryImageIds)
   const slug = await uniqueSlug(prisma, 'fair', input.slug ?? input.title)
   const last = await prisma.fair.aggregate({ _max: { sortOrder: true } })
   const created = await prisma.fair.create({
-    data: { ...writableFields(input, slug), isPublished: input.isPublished, sortOrder: (last._max.sortOrder ?? FIRST_SORT_ORDER - 1) + 1 },
+    data: {
+      ...writableFields(input, slug),
+      gallery: { create: galleryRows(input.galleryImageIds ?? []) },
+      isPublished: input.isPublished, sortOrder: (last._max.sortOrder ?? FIRST_SORT_ORDER - 1) + 1,
+    },
     include: FAIR_INCLUDE,
   })
   revalidateSite(tagsFor('fair', created.slug))
@@ -54,8 +70,11 @@ async function create(input: FairInput) {
 async function update(id: string, input: FairInput) {
   const existing = await find(id)
   await assertMediaExists(prisma, input.imageId)
+  await assertGallery(input.galleryImageIds)
   const slug = await nextSlug(existing, input, id)
-  const updated = await prisma.fair.update({ where: { id }, data: writableFields(input, slug), include: FAIR_INCLUDE })
+  // deleteMany + create run in the fair's own write, so a failed gallery never leaves a half-replaced one.
+  const gallery = input.galleryImageIds ? { gallery: { deleteMany: {}, create: galleryRows(input.galleryImageIds) } } : {}
+  const updated = await prisma.fair.update({ where: { id }, data: { ...writableFields(input, slug), ...gallery }, include: FAIR_INCLUDE })
   revalidateSite([...tagsFor('fair', existing.slug), ...tagsFor('fair', updated.slug)])
   return toAdminFair(updated)
 }

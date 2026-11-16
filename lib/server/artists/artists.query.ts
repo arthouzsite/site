@@ -8,7 +8,6 @@ const NON_LETTER_BUCKET = '#'
 export const artistListQuerySchema = z.object({
   q: z.string().trim().max(MAX_SEARCH_LENGTH).optional(),
   letter: z.string().regex(/^([A-Z]|#)$/, 'letter must be A-Z or #').optional(),
-  featured: z.enum(['true', 'false']).optional(),
   published: z.enum(['true', 'false']).optional(),
   page: z.coerce.number().int().min(1).optional(),
   limit: z.coerce.number().int().min(1).optional(),
@@ -26,7 +25,6 @@ function letterWhere(letter: string): Prisma.ArtistWhereInput {
 export function artistListWhere(query: ArtistListQuery): Prisma.ArtistWhereInput {
   const and: Prisma.ArtistWhereInput[] = []
   if (query.letter) and.push(letterWhere(query.letter))
-  if (query.featured) and.push({ isFeatured: query.featured === 'true' })
   if (query.published) and.push({ isPublished: query.published === 'true' })
   if (query.q) and.push({ OR: [{ name: { contains: query.q, mode: 'insensitive' } }, { sortName: { contains: query.q, mode: 'insensitive' } }] })
   return { AND: and }

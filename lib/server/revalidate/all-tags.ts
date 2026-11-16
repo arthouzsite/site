@@ -12,11 +12,12 @@ function slugTags(entity: TagEntity, rows: readonly Slugged[]): string[] {
 /** Every cache tag the site can carry: all entity tags plus the per-slug detail tags of every stored row. */
 export async function allSiteTags(): Promise<string[]> {
   const select = { slug: true } as const
-  const [exhibitions, artists, services, news] = await Promise.all([
+  const [exhibitions, artists, services, news, fairs] = await Promise.all([
     prisma.exhibition.findMany({ select }),
     prisma.artist.findMany({ select }),
     prisma.service.findMany({ select }),
     prisma.news.findMany({ select }),
+    prisma.fair.findMany({ select }),
   ])
   const tags = [
     ...ALL_ENTITIES.flatMap((entity) => tagsFor(entity)),
@@ -24,6 +25,7 @@ export async function allSiteTags(): Promise<string[]> {
     ...slugTags('artist', artists),
     ...slugTags('service', services),
     ...slugTags('news', news),
+    ...slugTags('fair', fairs),
   ]
   return Array.from(new Set(tags))
 }

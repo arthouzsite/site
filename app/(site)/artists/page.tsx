@@ -1,7 +1,6 @@
 import { publicArtistListSchema } from '@/lib/shared'
 import type { Metadata } from 'next'
 import { ArtistSearch } from '@/components/artists/ArtistSearch'
-import { FeaturedGrid } from '@/components/artists/FeaturedGrid'
 import { FlowingIndex } from '@/components/artists/FlowingIndex'
 import { GroupedIndex } from '@/components/artists/GroupedIndex'
 import { LetterStrip } from '@/components/artists/LetterStrip'
@@ -22,14 +21,13 @@ function readQuery(value: string | string[] | undefined): string {
 export default async function ArtistsPage({ searchParams }: Props) {
   const q = readQuery((await searchParams).q)
   // Free-text queries are per request: caching them would let arbitrary ?q values grow the data cache without bound.
-  const { featured, groups, flat, layout } = q
+  const { groups, flat, layout } = q
     ? await apiGetUncached(`/public/artists?q=${encodeURIComponent(q)}`, publicArtistListSchema)
     : await apiGet('/public/artists', publicArtistListSchema, [TAGS.artists])
   return (
     <main>
       <Container className="pt-[clamp(40px,6vw,88px)] pb-[clamp(72px,9vw,140px)]">
         <PageTitle className="mb-12">Artists</PageTitle>
-        <FeaturedGrid artists={featured} />
         <div className="mb-6 flex flex-wrap items-end justify-between gap-x-12 gap-y-6">
           <h2 className="m-0 font-display text-[clamp(36px,4vw,56px)] leading-none font-normal">Index A–Z</h2>
           <ArtistSearch initialQuery={q} />

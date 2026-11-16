@@ -23,6 +23,9 @@ export function FooterCard({ settings, readOnly }: Props) {
       <div className="grid gap-4 sm:grid-cols-2">
         <Field name="footer.instagramUrl" label="Instagram URL"><Input type="url" {...register('footer.instagramUrl')} /></Field>
         <Field name="footer.facebookUrl" label="Facebook URL"><Input type="url" {...register('footer.facebookUrl')} /></Field>
+        <Field name="footer.linkedinUrl" label="LinkedIn URL"><Input type="url" {...register('footer.linkedinUrl')} /></Field>
+        <Field name="footer.youtubeUrl" label="YouTube URL"><Input type="url" {...register('footer.youtubeUrl')} /></Field>
+        <Field name="footer.twitterUrl" label="Twitter URL"><Input type="url" {...register('footer.twitterUrl')} /></Field>
       </div>
       <Field name="footer.copyrightFrom" label="Copyright from year" help={`Renders as © ${Number.isFinite(from) ? from : ''} – ${year}`} error={fromError}>
         <Input type="number" className="max-w-[140px]" {...register('footer.copyrightFrom', { valueAsNumber: true })} />

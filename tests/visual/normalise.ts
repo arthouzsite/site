@@ -20,6 +20,10 @@ const FRAME_SIZE_READ = 'const fw = this.clientWidth, fh = this.clientHeight;'
 const NEWS_LIST_MAPPING = 'newsList: AH_NEWS.map(n => ({ ...n, '
 const NAV_DEFS_NEWS = "['News', 'news', ['news']], "
 const FOOTER_NAV_NEWS = "['News', 'news'], "
+const ABOUT_TABS_LIST = "['proprietor', 'Proprietor'], ['services', 'Services'], "
+/** The artists screen's featured grid: the grid `div` wrapping `<sc-for list="{{ featured }}">`, up to its closing `</div>`. */
+const FEATURED_GRID_PATTERN = /[ \t]*<div style="display:grid;[^"]*">\n\s*<sc-for list="\{\{ featured \}\}"[\s\S]*?<\/sc-for>\n\s*<\/div>\n/g
+const HOME_ARTISTS_SLICE = "flat(AH_ARTISTS.slice(0, 22)).map((a, i) => i === 21 ?"
 const NAV_MAP_RETURN = "line: on ? '#B4651A' : 'transparent' };"
 /** The full-screen menu's link: 44 px serif, 16 px padding, hairline below; the sub-list is inserted after it. */
 const MENU_LINK_PATTERN = /<a href="#" onClick="\{\{ n\.go \}\}" style="font-family:'EB Garamond',serif;font-size:44px;[^"]*">\{\{ n\.label \}\}<\/a>/g
@@ -132,6 +136,21 @@ export function addServicesNav(source: string): string {
   return replaceOnce(header, FOOTER_NAV_NEWS, (m) => `${m}['Services', 'services'], `, 'footerNav Services')
 }
 
+/** (j) Framing Services moved to a Service, so the port's About page has no Services tab; the prototype's tab strip drops it. */
+export function removeAboutServicesTab(source: string): string {
+  return replaceOnce(source, ABOUT_TABS_LIST, () => "['proprietor', 'Proprietor'], ", 'About services tab')
+}
+
+/** (k) The artists page no longer has a featured grid (FIN-3639); the prototype's grid is removed so the index starts right after the title. */
+export function removeFeaturedArtistsGrid(source: string): string {
+  return replaceOnce(source, FEATURED_GRID_PATTERN, () => '', 'artists featured grid')
+}
+
+/** (l) The home artists line is the first ten artists (FIN-3631); the prototype showed 22. */
+export function trimHomeArtistsLine(source: string): string {
+  return replaceOnce(source, HOME_ARTISTS_SLICE, () => 'flat(AH_ARTISTS.slice(0, 10)).map((a, i) => i === 9 ?', 'home artists line')
+}
+
 /**
  * (i) The port's mobile menu lists the published services under "Services": the nav items gain `subs`
  * (the service titles, in API order, for the Services item only) and the menu renders them as a 24 px-indented list.
@@ -152,7 +171,7 @@ export async function normaliseReference(apiUrl: string): Promise<string> {
   const source = await readFile(REFERENCE_FILE, 'utf8')
   const patched = addServicesNav(
     addServicesMenuSubs(
-      fixArtistBaseIndex(hidePublicationsLink(hideReadArticle(patchHomeNewsSlice(reorderNews(reorderArtists(source, artists.flat.map((a) => a.name)), news.map((n) => n.title)))))),
+      trimHomeArtistsLine(removeFeaturedArtistsGrid(removeAboutServicesTab(fixArtistBaseIndex(hidePublicationsLink(hideReadArticle(patchHomeNewsSlice(reorderNews(reorderArtists(source, artists.flat.map((a) => a.name)), news.map((n) => n.title))))))))),
       services.map((service) => service.title),
     ),
   )

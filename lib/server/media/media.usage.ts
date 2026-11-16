@@ -25,12 +25,13 @@ async function findSettingUsage(prisma: PrismaClient, mediaId: string): Promise<
 }
 
 export async function findMediaUsage(prisma: PrismaClient, mediaId: string): Promise<MediaUsage[]> {
-  const [exhibitions, works, artists, artworks, fairs, services, news, locations, settings] = await Promise.all([
+  const [exhibitions, works, artists, artworks, fairs, fairImages, services, news, locations, settings] = await Promise.all([
     prisma.exhibition.findMany({ where: { heroImageId: mediaId }, select: { id: true, title: true } }),
     prisma.exhibitionWork.findMany({ where: { imageId: mediaId }, select: { id: true, title: true } }),
     prisma.artist.findMany({ where: { portraitImageId: mediaId }, select: { id: true, name: true } }),
     prisma.artwork.findMany({ where: { imageId: mediaId }, select: { id: true, title: true } }),
     prisma.fair.findMany({ where: { imageId: mediaId }, select: { id: true, title: true } }),
+    prisma.fairImage.findMany({ where: { mediaId }, select: { fair: { select: { id: true, title: true } } } }),
     prisma.service.findMany({ where: { imageId: mediaId }, select: { id: true, title: true } }),
     prisma.news.findMany({ where: { imageId: mediaId }, select: { id: true, title: true } }),
     prisma.location.findMany({ where: { imageId: mediaId }, select: { id: true, city: true } }),
@@ -42,6 +43,7 @@ export async function findMediaUsage(prisma: PrismaClient, mediaId: string): Pro
     ...toUsage('artist', artists.map((r) => ({ id: r.id, label: r.name }))),
     ...toUsage('artwork', artworks.map((r) => ({ id: r.id, label: r.title }))),
     ...toUsage('fair', fairs.map((r) => ({ id: r.id, label: r.title }))),
+    ...toUsage('fairGallery', fairImages.map((r) => ({ id: r.fair.id, label: r.fair.title }))),
     ...toUsage('service', services.map((r) => ({ id: r.id, label: r.title }))),
     ...toUsage('news', news.map((r) => ({ id: r.id, label: r.title }))),
     ...toUsage('location', locations.map((r) => ({ id: r.id, label: r.city }))),

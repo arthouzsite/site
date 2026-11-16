@@ -23,7 +23,6 @@ export function buildSettingValues(r: Resolvers): Record<SettingKey, unknown> {
     heroLayout: settings.heroLayout,
     artistIndexLayout: settings.artistIndexLayout,
     homeHeroExhibitionId: settings.homeHeroExhibitionId,
-    homeArtistCount: settings.homeArtistCount,
     homeFocus: {
       artistId: r.artistId(homeFocus.artistName),
       text: homeFocus.text,

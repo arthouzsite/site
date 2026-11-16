@@ -1,7 +1,8 @@
+import { imageLimitError } from '@/lib/shared'
 import { ApiException, badRequest, conflict, payloadTooLarge, unsupportedMediaType } from '@/lib/server/http/errors'
 import type { Media } from '@/lib/server/generated/prisma/client'
 import { prisma } from '@/lib/server/prisma'
-import { MAX_IMAGE_UPLOAD_BYTES, VIDEO_SIGNATURE_BYTES } from './media.constants'
+import { VIDEO_SIGNATURE_BYTES } from './media.constants'
 import { processImage } from './image.service'
 import { cleanup, recordImage, recordVideo } from './media.service'
 import { getStorage } from './storage/storage.provider'
@@ -53,7 +54,8 @@ function completeImage(key: string, alt: string, userId: string | null): Promise
     const buffer = await storage.get(key)
     // The object can change between head and get, so the limit holds for the bytes actually read.
     const processed = await deleteIfRejected(key, () => {
-      if (buffer.length > MAX_IMAGE_UPLOAD_BYTES) throw payloadTooLarge('Images must be 25 MB or smaller')
+      const problem = imageLimitError({ bytes: buffer.length })
+      if (problem) throw payloadTooLarge(problem)
       return processImage(buffer)
     })
     return recordImage({ key, url: storage.urlFor(key) }, processed, buffer.length, alt, userId)

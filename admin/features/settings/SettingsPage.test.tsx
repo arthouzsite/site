@@ -14,7 +14,7 @@ function setup(role: Role = 'ADMIN', failOn?: string, extra: Parameters<typeof s
   signIn(role)
   const puts: Put[] = []
   server.use(
-    http.get(`${API_URL}/settings`, () => HttpResponse.json(envelope({ ...SETTING_DEFAULTS, homeArtistCount: 22 }))),
+    http.get(`${API_URL}/settings`, () => HttpResponse.json(envelope(SETTING_DEFAULTS))),
     http.get(`${API_URL}/exhibitions`, () => HttpResponse.json(envelope([{ id: EX_ID, title: 'Tidewater' }]))),
     http.get(`${API_URL}/artists`, () => HttpResponse.json(envelope([{ id: AR_ID, name: 'Vijay Pichumani' }]))),
     http.put(`${API_URL}/settings/:key`, async ({ params, request }) => {
@@ -52,22 +52,6 @@ describe('SettingsPage', () => {
     await waitFor(() => expect(puts).toEqual([{ key: 'homeHeroExhibitionId', value: EX_ID }]))
   })
 
-  it('homeArtistCount rejects 0', async () => {
-    const puts = setup()
-    const user = userEvent.setup()
-    const input = await screen.findByLabelText('Number of artists')
-    expect(input).toHaveValue(22)
-    await user.clear(input)
-    await user.type(input, '0')
-    await user.click(card('Artists line on home').getByRole('button', { name: 'Save' }))
-    expect(await card('Artists line on home').findAllByText('Enter a whole number from 1 to 200.')).not.toHaveLength(0)
-    expect(puts).toEqual([])
-    await user.clear(input)
-    await user.type(input, '30')
-    await user.click(card('Artists line on home').getByRole('button', { name: 'Save' }))
-    await waitFor(() => expect(puts).toEqual([{ key: 'homeArtistCount', value: 30 }]))
-  })
-
   it('shows the renders-as help for the copyright year and saves the footer object', async () => {
     const puts = setup()
     const user = userEvent.setup()
@@ -84,7 +68,7 @@ describe('SettingsPage', () => {
   it('save settings bar saves every dirty card in sequence', async () => {
     const puts = setup()
     const user = userEvent.setup()
-    await screen.findByLabelText('Number of artists')
+    await screen.findByLabelText('Tagline')
     const bar = screen.getByRole('button', { name: 'Save settings' })
     expect(bar).toBeDisabled()
     await user.click(screen.getByRole('radio', { name: 'Flowing' }))
@@ -121,8 +105,7 @@ describe('SettingsPage', () => {
   it('settings save hidden for EDITOR (read-only view with a note)', async () => {
     setup('EDITOR')
     expect(await screen.findByText('Only administrators can change these settings.')).toBeInTheDocument()
-    expect(await screen.findByLabelText('Number of artists')).toBeDisabled()
-    expect(screen.getByLabelText('Tagline')).toBeDisabled()
+    expect(await screen.findByLabelText('Tagline')).toBeDisabled()
     expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Save settings' })).not.toBeInTheDocument()
     expect(screen.getByRole('radio', { name: 'Split' })).toBeDisabled()

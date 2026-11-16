@@ -13,6 +13,7 @@ export type AdminFair = {
   sortOrder: number
   isPublished: boolean
   image: MediaRef | null
+  gallery: MediaRef[]
   where: string
   updatedAt?: string
 }

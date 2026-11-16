@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Button, Dialog, Icon, Pager, Tabs } from '../../components/ui'
 import { panelId, tabId } from '../../components/ui/Tabs'
 import { MediaGrid } from './MediaGrid'
-import { IMAGE_HINT, IMAGE_MIMES, toMediaRef, type Media, type MediaRef } from './types'
+import { IMAGE_HINT, IMAGE_LIMIT_HINT, IMAGE_MIMES, toMediaRef, type Media, type MediaRef } from './types'
 import { UploadQueue, type UploadRunSummary } from './UploadQueue'
 import { useDebouncedValue } from './useDebouncedValue'
 import { PICKER_PAGE_SIZE, useMediaList } from './useMedia'
@@ -67,6 +67,7 @@ export function MediaPicker({ open, onClose, onSelect }: Props) {
         <div role="tabpanel" id={panelId(tab)} aria-labelledby={tabId(tab)} className="flex flex-col gap-4 pt-4">
           {tab === 'library' ? (
             <>
+              <p className="m-0 text-12 text-muted">{IMAGE_LIMIT_HINT}</p>
               <div className="relative">
                 <label htmlFor="picker-q" className="sr-only">Search by file name or alt text</label>
                 <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" />

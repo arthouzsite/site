@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const reads = vi.hoisted(() => ({ getSettings: vi.fn(), getExhibitions: vi.fn(), getArtists: vi.fn(), getServices: vi.fn() }))
+const reads = vi.hoisted(() => ({ getSettings: vi.fn(), getExhibitions: vi.fn(), getArtists: vi.fn(), getServices: vi.fn(), getFairs: vi.fn() }))
 vi.mock('@/lib/server/public/public-reads', () => ({ publicReads: reads }))
 vi.mock('next/cache', () => ({ unstable_cache: (load: () => Promise<unknown>) => load }))
 import configForPhase, { assertProductionSiteUrl, buildRemotePatterns } from '@/next.config'
@@ -17,7 +17,7 @@ function settings(ogImage: typeof OG | null) {
   return {
     heroLayout: 'FULL_BLEED',
     artistIndexLayout: 'GROUPED',
-    footer: { tagline: 't', instagramUrl: '', facebookUrl: '', copyrightFrom: 2012 },
+    footer: { tagline: 't', instagramUrl: '', facebookUrl: '', linkedinUrl: '', youtubeUrl: '', twitterUrl: '', copyrightFrom: 2012 },
     site: { title: 'Art Houz Gallery', description: 'Leading gallery.', ogImage },
   }
 }
@@ -62,16 +62,17 @@ describe('site metadata, sitemap and redirects', () => {
     expect(metadata.openGraph?.images).toBeUndefined()
   })
 
-  it('lists static routes plus published exhibition, artist and service slugs', async () => {
+  it('lists static routes plus published exhibition, artist, fair and service slugs', async () => {
     reads.getExhibitions.mockResolvedValue({ items: [{ slug: 'tidewater' }], cities: [] })
     reads.getArtists.mockResolvedValue({ flat: [{ slug: 'vijay-pichumani' }] })
     reads.getServices.mockResolvedValue([service])
+    reads.getFairs.mockResolvedValue([{ id: 'f1', slug: 'art-dubai', title: 'Art Dubai', where: 'Dubai', booth: '', text: '', image: null }])
 
     const urls = (await buildSitemap()).map((entry) => entry.url)
 
     expect(urls).toEqual([
       `${SITE}/`, `${SITE}/exhibitions`, `${SITE}/artists`, `${SITE}/fairs`, `${SITE}/news`, `${SITE}/services`, `${SITE}/about`, `${SITE}/visit`,
-      `${SITE}/exhibitions/tidewater`, `${SITE}/artists/vijay-pichumani`, `${SITE}/services/art-sales`,
+      `${SITE}/exhibitions/tidewater`, `${SITE}/artists/vijay-pichumani`, `${SITE}/fairs/art-dubai`, `${SITE}/services/art-sales`,
     ])
   })
 

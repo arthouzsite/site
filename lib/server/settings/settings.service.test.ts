@@ -32,7 +32,7 @@ describe('settings service', () => {
 
   it('get returns the default when no row is stored', async () => {
     findUnique.mockResolvedValue(null)
-    await expect(get('homeArtistCount')).resolves.toBe(SETTING_DEFAULTS.homeArtistCount)
+    await expect(get('artistIndexLayout')).resolves.toBe(SETTING_DEFAULTS.artistIndexLayout)
   })
 
   it('get returns a valid stored value', async () => {
@@ -52,7 +52,7 @@ describe('settings service', () => {
     const all = await getAll()
     expect(Object.keys(all).sort()).toEqual([...SETTING_KEYS].sort())
     expect(all.heroLayout).toBe('SPLIT')
-    expect(all.homeArtistCount).toBe(SETTING_DEFAULTS.homeArtistCount)
+    expect(all.artistIndexLayout).toBe(SETTING_DEFAULTS.artistIndexLayout)
   })
 
   it('set validates, upserts and revalidates', async () => {

@@ -14,6 +14,7 @@ describe('tagsFor', () => {
   })
   test('others', () => {
     expect(tagsFor('fair')).toEqual(expect.arrayContaining(['home', 'search', 'fairs']))
+    expect(tagsFor('fair', 'art-dubai')).toEqual(expect.arrayContaining(['fairs', 'fair:art-dubai']))
     expect(tagsFor('news')).toEqual(expect.arrayContaining(['news', 'exhibitions']))
     expect(tagsFor('location')).toEqual(expect.arrayContaining(['locations', 'about']))
     expect(tagsFor('setting')).toEqual(expect.arrayContaining(['settings', 'about', 'artists']))

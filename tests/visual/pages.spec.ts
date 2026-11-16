@@ -3,7 +3,7 @@ import { expectVisualMatch, renderPort, renderPrototype, type PrototypeRoute } f
 
 const WIDTHS = [375, 768, 1024, 1440] as const
 const TAB_WIDTHS = [1440, 375] as const
-const TABS = ['gallery', 'proprietor', 'services', 'publications'] as const
+const TABS = ['gallery', 'proprietor', 'publications'] as const
 
 async function compare(browser: Browser, name: string, route: PrototypeRoute, path: string, width: number): Promise<void> {
   const prototypePage = await browser.newPage()

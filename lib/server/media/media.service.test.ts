@@ -66,6 +66,16 @@ describe('upload cleanup', () => {
   })
 })
 
+describe('image limits (memory driver path)', () => {
+  it('stores nothing and creates no row for an image over 4000 px', async () => {
+    const putSpy = vi.spyOn(storage, 'put')
+    const buffer = await sharp({ create: { width: 4001, height: 8, channels: 3, background: '#fff' } }).png().toBuffer()
+    await expect(upload({ buffer, mimetype: 'image/png' }, 'alt', null)).rejects.toMatchObject({ code: 'IMAGE_DIMENSIONS_EXCEEDED' })
+    expect(putSpy).not.toHaveBeenCalled()
+    expect(fake.media.create).not.toHaveBeenCalled()
+  })
+})
+
 describe('video upload', () => {
   it.each([
     ['video/mp4', 'mp4'],
@@ -99,7 +109,7 @@ describe('video upload', () => {
     })
   })
 
-  it('accepts a video larger than the 25 MB image limit', async () => {
+  it('accepts a video larger than the 2 MB image limit', async () => {
     await upload({ buffer: Buffer.concat([ftypBox(), Buffer.alloc(30 * 1024 * 1024)]), mimetype: 'video/mp4' }, 'Big', null)
     expect(fake.media.create).toHaveBeenCalledTimes(1)
   })

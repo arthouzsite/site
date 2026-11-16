@@ -7,12 +7,13 @@ import { Button, ConfirmModal, ErrorSummary, Field, Input, LinkButton, PrefixInp
 import { ApiError } from '../../lib/api'
 import { useToast } from '../../lib/toast'
 import { useZodForm } from '../../lib/useZodForm'
+import { GalleryCard } from './GalleryCard'
 import { ImageField } from '../media/ImageField'
 import type { MediaRef } from '../media/types'
 import type { AdminFair } from './types'
 import { useDeleteFair, useFair, usePublishFair, useSaveFair } from './useFairs'
 
-const LABELS = { title: 'Title', venue: 'Venue', city: 'City', dateLabel: 'Date label', booth: 'Booth', text: 'Text', slug: 'Slug' }
+const LABELS = { title: 'Title', venue: 'Venue', city: 'City', dateLabel: 'Date label', booth: 'Booth', text: 'Text', slug: 'Slug', galleryImageIds: 'Gallery' }
 
 export default function FairEditor() {
   const { id } = useParams()
@@ -33,6 +34,7 @@ function FairForm({ fair }: { fair: AdminFair | null }) {
   const publish = usePublishFair()
   const remove = useDeleteFair()
   const [image, setImage] = useState<MediaRef | null>(fair?.image ?? null)
+  const [gallery, setGallery] = useState<MediaRef[]>(fair?.gallery ?? [])
   const [submits, setSubmits] = useState(0)
   const [confirming, setConfirming] = useState(false)
   const form = useZodForm(fairInputSchema, {
@@ -44,6 +46,7 @@ function FairForm({ fair }: { fair: AdminFair | null }) {
     booth: fair?.booth ?? '',
     text: fair?.text ?? '',
     imageId: fair?.imageId ?? null,
+    galleryImageIds: (fair?.gallery ?? []).map((g) => g.id),
     sortOrder: fair?.sortOrder ?? 0,
     isPublished: fair?.isPublished ?? false,
   })
@@ -53,6 +56,11 @@ function FairForm({ fair }: { fair: AdminFair | null }) {
   const pickImage = (ref: MediaRef | null) => {
     setImage(ref)
     setValue('imageId', ref?.id ?? null, { shouldDirty: true })
+  }
+
+  const changeGallery = (next: MediaRef[]) => {
+    setGallery(next)
+    setValue('galleryImageIds', next.map((g) => g.id), { shouldDirty: true })
   }
 
   const onSubmit = handleSubmit(async (values) => {
@@ -107,6 +115,7 @@ function FairForm({ fair }: { fair: AdminFair | null }) {
           </div>
           <Field name="text" label="Text" error={err('text')}><Textarea rows={6} {...register('text')} /></Field>
           <Field name="slug" label="Slug" error={err('slug')}><PrefixInput prefix="arthouz.com/fairs/" {...register('slug', slugAsUndefined)} /></Field>
+          <GalleryCard images={gallery} onChange={changeGallery} error={err('galleryImageIds')} />
         </div>
         <aside className="flex flex-col gap-5 border border-line bg-surface-2 p-4">
           <ImageField label="Image" ratio="3/2" value={image} onChange={pickImage} />

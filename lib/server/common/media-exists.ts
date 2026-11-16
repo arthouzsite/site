@@ -11,3 +11,13 @@ export async function assertMediaExists(prisma: PrismaClient, mediaId: string | 
   if (!media) throw badRequest(UNKNOWN_MEDIA, `Unknown ${label}: ${mediaId}`)
   if (media.kind !== 'IMAGE') throw badRequest(INVALID_MEDIA_KIND, `${label} must be an image`)
 }
+
+/** Every id must exist and be an IMAGE; one query for the lot. Duplicates are the caller's concern. */
+export async function assertMediaIdsExist(prisma: PrismaClient, mediaIds: readonly string[], label = 'image'): Promise<void> {
+  if (mediaIds.length === 0) return
+  const rows = await prisma.media.findMany({ where: { id: { in: [...mediaIds] } }, select: { id: true, kind: true } })
+  const byId = new Map(rows.map((r) => [r.id, r.kind]))
+  const missing = mediaIds.find((id) => !byId.has(id))
+  if (missing) throw badRequest(UNKNOWN_MEDIA, `Unknown ${label}: ${missing}`)
+  if (rows.some((r) => r.kind !== 'IMAGE')) throw badRequest(INVALID_MEDIA_KIND, `${label} must be an image`)
+}

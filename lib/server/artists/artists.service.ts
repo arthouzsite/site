@@ -2,7 +2,7 @@ import { slugify, tagsFor, type ArtistInput } from '@/lib/shared'
 import { assertMediaExists } from '@/lib/server/common/media-exists'
 import { parsePagination } from '@/lib/server/common/pagination'
 import { uniqueSlug } from '@/lib/server/common/slugs'
-import { badRequest, conflict, notFound } from '@/lib/server/http/errors'
+import { conflict, notFound } from '@/lib/server/http/errors'
 import { withMeta } from '@/lib/server/http/route'
 import { prisma } from '@/lib/server/prisma'
 import { revalidateSite } from '@/lib/server/revalidate'
@@ -11,11 +11,9 @@ import { artistListWhere, type ArtistListQuery } from './artists.query'
 import { artistTagsWithExhibitions } from '@/lib/server/revalidate/related-tags'
 
 const NOT_FOUND = 'Artist not found'
-const UNKNOWN_ARTIST = 'UNKNOWN_ARTIST'
-const NOT_FEATURED_ORDER = 0
 
-// Scalars written by create/PATCH. Publish and feature state have their own endpoints.
-const NON_WRITABLE_KEYS = ['slug', 'sortName', 'isPublished', 'isFeatured', 'featuredOrder'] as const
+// Scalars written by create/PATCH. Publish state has its own endpoints.
+const NON_WRITABLE_KEYS = ['slug', 'sortName', 'isPublished'] as const
 
 function writableData(input: ArtistInput, slug: string) {
   const rest = Object.fromEntries(Object.entries(input).filter(([key]) => !(NON_WRITABLE_KEYS as readonly string[]).includes(key)))
@@ -64,8 +62,8 @@ export async function updateArtist(id: string, input: ArtistInput) {
   return toAdminArtist(updated)
 }
 
-// The database may sit far from the function (FIN-3492), so each toggle keeps its sequential round trips to a minimum:
-// independent reads and writes run together, and the featured list is renumbered in one statement instead of one per row.
+// The database may sit far from the function (FIN-3492), so the toggle keeps its sequential round trips to a minimum:
+// independent reads and writes run together.
 export async function publishArtist(id: string, isPublished: boolean) {
   const existing = await find(id)
   const [updated, tags] = await Promise.all([
@@ -74,58 +72,6 @@ export async function publishArtist(id: string, isPublished: boolean) {
   ])
   revalidateSite(tags)
   return toAdminArtist(updated)
-}
-
-/** Appends the artist after the current last featured position in one atomic statement. */
-const appendFeatured = (id: string) =>
-  prisma.$executeRaw`
-    UPDATE "Artist"
-    SET "isFeatured" = true,
-        "featuredOrder" = (SELECT COALESCE(MAX("featuredOrder"), 0) + 1 FROM "Artist" WHERE "isFeatured" = true)
-    WHERE id = ${id}`
-
-/** Closes the gap left by an unfeatured artist: remaining featured artists get positions 1..n in their current order. */
-const compactFeaturedOrder = () =>
-  prisma.$executeRaw`
-    UPDATE "Artist" AS a
-    SET "featuredOrder" = ranked.position
-    FROM (
-      SELECT id, ROW_NUMBER() OVER (ORDER BY "featuredOrder" ASC, id ASC)::int AS position
-      FROM "Artist" WHERE "isFeatured" = true
-    ) AS ranked
-    WHERE a.id = ranked.id AND a."featuredOrder" <> ranked.position`
-
-export async function setArtistFeatured(id: string, isFeatured: boolean) {
-  const existing = await find(id)
-  if (existing.isFeatured === isFeatured) return toAdminArtist(existing)
-  if (isFeatured) {
-    await appendFeatured(id)
-  } else {
-    await prisma.$transaction([
-      prisma.artist.update({ where: { id }, data: { isFeatured: false, featuredOrder: NOT_FEATURED_ORDER } }),
-      compactFeaturedOrder(),
-    ])
-  }
-  revalidateSite(tagsFor('artist', existing.slug))
-  return getArtist(id)
-}
-
-export async function setFeaturedOrder(requestedIds: string[]) {
-  const ids = Array.from(new Set(requestedIds))
-  const found = await prisma.artist.findMany({ where: { id: { in: ids } }, select: { id: true } })
-  const known = new Set(found.map((a) => a.id))
-  const missing = ids.filter((i) => !known.has(i))
-  if (missing.length > 0) {
-    throw badRequest(UNKNOWN_ARTIST, `Unknown artist ids: ${missing.join(', ')}`, { missingIds: missing })
-  }
-  const before = await prisma.artist.findMany({ where: { OR: [{ isFeatured: true }, { id: { in: ids } }] }, select: { slug: true } })
-  await prisma.$transaction([
-    prisma.artist.updateMany({ where: { id: { notIn: ids } }, data: { isFeatured: false, featuredOrder: NOT_FEATURED_ORDER } }),
-    ...ids.map((id, index) => prisma.artist.update({ where: { id }, data: { isFeatured: true, featuredOrder: index + 1 } })),
-  ])
-  revalidateSite(before.flatMap((a) => tagsFor('artist', a.slug)))
-  const rows = await prisma.artist.findMany({ where: { isFeatured: true }, include: ARTIST_INCLUDE, orderBy: { featuredOrder: 'asc' } })
-  return rows.map(toAdminArtist)
 }
 
 export async function removeArtist(id: string) {

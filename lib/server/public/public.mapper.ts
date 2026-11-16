@@ -1,6 +1,6 @@
 import { formatDateRange, formatMonthYear, indexLetter, resolveExhibitionStatus, STATUS_BADGE } from '@/lib/shared'
 import type {
-  PublicArtist, PublicExhibition, PublicExhibitionDetail, PublicFair, PublicLocation, PublicNews, PublicService,
+  PublicArtist, PublicExhibition, PublicExhibitionDetail, PublicFair, PublicFairDetail, PublicLocation, PublicNews, PublicService,
 } from '@/lib/shared'
 import type { Prisma } from '@/lib/server/generated/prisma/client'
 import { toPublicImage } from './public.images'
@@ -82,13 +82,21 @@ export function toPublicArtist(row: PublicArtistRow): PublicArtist {
   }
 }
 
-export function toPublicFair(row: Prisma.FairGetPayload<{ include: { image: true } }>): PublicFair {
+// One include for the list and the detail: the list's gallery rides the same query, so there is no per-fair lookup.
+export const PUBLIC_FAIR_INCLUDE = {
+  image: true,
+  gallery: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }], include: { media: true } },
+} satisfies Prisma.FairInclude
+
+export function toPublicFair(row: Prisma.FairGetPayload<{ include: typeof PUBLIC_FAIR_INCLUDE }>): PublicFair {
   const place = [row.venue, row.city].filter(Boolean).join(', ')
   return {
     id: row.id, slug: row.slug, title: row.title, where: [place, row.dateLabel].filter(Boolean).join(' · '), booth: row.booth,
-    text: row.text, image: toPublicImage(row.image),
+    text: row.text, image: toPublicImage(row.image), gallery: row.gallery.flatMap((g) => toPublicImage(g.media) ?? []),
   }
 }
+
+export const toPublicFairDetail = (row: Prisma.FairGetPayload<{ include: typeof PUBLIC_FAIR_INCLUDE }>): PublicFairDetail => toPublicFair(row)
 
 export function toPublicService(row: Prisma.ServiceGetPayload<{ include: { image: true } }>): PublicService {
   return {

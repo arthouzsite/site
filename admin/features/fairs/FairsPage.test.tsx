@@ -1,10 +1,12 @@
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { API_URL, HttpResponse, envelope, http, server } from '../../test/msw'
 import { renderRoutes } from '../../test/renderRoutes'
 import FairEditor from './FairEditor'
 import FairsPage from './FairsPage'
+import { makeMedia } from '../media/testUtils'
+import { toMediaRef } from '../media/types'
 import { makeFair } from './testData'
 
 const routes = [
@@ -102,5 +104,94 @@ describe('FairEditor', () => {
     await waitFor(() => expect(deleted).toBe(true))
     await waitFor(() => expect(router.state.location.pathname).toBe('/fairs'))
     expect(screen.queryByText(/Could not load/)).not.toBeInTheDocument()
+  })
+})
+
+describe('FairEditor gallery', () => {
+  const uid = (tag: string, i = 0) => `3f2b8c1e-8a52-4f0e-9d3b-${tag}${String(i).padStart(12 - tag.length, '0')}`
+  const refs = (n: number) => Array.from({ length: n }, (_, i) => toMediaRef(makeMedia({ id: uid('a', i), key: `media/g${i}.jpg`, alt: `Gallery ${i}` })))
+  const pool = [makeMedia({ id: uid('b'), key: 'media/fresh.jpg', alt: 'Fresh' }), makeMedia({ id: uid('a', 0), key: 'media/g0.jpg', alt: 'Gallery 0' })]
+  const serve = (fair = makeFair({ gallery: refs(2) })) =>
+    server.use(
+      http.get(`${API_URL}/fairs/f1`, () => HttpResponse.json(envelope(fair))),
+      http.get(`${API_URL}/media`, () => HttpResponse.json({ ...envelope(pool), meta: { total: pool.length, page: 1, limit: 12 } })),
+    )
+  const pick = async (key: RegExp) => {
+    await userEvent.click(screen.getByRole('button', { name: 'Add gallery image' }))
+    await userEvent.click(await screen.findByRole('option', { name: key }))
+    await userEvent.click(screen.getByRole('button', { name: 'Use this image' }))
+  }
+
+  it('shows the count against the limit and the images in order', async () => {
+    serve()
+    renderRoutes(routes, '/fairs/f1')
+    expect(await screen.findByText('2 of 15')).toBeInTheDocument()
+    expect(screen.getByRole('list', { name: 'Gallery images' }).querySelectorAll('li')).toHaveLength(2)
+  })
+
+  it('adds an image from the media picker and saves the ordered ids', async () => {
+    let patched: Record<string, unknown> | undefined
+    serve()
+    server.use(
+      http.patch(`${API_URL}/fairs/f1`, async ({ request }) => {
+        patched = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json(envelope(makeFair()))
+      }),
+    )
+    renderRoutes(routes, '/fairs/f1')
+    await screen.findByText('2 of 15')
+    await pick(/fresh\.jpg/i)
+    expect(await screen.findByText('3 of 15')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Move Gallery 0 down' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(patched?.galleryImageIds).toEqual([uid('a', 1), uid('a', 0), uid('b')]))
+  })
+
+  it('removes an image after confirming, without a native dialog', async () => {
+    const confirm = vi.spyOn(window, 'confirm')
+    serve()
+    renderRoutes(routes, '/fairs/f1')
+    await screen.findByText('2 of 15')
+    await userEvent.click(screen.getByRole('button', { name: 'Remove Gallery 0' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Remove image' }))
+    expect(await screen.findByText('1 of 15')).toBeInTheDocument()
+    expect(confirm).not.toHaveBeenCalled()
+  })
+
+  it('blocks adding past 15 with an error and never opens the picker', async () => {
+    serve(makeFair({ gallery: refs(15) }))
+    renderRoutes(routes, '/fairs/f1')
+    expect(await screen.findByText('15 of 15')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Add gallery image' }))
+    expect(await screen.findByText('A fair gallery holds at most 15 images')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: 'Choose image' })).not.toBeInTheDocument()
+    expect(screen.getByText('15 of 15')).toBeInTheDocument()
+  })
+
+  it('refuses an image that is already in the gallery', async () => {
+    serve()
+    renderRoutes(routes, '/fairs/f1')
+    await screen.findByText('2 of 15')
+    await pick(/g0\.jpg/i)
+    expect(await screen.findByText('That image is already in the gallery')).toBeInTheDocument()
+    expect(screen.getByText('2 of 15')).toBeInTheDocument()
+  })
+
+  it('lets a new fair collect gallery images before its first save', async () => {
+    let posted: Record<string, unknown> | undefined
+    server.use(
+      http.get(`${API_URL}/media`, () => HttpResponse.json({ ...envelope(pool), meta: { total: pool.length, page: 1, limit: 12 } })),
+      http.post(`${API_URL}/fairs`, async ({ request }) => {
+        posted = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json(envelope(makeFair({ id: 'f9' })))
+      }),
+      http.get(`${API_URL}/fairs/f9`, () => HttpResponse.json(envelope(makeFair({ id: 'f9' })))),
+    )
+    renderRoutes(routes, '/fairs/new')
+    expect(await screen.findByText('0 of 15')).toBeInTheDocument()
+    await userEvent.type(screen.getByLabelText(/Title/), 'Fresh')
+    await pick(/fresh\.jpg/i)
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(posted?.galleryImageIds).toEqual([uid('b')]))
   })
 })

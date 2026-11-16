@@ -8,6 +8,7 @@ vi.mock('@/lib/server/prisma', () => ({
     artist: { findMany: vi.fn() },
     service: { findMany: vi.fn() },
     news: { findMany: vi.fn() },
+    fair: { findMany: vi.fn() },
   },
 }))
 
@@ -19,6 +20,7 @@ beforeEach(() => {
   vi.mocked(prisma.artist.findMany).mockResolvedValue(rows('jane-doe') as never)
   vi.mocked(prisma.service.findMany).mockResolvedValue(rows('advisory') as never)
   vi.mocked(prisma.news.findMany).mockResolvedValue(rows('press-note') as never)
+  vi.mocked(prisma.fair.findMany).mockResolvedValue(rows('art-dubai') as never)
 })
 
 describe('allSiteTags', () => {
@@ -29,7 +31,7 @@ describe('allSiteTags', () => {
 
   it('adds the per-slug tags for exhibitions, artists and services', async () => {
     const tags = await allSiteTags()
-    expect(tags).toEqual(expect.arrayContaining(['exhibition:spring-show', 'exhibition:autumn-show', 'artist:jane-doe', 'service:advisory']))
+    expect(tags).toEqual(expect.arrayContaining(['exhibition:spring-show', 'exhibition:autumn-show', 'artist:jane-doe', 'service:advisory', 'fair:art-dubai']))
   })
 
   it('has no per-slug tag for news (tagsFor yields none) and no duplicates', async () => {
@@ -40,7 +42,7 @@ describe('allSiteTags', () => {
 
   it('queries only the slug column', async () => {
     await allSiteTags()
-    for (const model of [prisma.exhibition, prisma.artist, prisma.service, prisma.news]) {
+    for (const model of [prisma.exhibition, prisma.artist, prisma.service, prisma.news, prisma.fair]) {
       expect(model.findMany).toHaveBeenCalledWith({ select: { slug: true } })
     }
   })

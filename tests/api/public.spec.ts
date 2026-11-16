@@ -1,9 +1,10 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   publicAboutSchema, publicArtistDetailSchema, publicArtistListSchema, publicExhibitionDetailSchema,
-  publicExhibitionListSchema, publicFairSchema, publicHomeSchema, publicLocationSchema, publicNewsSchema,
+  publicExhibitionListSchema, publicFairDetailSchema, publicFairSchema, publicHomeSchema, publicLocationSchema, publicNewsSchema,
   publicSearchSchema, publicSettingsSchema,
 } from '@/lib/shared'
+import { SEARCH_FAIR_LIMIT } from '@/lib/server/public/public.constants'
 import { prisma } from '@/lib/server/prisma'
 import { call } from './helpers/client'
 import { migrateTestDb, resetDb } from './helpers/db'
@@ -135,17 +136,17 @@ describe('public API', () => {
     expect((await get('/api/public/exhibitions?status=PAST')).status).toBe(400)
   })
 
-  it('/api/public/artists groups K.M. Adimoolam under K, # last, and returns featured and layout', async () => {
+  it('/api/public/artists groups K.M. Adimoolam under K, # last, and returns layout', async () => {
     await artist('km', { name: 'K.M. Adimoolam', sortName: 'Adimoolam, K.M.' })
     await prisma.artist.update({ where: { slug: 'km' }, data: { sortName: 'K.M. Adimoolam' } })
-    await artist('apple', { name: 'Apple', sortName: 'Apple', isFeatured: true, featuredOrder: 2 })
-    await artist('zed', { name: 'Zed', sortName: 'Zed', isFeatured: true, featuredOrder: 1 })
+    await artist('apple', { name: 'Apple', sortName: 'Apple' })
+    await artist('zed', { name: 'Zed', sortName: 'Zed' })
     await artist('num', { name: '3 Dots', sortName: '3 Dots' })
     await artist('draft', { name: 'Draft', sortName: 'Draft', isPublished: false })
     const res = await ok('/api/public/artists', publicArtistListSchema)
     expect(res.groups.map((g) => g.letter)).toEqual(['A', 'K', 'Z', '#'])
     expect(res.groups.find((g) => g.letter === 'K')?.items.map((a) => a.name)).toEqual(['K.M. Adimoolam'])
-    expect(res.featured.map((a) => a.slug)).toEqual(['zed', 'apple'])
+    expect(res).not.toHaveProperty('featured')
     expect(res.flat).toHaveLength(4)
     expect(res.layout).toBe('GROUPED')
     const q = await ok('/api/public/artists?q=adimo', publicArtistListSchema)
@@ -195,5 +196,39 @@ describe('public API', () => {
       { k: 'Location', v: 'Chennai, India' }, { k: 'Venue', v: 'Main Hall' },
       { k: 'Dates', v: 'Spring 2025' }, { k: 'Format', v: 'Group exhibition' },
     ])
+  })
+
+  it('fair detail returns the ordered gallery, 404s for drafts, and the fair is searchable', async () => {
+    const [m1, m2] = await Promise.all(
+      [1, 2].map((n) =>
+        prisma.media.create({ data: { key: `fg${n}`, url: `https://x/${n}.jpg`, thumbUrl: `https://x/${n}t.jpg`, width: 4, height: 3, mime: 'image/jpeg', bytes: 1, alt: `g${n}` } }),
+      ),
+    )
+    const fair = await prisma.fair.create({ data: { slug: 'art-dubai', title: 'Art Dubai', city: 'Dubai', isPublished: true } })
+    await prisma.fairImage.createMany({
+      data: [{ fairId: fair.id, mediaId: m1!.id, sortOrder: 1 }, { fairId: fair.id, mediaId: m2!.id, sortOrder: 0 }],
+    })
+    await prisma.fair.create({ data: { slug: 'draft', title: 'Draft', isPublished: false } })
+    const detail = await ok('/api/public/fairs/art-dubai', publicFairDetailSchema)
+    expect(detail.gallery.map((g) => g.alt)).toEqual(['g2', 'g1'])
+    const list = await ok('/api/public/fairs', arrayOf(publicFairSchema))
+    expect(list.find((f) => f.slug === 'art-dubai')?.gallery).toEqual(detail.gallery)
+    const bare = await prisma.fair.create({ data: { slug: 'bare', title: 'Bare', isPublished: true } })
+    expect((await ok('/api/public/fairs/bare', publicFairDetailSchema)).gallery).toEqual([])
+    expect(bare.slug).toBe('bare')
+    expect((await get('/api/public/fairs/draft')).status).toBe(404)
+    expect((await get('/api/public/fairs/missing')).status).toBe(404)
+    const search = await ok('/api/public/search?q=Dubai', publicSearchSchema)
+    expect(search.groups).toEqual([{ label: 'Fairs', items: [{ label: 'Art Dubai', href: '/fairs/art-dubai' }] }])
+  })
+
+  it('caps the fairs group of a search at the search limit, in site order', async () => {
+    const total = SEARCH_FAIR_LIMIT + 3
+    await prisma.fair.createMany({
+      data: Array.from({ length: total }, (_, n) => ({ slug: `fair-${n}`, title: `Biennale ${n}`, isPublished: true, sortOrder: n })),
+    })
+    const search = await ok('/api/public/search?q=Biennale', publicSearchSchema)
+    const fairs = search.groups.find((g) => g.label === 'Fairs')?.items ?? []
+    expect(fairs.map((f) => f.label)).toEqual(Array.from({ length: SEARCH_FAIR_LIMIT }, (_, n) => `Biennale ${n}`))
   })
 })

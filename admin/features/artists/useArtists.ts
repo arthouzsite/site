@@ -2,7 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { api } from '../../lib/api'
 import { useToast } from '../../lib/toast'
 import { errorMessage } from './errors'
-import { FEATURED_LIMIT, type AdminArtist, type ArtistExhibition, type ArtistListParams, type Artwork } from './types'
+import type { AdminArtist, ArtistExhibition, ArtistListParams, Artwork } from './types'
 
 const EXHIBITION_LIMIT = 50
 
@@ -43,19 +43,6 @@ export function useArtistList(params: ArtistListParams) {
       return { items: data, total: meta?.total ?? data.length }
     },
     placeholderData: keepPreviousData,
-  })
-}
-
-export const FEATURED_PARAMS = { featured: 'true', limit: FEATURED_LIMIT } as const
-
-/** Featured artists in their display order (the API lists by sort name). */
-export function useFeaturedArtists() {
-  return useQuery({
-    queryKey: ['artists', FEATURED_PARAMS],
-    queryFn: async () => {
-      const data = await api.get<AdminArtist[]>(`/artists?${listQuery(FEATURED_PARAMS)}`)
-      return [...data].sort((a, b) => a.featuredOrder - b.featuredOrder)
-    },
   })
 }
 
@@ -104,17 +91,15 @@ export function useSaveArtist(id: string | null) {
   })
 }
 
-type FlagPatch = Partial<Pick<AdminArtist, 'isPublished' | 'isFeatured'>>
-
 /**
- * Shared shape of the Published and Featured switches: the cached artist flips at once, the server's row replaces it
- * on success, and the previous row returns on failure. Only the lists refetch afterwards, in the background.
+ * The Published switch: the cached artist flips at once, the server's row replaces it on success, and the previous
+ * row returns on failure. Only the lists refetch afterwards, in the background.
  */
-function useFlagMutation(path: 'publish' | 'feature') {
+export function usePublishArtist() {
   const client = useQueryClient()
   const toast = useToast()
   return useMutation({
-    mutationFn: ({ id, ...body }: { id: string } & FlagPatch) => api.patch<AdminArtist>(`/artists/${id}/${path}`, body),
+    mutationFn: ({ id, ...body }: { id: string; isPublished: boolean }) => api.patch<AdminArtist>(`/artists/${id}/publish`, body),
     onMutate: async ({ id, ...patch }) => {
       const key = ['artist', id]
       await client.cancelQueries({ queryKey: key })
@@ -130,37 +115,6 @@ function useFlagMutation(path: 'publish' | 'feature') {
       if (context?.previous) client.setQueryData(['artist', id], context.previous)
       toast.error(errorMessage(err))
     },
-  })
-}
-
-export function usePublishArtist() {
-  return useFlagMutation('publish')
-}
-
-export function useFeatureArtist() {
-  return useFlagMutation('feature')
-}
-
-export function useReorderFeatured() {
-  const client = useQueryClient()
-  const toast = useToast()
-  const key = ['artists', FEATURED_PARAMS]
-  return useMutation({
-    mutationFn: (ids: string[]) => api.put<AdminArtist[]>('/artists/featured-order', { ids }),
-    onMutate: async (ids) => {
-      await client.cancelQueries({ queryKey: key })
-      const previous = client.getQueryData<AdminArtist[]>(key)
-      if (previous) {
-        const byId = new Map(previous.map((a) => [a.id, a]))
-        client.setQueryData(key, ids.flatMap((id) => byId.get(id) ?? []))
-      }
-      return { previous }
-    },
-    onError: (err, _ids, ctx) => {
-      if (ctx?.previous) client.setQueryData(key, ctx.previous)
-      toast.error(errorMessage(err))
-    },
-    onSettled: () => client.invalidateQueries({ queryKey: ['artists'] }),
   })
 }
 

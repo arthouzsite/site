@@ -7,6 +7,7 @@ export const TAGS = {
   artists: 'artists',
   artist: (slug: string) => `artist:${slug}`,
   fairs: 'fairs',
+  fair: (slug: string) => `fair:${slug}`,
   services: 'services',
   service: (slug: string) => `service:${slug}`,
   news: 'news',

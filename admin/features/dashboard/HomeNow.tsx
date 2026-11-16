@@ -32,7 +32,6 @@ export function HomeNow({ dash }: { dash: Dash }) {
           <Row label="Hero layout" value={LAYOUT_LABEL[home.heroLayout] ?? home.heroLayout} change="Change hero layout" />
           <Row label="Upcoming band" value={home.upcoming?.title ?? 'None'} change="Change upcoming band" />
           <Row label="Artist in focus" value={home.focus.artist?.name ?? 'None'} change="Change artist in focus" />
-          <Row label="Artists line" value={`${home.artistsLine.length} artists`} change="Change artists line" />
         </dl>
       )}
     </Card>

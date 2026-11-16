@@ -1,12 +1,12 @@
 import { publicArtistDetailSchema, type PublicArtistDetail } from '@/lib/shared'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { EnquiryTrigger } from '@/components/enquiry/EnquiryTrigger'
 import { ArtistExhibitions } from '@/components/artists/ArtistExhibitions'
 import { SelectedWorks } from '@/components/artists/SelectedWorks'
 import { Container } from '@/components/site/Container'
 import { Eyebrow } from '@/components/site/Eyebrow'
 import { ImageSlot } from '@/components/site/ImageSlot'
-import { PrimaryButton } from '@/components/site/PrimaryButton'
 import { ApiError, apiGet } from '@/lib/api'
 import { detailMetadata } from '@/lib/site-metadata'
 import { TAGS } from '@/lib/tags'
@@ -49,7 +49,7 @@ export default async function ArtistPage({ params }: Props) {
             <p className="m-0 font-display text-[clamp(24px,2.4vw,32px)] leading-[1.3] text-pretty">{a.lede}</p>
             <p className="m-0 max-w-[620px] text-[16px] leading-[1.7] text-body text-pretty">{a.bio}</p>
             {a.exhibitions.length > 0 && <ArtistExhibitions exhibitions={a.exhibitions} />}
-            <PrimaryButton href="/visit">Enquire about works →</PrimaryButton>
+            <EnquiryTrigger label="Enquire about works →" target={{ kind: 'ARTIST', slug: a.slug, name: a.name }} />
           </div>
         </div>
         <SelectedWorks works={a.works} />

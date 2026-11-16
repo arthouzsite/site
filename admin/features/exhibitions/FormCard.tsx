@@ -1,7 +1,7 @@
 import { useId, type ReactNode } from 'react'
 import { cx } from '../../components/ui/cx'
 
-type Props = { title: string; count?: number; actions?: ReactNode; danger?: boolean; children: ReactNode; className?: string }
+type Props = { title: string; count?: number | string; actions?: ReactNode; danger?: boolean; children: ReactNode; className?: string }
 
 export function FormCard({ title, count, actions, danger, children, className }: Props) {
   const id = useId()

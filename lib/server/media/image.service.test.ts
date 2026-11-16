@@ -14,6 +14,18 @@ async function jpeg(width: number, height: number, orientation?: number): Promis
   return (orientation ? base.withMetadata({ orientation }) : base).toBuffer()
 }
 
+describe('processImage dimension limit', () => {
+  it('accepts exactly 4000 px and rejects 4001 px on either edge', async () => {
+    await expect(processImage(await jpeg(4000, 10))).resolves.toMatchObject({ width: 4000 })
+    await expect(processImage(await jpeg(4001, 10))).rejects.toMatchObject({ status: 400, code: 'IMAGE_DIMENSIONS_EXCEEDED' })
+    await expect(processImage(await jpeg(10, 4001))).rejects.toMatchObject({ status: 400, code: 'IMAGE_DIMENSIONS_EXCEEDED' })
+  })
+
+  it('judges the oriented size: a 4001 x 10 image rotated by EXIF is still too long', async () => {
+    await expect(processImage(await jpeg(4001, 10, 6))).rejects.toMatchObject({ code: 'IMAGE_DIMENSIONS_EXCEEDED' })
+  })
+})
+
 describe('processImage', () => {
   beforeEach(() => vi.clearAllMocks())
 

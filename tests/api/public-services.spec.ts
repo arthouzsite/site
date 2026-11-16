@@ -32,20 +32,19 @@ describe('public services and search', () => {
     await prisma.$disconnect()
   })
 
-  it('lists only published services in sortOrder with the public shape', async () => {
+  it('lists only published services A-Z by title with the public shape', async () => {
     const image = await prisma.media.create({
       data: { key: 'pub', url: 'https://x/pub.jpg', thumbUrl: 'https://x/pubt.jpg', width: 3, height: 2, mime: 'image/jpeg', bytes: 1, alt: 'alt pub' },
     })
-    const a = await create({ title: 'A', summary: 'sa', imageId: image.id, contactName: 'Asha', contactPhone: '+914412345678', contactEmail: 'a@b.co', ctaHref: 'tel:+914412345678' })
+    const a = await create({ title: 'a', summary: 'sa', imageId: image.id, contactName: 'Asha', contactPhone: '+914412345678', contactEmail: 'a@b.co', ctaHref: 'tel:+914412345678' })
     const b = await create({ title: 'B' })
     const c = await create({ title: 'C' })
-    const draft = await create({ title: 'Draft' })
+    await create({ title: 'Draft' })
     for (const s of [a, b, c]) await publish(s.id, true)
-    expect((await api.put('/api/services/order', { ids: [c.id, a.id, b.id, draft.id] })).status).toBe(200)
     const list = await ok('/api/public/services', publicServiceListSchema)
-    expect(list.map((s) => s.slug)).toEqual(['c', 'a', 'b'])
-    expect(list[1]).toEqual({
-      slug: 'a', title: 'A', summary: 'sa', body: '', image: { url: 'https://x/pub.jpg', thumbUrl: 'https://x/pubt.jpg', width: 3, height: 2, alt: 'alt pub' },
+    expect(list.map((s) => s.slug)).toEqual(['a', 'b', 'c'])
+    expect(list[0]).toEqual({
+      slug: 'a', title: 'a', summary: 'sa', body: '', image: { url: 'https://x/pub.jpg', thumbUrl: 'https://x/pubt.jpg', width: 3, height: 2, alt: 'alt pub' },
       ctaLabel: 'Enquire →', ctaHref: 'tel:+914412345678', contact: { name: 'Asha', phone: '+914412345678', email: 'a@b.co' },
     })
   })
@@ -70,7 +69,7 @@ describe('public services and search', () => {
     await publish(b.id, true)
     const res = await ok('/api/public/search?q=rent', publicSearchSchema)
     expect(res.groups).toEqual([
-      { label: 'Services', items: [{ label: 'Gallery on rent', href: '/services/gallery-on-rent' }, { label: 'Art for rent', href: '/services/art-for-rent' }] },
+      { label: 'Services', items: [{ label: 'Art for rent', href: '/services/art-for-rent' }, { label: 'Gallery on rent', href: '/services/gallery-on-rent' }] },
     ])
     const bySummary = await ok('/api/public/search?q=chennai', publicSearchSchema)
     expect(bySummary.groups.map((g) => g.label)).toEqual(['Services'])

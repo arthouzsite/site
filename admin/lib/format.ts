@@ -16,3 +16,10 @@ export function formatBytes(n: number): string {
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(0)} KB`
   return `${(n / 1024 / 1024).toFixed(1)} MB`
 }
+
+const dateTimeFmt = new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' })
+
+export function formatDateTime(value: string | Date): string {
+  const d = typeof value === 'string' ? new Date(value) : value
+  return Number.isNaN(d.getTime()) ? '' : dateTimeFmt.format(d)
+}

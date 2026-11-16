@@ -19,7 +19,7 @@ Build and deploy need devDependencies installed (`prisma`, `tsx`, `typescript`, 
 
 - Terminate HTTPS at the proxy and forward everything to port 3300. The `ah_session` cookie is `HttpOnly`, `SameSite=Lax`, `Path=/`, `Secure` in production, 7 days, host-only.
 - The CMS and API are same-origin, so there is no CORS setup. Write requests (POST, PUT, PATCH, DELETE) with an `Origin` header that differs from the request origin get `403 BAD_ORIGIN`.
-- Set `TRUST_PROXY=1` (hop count) behind one proxy, otherwise the per-IP login limit (5 attempts per minute, stored in Postgres) sees the proxy's address for every client. The proxy must overwrite `X-Forwarded-For`, never pass a client value through.
+- Set `TRUST_PROXY=1` (hop count) behind one proxy, otherwise the per-IP login limit (5 attempts per minute, stored in Postgres) sees the proxy's address for every client. The public enquiry form (`POST /api/public/enquiries`) depends on it too: with `TRUST_PROXY=0` it is limited by one site-wide cap (60 per 10 minutes) instead of 5 per client address per 10 minutes (IPv6 clients count by /64). The endpoint also requires a same-origin `Origin` header and reads at most 16 KB of body. The proxy must overwrite `X-Forwarded-For`, never pass a client value through.
 - Uploads: allow bodies of at least 200 MB on `POST /api/media` (nginx: `client_max_body_size 200m;`) and timeouts of 600 s (`client_body_timeout 600s; proxy_read_timeout 600s; proxy_send_timeout 600s;`). The route allows 600 s. Uploads are buffered in memory, so the server answers more than two concurrent uploads with 429 `TOO_MANY_UPLOADS`; add a per-server connection limit on `/api/media` at the proxy as well.
 - `/api/search` has no rate limit of its own and rejects queries over 120 characters; throttle it at the proxy.
 
@@ -38,7 +38,7 @@ Build and deploy need devDependencies installed (`prisma`, `tsx`, `typescript`, 
 
 Works for the site, CMS and API. Media uploads above 4.5 MB fail because of Vercel's request body limit until presigned browser-to-bucket uploads are built; that also needs a CORS rule on the R2 bucket. Run `prisma migrate deploy` and `prisma generate` in the build step.
 
-- Set `TRUST_PROXY=1`: Vercel sits behind one proxy, and without it every client shares one login-throttle bucket.
+- Set `TRUST_PROXY=1`: Vercel sits behind one proxy, and without it every client shares one login-throttle bucket and one site-wide enquiry cap.
 - `vercel.json` pins functions to `sin1` (Singapore) because the Neon database lives in `ap-southeast-1`. Keep the two in the same region: from a US region every query is a ~230 ms round trip and a CMS toggle takes seconds (FIN-3492). If the database moves, change `regions` with it.
 - `app/api/media/route.ts` sets `maxDuration = 600`, which exceeds the Hobby plan's function limit. Use a plan that allows it or lower the value.
 - The build step needs the same environment as a Node host build, including `STORAGE_DRIVER` or the R2 variables, and devDependencies installed.

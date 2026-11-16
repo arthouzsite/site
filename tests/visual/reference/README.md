@@ -6,8 +6,8 @@ Do not edit these three files: the visual harness patches a copy.
 
 ## Visual harness
 
-`tests/visual/normalise.ts` copies the prototype to `test-results/reference.html` after nine textual
-patches (a-i), with `support.js` copied beside it unchanged and `image-slot.js` written as the patched
+`tests/visual/normalise.ts` copies the prototype to `test-results/reference.html` after twelve textual
+patches (a-l), with `support.js` copied beside it unchanged and `image-slot.js` written as the patched
 copy (g). Each patch must match exactly once or the run fails:
 
 1. **Artist order** — the `AH_ARTISTS` array literal is rewritten to the order of `flat[].name`
@@ -36,6 +36,15 @@ copy (g). Each patch must match exactly once or the run fails:
    `sc-for` renders `<sc-if value="{{ n.subs }}">` after each link: a 24 px-indented block of anchors styled as
    `MobileMenu` does (EB Garamond 28 px, line-height 1, 12 px vertical padding, 1 px `rgba(237,234,228,0.16)`
    hairline below, `#C9C4BB` text). Applied inside (h), so (h) is the outermost wrapper.
+10. **(j) About tabs** — `['services', 'Services']` is removed from the prototype's About `tabs` list: Framing Services
+   is now a regular Service in the port, so the About page has Gallery, Proprietor and Publications only (the
+   prototype's unreachable Services panel adds no pixels). Services in the nav menu are listed A-Z by title, which is
+   the API order the (i) patch already follows.
+11. **(k) Featured artists grid** — the artists screen's grid (`<sc-for list="{{ featured }}">` and its wrapping
+   `div`) is removed: FIN-3639 dropped "Featured" from the product, so `/artists` is the title followed by the
+   A-Z index. The `featured` render value stays in the prototype's data; nothing reads it.
+12. **(l) Home artists line** — `AH_ARTISTS.slice(0, 22)` becomes `slice(0, 10)` (and the last-separator index 21
+   becomes 9): FIN-3631 fixed the home line at the first ten artists A-Z.
 
 `renderPrototype` seeds `localStorage['arthouz-route']` (`{ page, param, city, status, aq, tab, search, q }`) before load
 (the prototype applies the whole stored object on mount, so `search: true, q` opens its search overlay) and can

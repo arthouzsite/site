@@ -138,28 +138,18 @@ describe('services', () => {
     expect((await api.patch(`/api/services/${UNKNOWN_UUID}/publish`, { isPublished: true })).status).toBe(404)
   })
 
-  it('order persists and drives the admin list', async () => {
-    const a = await create({ title: 'A' })
-    const b = await create({ title: 'B' })
-    const c = await create({ title: 'C' })
-    clearTags()
-    const res = await api.put('/api/services/order', { ids: [c.id, a.id, b.id] })
-    expect(res.status).toBe(200)
-    expect(res.body.data.map((s: { id: string }) => s.id)).toEqual([c.id, a.id, b.id])
-    expect(postedTags()).toEqual(expect.arrayContaining(['services', 'service:a', 'service:b', 'service:c']))
-    const rows = await prisma.service.findMany({ orderBy: { sortOrder: 'asc' } })
-    expect(rows.map((r) => r.id)).toEqual([c.id, a.id, b.id])
+  it('lists A-Z by title ignoring case, whatever the creation order', async () => {
+    const c = await create({ title: 'framing services' })
+    const a = await create({ title: 'Art sales' })
+    const b = await create({ title: 'Gallery on rent' })
     const list = await api.get('/api/services')
     expect(list.status).toBe(200)
-    expect(list.body.data.map((s: { id: string }) => s.id)).toEqual([c.id, a.id, b.id])
+    expect(list.body.data.map((s: { id: string }) => s.id)).toEqual([a.id, c.id, b.id])
   })
 
-  it('reorder with a missing or duplicate id is 400 INVALID_ORDER', async () => {
+  it('no longer exposes a reorder endpoint', async () => {
     const a = await create({ title: 'A' })
-    await create({ title: 'B' })
-    const res = await api.put('/api/services/order', { ids: [a.id, a.id] })
-    expect(res.status).toBe(400)
-    expect(res.body).toMatchObject({ ok: false, error: { code: 'INVALID_ORDER' } })
+    expect((await api.put('/api/services/order', { ids: [a.id] })).status).toBe(405)
   })
 
   it('list filters by q on title and summary, paginates and caps q', async () => {
@@ -173,7 +163,7 @@ describe('services', () => {
     expect(bySummary.body.data.map((s: { title: string }) => s.title)).toEqual(['Art for rent'])
     const paged = await api.get('/api/services?limit=2&page=2')
     expect(paged.status).toBe(200)
-    expect(paged.body.data.map((s: { title: string }) => s.title)).toEqual(['Art sales'])
+    expect(paged.body.data.map((s: { title: string }) => s.title)).toEqual(['Gallery on rent'])
     expect(paged.body.meta).toMatchObject({ page: 2, limit: 2, total: 3 })
     expect((await api.get(`/api/services?q=${'x'.repeat(121)}`)).status).toBe(400)
   })

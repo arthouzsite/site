@@ -43,7 +43,7 @@ describe('createUpload', () => {
   it('allocates no key and calls no storage for a disallowed type or size', async () => {
     const spy = vi.spyOn(storage, 'createUploadTarget')
     await expect(createUpload({ filename: 'a', mime: 'text/html', bytes: 1, alt: 'x' })).rejects.toMatchObject({ status: 415 })
-    await expect(createUpload({ filename: 'a', mime: 'image/png', bytes: 26 * 1024 * 1024, alt: 'x' })).rejects.toMatchObject({ status: 413 })
+    await expect(createUpload({ filename: 'a', mime: 'image/png', bytes: 2 * 1024 * 1024 + 1, alt: 'x' })).rejects.toMatchObject({ status: 413 })
     expect(spy).not.toHaveBeenCalled()
   })
 })
@@ -96,9 +96,9 @@ describe('completeUpload', () => {
     expect(fake.media.create.mock.calls[0]![0].data).toMatchObject({ key, kind: 'VIDEO', uploadedById: 'u1', url: `/media/${key}` })
   })
 
-  it('deletes the object when the bytes read exceed the image limit although head reported a small size', async () => {
+  it('deletes the object when the bytes read exceed the 2 MB image limit although head reported a small size', async () => {
     await storage.put(KEY, png, 'image/png')
-    vi.spyOn(storage, 'get').mockResolvedValue(Buffer.alloc(25 * 1024 * 1024 + 1))
+    vi.spyOn(storage, 'get').mockResolvedValue(Buffer.alloc(2 * 1024 * 1024 + 1))
     await expect(completeUpload({ key: KEY, alt: 'x' }, null)).rejects.toMatchObject({ status: 413 })
     expect(storage.has(KEY)).toBe(false)
     expect(fake.media.create).not.toHaveBeenCalled()
@@ -116,5 +116,27 @@ describe('completeUpload', () => {
     vi.spyOn(storage, 'get').mockRejectedValue(new Error('r2 timeout'))
     await expect(completeUpload({ key: KEY, alt: 'x' }, null)).rejects.toThrow('r2 timeout')
     expect(storage.has(KEY)).toBe(true)
+  })
+
+  it('deletes the object and records no row when the image is over 4000 px on its longer side', async () => {
+    const wide = await sharp({ create: { width: 4001, height: 10, channels: 3, background: '#fff' } }).png().toBuffer()
+    await storage.put(KEY, wide, 'image/png')
+    await expect(completeUpload({ key: KEY, alt: 'x' }, null)).rejects.toMatchObject({ status: 400, code: 'IMAGE_DIMENSIONS_EXCEEDED' })
+    expect(storage.has(KEY)).toBe(false)
+    expect(storage.has(THUMB_KEY)).toBe(false)
+    expect(fake.media.create).not.toHaveBeenCalled()
+  })
+
+  it('accepts an image of exactly 4000 px', async () => {
+    const exact = await sharp({ create: { width: 4000, height: 10, channels: 3, background: '#fff' } }).png().toBuffer()
+    await storage.put(KEY, exact, 'image/png')
+    await completeUpload({ key: KEY, alt: 'x' }, null)
+    expect(fake.media.create.mock.calls[0]![0].data).toMatchObject({ width: 4000, height: 10 })
+  })
+
+  it('deletes an object stored over 2 MB when completing', async () => {
+    await storage.put(KEY, Buffer.alloc(2 * 1024 * 1024 + 1), 'image/png')
+    await expect(completeUpload({ key: KEY, alt: 'x' }, null)).rejects.toMatchObject({ status: 413 })
+    expect(storage.has(KEY)).toBe(false)
   })
 })

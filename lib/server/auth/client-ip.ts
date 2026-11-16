@@ -1,6 +1,6 @@
 import { env } from '@/lib/server/env'
 
-const UNKNOWN_IP = 'unknown'
+export const UNKNOWN_IP = 'unknown'
 
 /**
  * Client address for rate limiting. Route handlers cannot see the socket, so with TRUST_PROXY=0 the

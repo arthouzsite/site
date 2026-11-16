@@ -1,4 +1,4 @@
-import { publicServiceListSchema } from '@/lib/shared'
+import { publicFairSchema, publicServiceListSchema } from '@/lib/shared'
 import { z } from 'zod'
 import type { MetadataRoute } from 'next'
 import { unstable_rethrow } from 'next/navigation'
@@ -23,13 +23,14 @@ async function sectionPaths(load: () => Promise<{ slug: string }[]>, prefix: str
   }
 }
 
-/** Static routes followed by every published exhibition, artist and service page. */
+/** Static routes followed by every published exhibition, artist, fair and service page. */
 export async function buildSitemap(): Promise<MetadataRoute.Sitemap> {
-  const [exhibitions, artists, services] = await Promise.all([
+  const [exhibitions, artists, fairs, services] = await Promise.all([
     sectionPaths(async () => (await apiGet('/public/exhibitions', exhibitionSlugs, [TAGS.exhibitions])).items, '/exhibitions'),
     sectionPaths(async () => (await apiGet('/public/artists', artistSlugs, [TAGS.artists])).flat, '/artists'),
+    sectionPaths(() => apiGet('/public/fairs', z.array(publicFairSchema), [TAGS.fairs]), '/fairs'),
     sectionPaths(() => apiGet('/public/services', publicServiceListSchema, [TAGS.services]), '/services'),
   ])
   const origin = siteUrl()
-  return [...STATIC_PATHS, ...exhibitions, ...artists, ...services].map((path) => ({ url: path === '/' ? `${origin}/` : `${origin}${path}` }))
+  return [...STATIC_PATHS, ...exhibitions, ...artists, ...fairs, ...services].map((path) => ({ url: path === '/' ? `${origin}/` : `${origin}${path}` }))
 }

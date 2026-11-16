@@ -1,9 +1,9 @@
 import { z } from 'zod'
+import { imageLimitError } from '@/lib/shared'
 import { badRequest, payloadTooLarge, unsupportedMediaType } from '@/lib/server/http/errors'
 import {
   ALLOWED_IMAGE_MIMES,
   ALLOWED_VIDEO_MIMES,
-  MAX_IMAGE_UPLOAD_BYTES,
   MAX_VIDEO_UPLOAD_BYTES,
   MULTIPART_OVERHEAD_BYTES,
 } from './media.constants'
@@ -37,13 +37,13 @@ export type CompleteUploadInput = z.infer<typeof completeUploadSchema>
 
 export type UploadForm = z.infer<typeof uploadSchema>
 
-const IMAGE_TOO_LARGE = 'Images must be 25 MB or smaller'
 const VIDEO_TOO_LARGE = 'Videos must be 200 MB or smaller'
 
 /** Rejects by declared type and size, from metadata alone: nothing is read into memory, decoded or stored. */
 export function assertUploadAllowed(file: { type: string; size: number }): void {
   if (ALLOWED_IMAGE_MIMES.includes(file.type)) {
-    if (file.size > MAX_IMAGE_UPLOAD_BYTES) throw payloadTooLarge(IMAGE_TOO_LARGE)
+    const problem = imageLimitError({ bytes: file.size })
+    if (problem) throw payloadTooLarge(problem)
     return
   }
   if (ALLOWED_VIDEO_MIMES.includes(file.type)) {
@@ -56,9 +56,9 @@ export function assertUploadAllowed(file: { type: string; size: number }): void 
 /** Largest request body the media routes accept: the biggest video plus multipart framing. */
 export const MAX_BODY_BYTES = MAX_VIDEO_UPLOAD_BYTES + MULTIPART_OVERHEAD_BYTES
 
-function assertDeclaredLength(request: Request, limit: number): void {
+function assertDeclaredLength(request: Request, limit: number, message: string): void {
   const declared = Number(request.headers.get('content-length'))
-  if (Number.isFinite(declared) && declared > limit) throw payloadTooLarge(VIDEO_TOO_LARGE)
+  if (Number.isFinite(declared) && declared > limit) throw payloadTooLarge(message)
 }
 
 /** Passes bytes through and errors the stream (cancelling the source) once more than `limit` have gone by. */
@@ -81,20 +81,24 @@ function limitBytes(limit: number, onExceeded: () => void): TransformStream<Uint
  * The request body piped through a byte counter, so a chunked request with no Content-Length cannot be buffered
  * without bound; the declared length (when present) is only an early exit.
  */
-function countedBody(request: Request, limit: number): { body: ReadableStream<Uint8Array> | null; isTooLarge: () => boolean } {
-  assertDeclaredLength(request, limit)
+function countedBody(
+  request: Request,
+  limit: number,
+  message: string = VIDEO_TOO_LARGE,
+): { body: ReadableStream<Uint8Array> | null; isTooLarge: () => boolean } {
+  assertDeclaredLength(request, limit, message)
   let isTooLarge = false
   const body = request.body?.pipeThrough(limitBytes(limit, () => (isTooLarge = true))) ?? null
   return { body, isTooLarge: () => isTooLarge }
 }
 
 /** Buffers the request body, failing with 413 as soon as more than `limit` bytes have arrived. */
-export async function readBoundedBody(request: Request, limit: number): Promise<Buffer> {
-  const { body, isTooLarge } = countedBody(request, limit)
+export async function readBoundedBody(request: Request, limit: number, tooLargeMessage: string = VIDEO_TOO_LARGE): Promise<Buffer> {
+  const { body, isTooLarge } = countedBody(request, limit, tooLargeMessage)
   try {
     return Buffer.from(await new Response(body).arrayBuffer())
   } catch {
-    if (isTooLarge()) throw payloadTooLarge(VIDEO_TOO_LARGE)
+    if (isTooLarge()) throw payloadTooLarge(tooLargeMessage)
     throw badRequest('BAD_REQUEST', 'Could not read the request body')
   }
 }

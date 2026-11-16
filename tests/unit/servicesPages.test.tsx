@@ -41,11 +41,13 @@ import { Header } from '@/components/site/Header'
 import { ApiError } from '@/lib/api'
 import { loadNavServices } from '@/lib/services'
 import { TAGS } from '@/lib/tags'
-import { bareService, publicServiceList, service } from './support/publicFixtures'
+import { bareService, location, publicServiceList, service } from './support/publicFixtures'
 
 const settings = { site: { title: 'Art Houz', description: 'Gallery.', ogImage: null } }
 const html = (node: ReactElement) => renderToStaticMarkup(node)
 const params = <T,>(value: T) => Promise.resolve(value)
+/** Answers a service request with `body` while locations keep their own answer. */
+const serving = (body: unknown) => async (path: string) => (path === '/public/locations' ? [location] : body)
 
 beforeEach(() => {
   connection.mockReset()
@@ -55,6 +57,7 @@ beforeEach(() => {
   apiGet.mockImplementation(async (path) => {
     if (path === '/public/services') return publicServiceList
     if (path === '/public/settings') return settings
+    if (path === '/public/locations') return [location]
     const found = publicServiceList.find((item) => path === `/public/services/${item.slug}`)
     if (found) return found
     throw new ApiError('NOT_FOUND', 'missing', 404)
@@ -116,8 +119,29 @@ describe('/services/[slug]', () => {
     expect(out).toContain('A. Seller')
     expect(out).toContain('href="tel:+914411112222"')
     expect(out).toContain('href="mailto:sales@arthouz.example"')
-    expect(out).toMatch(/<a[^>]+href="\/visit"[^>]*>Enquire/)
+    // No custom link: the CTA is a button that opens the enquiry form, not a link to the Visit page.
+    expect(out).toMatch(/<button type="button" aria-haspopup="dialog"[^>]*>Enquire →<\/button>/)
+    expect(out).not.toContain('href="/visit"')
     expect(out).not.toContain('target="_blank"')
+    expect(apiGet).toHaveBeenCalledWith('/public/locations')
+  })
+
+  it.each([
+    ['the locations call fails', async (path: string) => { if (path === '/public/locations') throw new ApiError('NETWORK', 'down', 0); return service }],
+    ['there are no locations', async (path: string) => (path === '/public/locations' ? [] : service)],
+  ])('falls back to the Visit link when %s', async (_label, answer) => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    apiGet.mockImplementation(answer)
+    const out = html(await ServicePage({ params: params({ slug: 'art-sales' }) }))
+    expect(out).toMatch(/<a[^>]+href="\/visit"[^>]*>Enquire/)
+    expect(out).not.toContain('aria-haspopup')
+    error.mockRestore()
+  })
+
+  it('does not load locations when a custom link replaces the form', async () => {
+    apiGet.mockImplementation(serving(({ ...service, ctaHref: 'tel:+914400000000' })))
+    await ServicePage({ params: params({ slug: 'art-sales' }) })
+    expect(apiGet).not.toHaveBeenCalledWith('/public/locations')
   })
 
   it('links back to the services index', async () => {
@@ -134,7 +158,7 @@ describe('/services/[slug]', () => {
   })
 
   it('renders only the contact lines that are set', async () => {
-    apiGet.mockImplementation(async () => ({ ...service, contact: { name: '', phone: '', email: 'sales@arthouz.example' } }))
+    apiGet.mockImplementation(serving(({ ...service, contact: { name: '', phone: '', email: 'sales@arthouz.example' } })))
     const out = html(await ServicePage({ params: params({ slug: 'art-sales' }) }))
     expect(out).toContain('Contact')
     expect(out).toContain('mailto:sales@arthouz.example')
@@ -143,10 +167,10 @@ describe('/services/[slug]', () => {
   })
 
   it('uses the ctaHref: external http(s) opens safely in a new tab, mailto stays in the page', async () => {
-    apiGet.mockImplementation(async () => ({ ...service, ctaLabel: 'Book', ctaHref: 'https://book.example/x' }))
+    apiGet.mockImplementation(serving(({ ...service, ctaLabel: 'Book', ctaHref: 'https://book.example/x' })))
     const external = html(await ServicePage({ params: params({ slug: 'art-sales' }) }))
     expect(external).toMatch(/<a href="https:\/\/book\.example\/x" target="_blank" rel="noopener noreferrer"[^>]*>Book/)
-    apiGet.mockImplementation(async () => ({ ...service, ctaHref: 'mailto:hello@arthouz.example' }))
+    apiGet.mockImplementation(serving(({ ...service, ctaHref: 'mailto:hello@arthouz.example' })))
     const mail = html(await ServicePage({ params: params({ slug: 'art-sales' }) }))
     expect(mail).toContain('href="mailto:hello@arthouz.example"')
     expect(mail).not.toContain('target="_blank"')
@@ -161,14 +185,14 @@ describe('/services/[slug]', () => {
     ['tel:+914400000000', 'tel:+914400000000'],
     ['/exhibitions', '/exhibitions'],
   ])('guards ctaHref %s on render, falling back to /visit', async (ctaHref, expected) => {
-    apiGet.mockImplementation(async () => ({ ...service, ctaLabel: 'Go', ctaHref }))
+    apiGet.mockImplementation(serving(({ ...service, ctaLabel: 'Go', ctaHref })))
     const out = html(await ServicePage({ params: params({ slug: 'art-sales' }) }))
     const cta = out.match(/<a [^>]*>Go/)?.[0]
     expect(cta).toContain(`href="${expected}"`)
   })
 
   it('splits the body only on blank lines and skips empty paragraphs', async () => {
-    apiGet.mockImplementation(async () => ({ ...service, body: 'One\nstill one.\r\n\r\n\n  \nTwo.\n\n' }))
+    apiGet.mockImplementation(serving(({ ...service, body: 'One\nstill one.\r\n\r\n\n  \nTwo.\n\n' })))
     const out = html(await ServicePage({ params: params({ slug: 'art-sales' }) }))
     expect(out.match(/text-body">(One|Two)/g)).toHaveLength(2)
     expect(out).toContain('One\nstill one.')

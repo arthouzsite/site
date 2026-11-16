@@ -5,7 +5,7 @@ import { formatDate } from '../../lib/format'
 import { SectionCard } from './SectionCard'
 import { ToggleCell } from './ToggleCell'
 import type { AdminArtist } from './types'
-import { useFeatureArtist, useFeaturedArtists, useHomeFocus, usePublishArtist } from './useArtists'
+import { useHomeFocus, usePublishArtist } from './useArtists'
 
 function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -18,14 +18,11 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
 
 type Props = { artist: AdminArtist | null; dirty: boolean }
 
-/** Publish and feature are their own mutations, so they stay off while unsaved edits exist. */
+/** Publish is its own mutation, so it stays off while unsaved edits exist. */
 export function VisibilityCard({ artist, dirty }: Props) {
   const publish = usePublishArtist()
-  const feature = useFeatureArtist()
-  const featured = useFeaturedArtists()
   const homeFocus = useHomeFocus()
-  const locked = !artist || dirty || publish.isPending || feature.isPending
-  const position = artist ? (featured.data?.findIndex((a) => a.id === artist.id) ?? -1) + 1 : 0
+  const locked = !artist || dirty || publish.isPending
   const note = !artist ? 'Save the artist first' : null
 
   return (
@@ -40,17 +37,6 @@ export function VisibilityCard({ artist, dirty }: Props) {
               onChange={(e) => artist && publish.mutate({ id: artist.id, isPublished: e.target.checked })}
             />
           </Row>
-          <Row label="Featured">
-            <ToggleCell
-              label="Featured"
-              checked={artist?.isFeatured ?? false}
-              disabled={locked}
-              onChange={(e) => artist && feature.mutate({ id: artist.id, isFeatured: e.target.checked })}
-            />
-          </Row>
-          {artist?.isFeatured && position > 0 && (
-            <Row label="Featured order"><Link to="/artists" className="underline">{position} of {featured.data?.length ?? position}</Link></Row>
-          )}
           {artist && <Row label="Last saved">{formatDate(artist.updatedAt)}</Row>}
         </dl>
         {note && <p className="m-0 text-12 text-muted">{note}</p>}

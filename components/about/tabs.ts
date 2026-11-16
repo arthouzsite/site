@@ -1,7 +1,6 @@
 export const ABOUT_TABS = [
   { key: 'gallery', label: 'Gallery' },
   { key: 'proprietor', label: 'Proprietor' },
-  { key: 'services', label: 'Services' },
   { key: 'publications', label: 'Publications' },
 ] as const
 

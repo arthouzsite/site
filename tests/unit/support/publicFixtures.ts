@@ -1,6 +1,6 @@
 import type {
   PublicAbout, PublicArtist, PublicArtistDetail, PublicArtistList, PublicExhibition, PublicExhibitionDetail,
-  PublicFair, PublicHome, PublicImage, PublicLocation, PublicNews, PublicService,
+  PublicFair, PublicFairDetail, PublicHome, PublicImage, PublicLocation, PublicNews, PublicService,
 } from '@/lib/shared'
 
 export const image: PublicImage = { url: 'https://picsum.photos/seed/a/1200/800', thumbUrl: 'https://picsum.photos/seed/a/480/320', width: 1200, height: 800, alt: 'Installation view' }
@@ -34,13 +34,14 @@ export const artistDetail: PublicArtistDetail = {
 }
 
 export const artistList: PublicArtistList = {
-  featured: [artist],
   groups: [{ letter: 'N', items: [artist] }],
   flat: [artist],
   layout: 'GROUPED',
 }
 
-export const fair: PublicFair = { id: 'f1', slug: 'f1', title: 'India Art Fair', where: 'New Delhi', booth: 'Booth A1', text: 'Fair text.', image }
+export const fair: PublicFair = { id: 'f1', slug: 'f1', title: 'India Art Fair', where: 'New Delhi', booth: 'Booth A1', text: 'Fair text.', image, gallery: [] }
+
+export const fairDetail: PublicFairDetail = { ...fair, gallery: [image, { ...image, url: 'https://picsum.photos/seed/b/1200/800', alt: 'Booth view' }] }
 
 export const location: PublicLocation = {
   id: 'l1', slug: 'chennai', city: 'Chennai', address: '1 Main Road', phone: '+91 44 0000 0000', tel: 'tel:+914400000000',
@@ -67,7 +68,6 @@ export const home: PublicHome = {
 export const about: PublicAbout = {
   gallery: { statement: 'Statement.', body: 'Gallery body.', locationsLabel: 'Our locations', image },
   proprietor: { eyebrow: 'Proprietor', name: 'A. Person', quote: 'A quote.', body: 'Proprietor body.', image },
-  services: { title: 'Framing', body: 'Services body.', ctaLabel: 'Enquire', image },
   publications: { title: 'Arts Illustrated', body: 'Publications body.', externalUrl: 'https://pub.example', image },
 }
 

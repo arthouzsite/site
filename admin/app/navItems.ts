@@ -9,6 +9,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/fairs', label: 'Fairs', icon: 'fairs', countKey: 'fairs' },
   { to: '/news', label: 'News', icon: 'news', countKey: 'news' },
   { to: '/services', label: 'Services', icon: 'services' },
+  { to: '/enquiries', label: 'Enquiries', icon: 'enquiries' },
   { to: '/locations', label: 'Locations', icon: 'locations', countKey: 'locations' },
   { to: '/about', label: 'About page', icon: 'about' },
   { to: '/settings', label: 'Home & settings', icon: 'settings' },
