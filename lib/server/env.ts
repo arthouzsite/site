@@ -1,13 +1,13 @@
 import 'server-only'
 import { z } from 'zod'
+import { DEFAULT_MEDIA_URL_BASE } from '@/lib/media-base'
 
 const MIN_JWT_SECRET_LENGTH = 32
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 const R2_SETTINGS = ['S3_ENDPOINT', 'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_S3_BUCKET_NAME'] as const
 
 const optionalString = z.string().min(1).optional()
-const DEFAULT_MEDIA_URL_BASE = '/media'
-// An absolute origin (the public CDN) or a path on this origin (`/media`); stored without a trailing slash.
+// An absolute origin (the public CDN, the default) or a path on this origin (`/media`); stored without a trailing slash.
 const mediaUrlBase = z
   .string()
   .regex(/^(\/|https?:\/\/)/, 'Expected a path starting with / or an http(s) URL')

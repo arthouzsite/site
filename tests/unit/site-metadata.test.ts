@@ -141,9 +141,10 @@ describe('next config guards', () => {
   it('allows picsum image hosts only outside production or with the test override', () => {
     const hosts = (env: Record<string, string>) => buildRemotePatterns(env).map((pattern) => pattern.hostname)
 
-    expect(hosts({ NODE_ENV: 'development' })).toEqual(['picsum.photos', 'fastly.picsum.photos'])
-    expect(hosts({ NODE_ENV: 'production' })).toEqual([])
-    expect(hosts({ NODE_ENV: 'production', ALLOW_TEST_OVERRIDES: '1' })).toEqual(['picsum.photos', 'fastly.picsum.photos'])
+    const local = { MEDIA_URL_BASE: '/media' }
+    expect(hosts({ NODE_ENV: 'development', ...local })).toEqual(['picsum.photos', 'fastly.picsum.photos'])
+    expect(hosts({ NODE_ENV: 'production', ...local })).toEqual([])
+    expect(hosts({ NODE_ENV: 'production', ALLOW_TEST_OVERRIDES: '1', ...local })).toEqual(['picsum.photos', 'fastly.picsum.photos'])
   })
 
   it('allows the media CDN host when MEDIA_URL_BASE is an absolute origin', () => {
@@ -158,10 +159,15 @@ describe('next config guards', () => {
     ])
   })
 
-  it('adds no media host when MEDIA_URL_BASE is unset, a path or not a URL', () => {
-    expect(buildRemotePatterns({ NODE_ENV: 'production' })).toEqual([])
+  it('allows the public CDN when MEDIA_URL_BASE is unset or blank', () => {
+    const cdn = [{ protocol: 'https', hostname: 'cdn.arthouz.com', pathname: '/**' }]
+    expect(buildRemotePatterns({ NODE_ENV: 'production' })).toEqual(cdn)
+    expect(buildRemotePatterns({ NODE_ENV: 'production', MEDIA_URL_BASE: ' ' })).toEqual(cdn)
+  })
+
+  it('adds no media host when MEDIA_URL_BASE is a path or not a URL', () => {
     expect(buildRemotePatterns({ NODE_ENV: 'production', MEDIA_URL_BASE: '/media' })).toEqual([])
     expect(buildRemotePatterns({ NODE_ENV: 'production', MEDIA_URL_BASE: 'https://' })).toEqual([])
-    expect(buildRemotePatterns({ NODE_ENV: 'production', S3_ENDPOINT: 'https://acct.r2.cloudflarestorage.com', AWS_S3_BUCKET_NAME: 'arthouz' })).toEqual([])
+    expect(buildRemotePatterns({ NODE_ENV: 'production', MEDIA_URL_BASE: '/media', S3_ENDPOINT: 'https://acct.r2.cloudflarestorage.com', AWS_S3_BUCKET_NAME: 'arthouz' })).toEqual([])
   })
 })

@@ -1,5 +1,6 @@
 import type { NextConfig } from 'next'
 import type { RemotePattern } from 'next/dist/shared/lib/image-config'
+import { DEFAULT_MEDIA_URL_BASE } from './lib/media-base'
 import { allowsTestOverrides } from './lib/test-overrides'
 
 type Env = Readonly<Record<string, string | undefined>>
@@ -20,9 +21,9 @@ export function assertProductionSiteUrl(env: Env, phase: string | undefined = en
   }
 }
 
-/** Media links are `${MEDIA_URL_BASE}/<key>`; when that base is an absolute origin (the public CDN) `next/image` must accept its host. */
+/** Media links are `${MEDIA_URL_BASE}/<key>` (the public CDN unless overridden); `next/image` must accept that host. A `/media` base needs none. */
 function mediaBasePatterns(env: Env): RemotePattern[] {
-  const base = env.MEDIA_URL_BASE?.trim() ?? ''
+  const base = env.MEDIA_URL_BASE?.trim() || DEFAULT_MEDIA_URL_BASE
   if (!/^https?:\/\//i.test(base)) return []
   let url: URL
   try {

@@ -43,9 +43,10 @@ describe('parseEnv', () => {
     expect(env.STORAGE_DRIVER).toBe('r2')
   })
 
-  it('defaults MEDIA_URL_BASE to /media, trims trailing slashes and accepts an absolute origin', () => {
-    expect(parseEnv(build({ NODE_ENV: 'test' })).MEDIA_URL_BASE).toBe('/media')
-    expect(parseEnv(build({ NODE_ENV: 'test', MEDIA_URL_BASE: '' })).MEDIA_URL_BASE).toBe('/media')
+  it('defaults MEDIA_URL_BASE to the public CDN, trims trailing slashes and accepts a path or another origin', () => {
+    expect(parseEnv(build({ NODE_ENV: 'test' })).MEDIA_URL_BASE).toBe('https://cdn.arthouz.com')
+    expect(parseEnv(build({ NODE_ENV: 'test', MEDIA_URL_BASE: '' })).MEDIA_URL_BASE).toBe('https://cdn.arthouz.com')
+    expect(parseEnv(build({ NODE_ENV: 'test', MEDIA_URL_BASE: '/media' })).MEDIA_URL_BASE).toBe('/media')
     expect(parseEnv(build({ NODE_ENV: 'test', MEDIA_URL_BASE: '/assets/' })).MEDIA_URL_BASE).toBe('/assets')
     expect(parseEnv(build({ NODE_ENV: 'test', MEDIA_URL_BASE: 'https://cdn.example.test//' })).MEDIA_URL_BASE).toBe('https://cdn.example.test')
   })

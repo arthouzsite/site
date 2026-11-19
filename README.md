@@ -45,7 +45,7 @@ Configuration is read from the process environment; locally from `.env` at the r
 | `SEED_ADMIN_EMAIL` | yes | Email of the admin user created by the seed | `admin@example.com` |
 | `SEED_ADMIN_PASSWORD` | yes | Password of the seeded admin | `<choose a password>` |
 | `NEXT_PUBLIC_SITE_URL` | build | Public origin, no trailing slash. Inlined at build time (canonical URLs, sitemap, robots). A production build fails if it is unset or a localhost URL | `https://www.example.com` |
-| `MEDIA_URL_BASE` | production | Prefix of every media URL: the public CDN origin in front of the bucket. Unset, it is `/media` (objects streamed through this app; tests and local runs without a CDN) | `https://cdn.arthouz.com` |
+| `MEDIA_URL_BASE` | no | Prefix of every media URL; default `https://cdn.arthouz.com`, the public CDN in front of the bucket (`lib/media-base.ts`). Set `/media` to stream objects through this app instead (tests, local runs with `STORAGE_DRIVER=memory`) | `/media` |
 | `STORAGE_DRIVER` | no | `r2` (S3-compatible bucket, default) or `memory` (nothing persisted, still served at `/media/...`) | `r2` |
 | `S3_ENDPOINT` | with `r2` | S3 API endpoint of the bucket | `https://ACCOUNT_ID.r2.cloudflarestorage.com` |
 | `AWS_ACCESS_KEY_ID` | with `r2` | Bucket access key id | `<access key id>` |
@@ -132,7 +132,7 @@ Details in `docs/deploy.md`. In short:
 
 ### Media URLs
 
-Media is public: the bucket is served by a CDN hostname and every media link is `${MEDIA_URL_BASE}/<key>` (for example `https://cdn.arthouz.com/arthouz/2026/<uuid>.jpg`). That URL is written to the database when a file is stored, so nothing is signed and links never expire. `next/image` accepts the host of `MEDIA_URL_BASE`; it is read at build time, so set the variable before building. Rows recorded earlier as `/media/<key>` are emitted with the configured base when a response is built; `pnpm media:relink` rewrites them in the database for good. With `MEDIA_URL_BASE` unset (tests, local runs without a CDN) links are `/media/<key>`, streamed from storage by the `/media` route.
+Media is public: the bucket is served by a CDN hostname and every media link is `${MEDIA_URL_BASE}/<key>` (for example `https://cdn.arthouz.com/arthouz/2026/<uuid>.jpg`). That URL is written to the database when a file is stored, so nothing is signed and links never expire. `next/image` accepts the host of the media base. Rows recorded earlier as `/media/<key>` are emitted with the configured base when a response is built; `pnpm media:relink` rewrites them in the database for good. With `MEDIA_URL_BASE=/media` (tests, local runs without the bucket) links are `/media/<key>`, streamed from storage by the `/media` route.
 
 ### Uploads
 
