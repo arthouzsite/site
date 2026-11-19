@@ -136,17 +136,17 @@ Media is public: the bucket is served by a CDN hostname and every media link is 
 
 ### Uploads
 
-Media reaches the bucket in three steps, so the file bytes never pass through the app server (Vercel rejects request bodies over 4.5 MB):
+Media reaches the bucket in three steps. Files up to 4 MB go through the app server; larger ones go straight to the bucket (Vercel rejects request bodies over 4.5 MB):
 
-1. `POST /api/media/uploads` with `{ filename, mime, bytes, alt }` checks the type (images: jpeg, png, webp, avif, up to 25 MB; videos: mp4, webm, mov, up to 200 MB) and answers `201 { key, method: 'PUT', url, headers, expiresAt }`. With the `r2` driver `url` is a presigned `PutObject` URL valid for 15 minutes with the content type signed.
+1. `POST /api/media/uploads` with `{ filename, mime, bytes, alt }` checks the type (images: jpeg, png, webp, avif, up to 25 MB; videos: mp4, webm, mov, up to 200 MB) and answers `201 { key, method: 'PUT', url, headers, expiresAt }`. With the `r2` driver a file up to 4 MB (every image) gets the same-origin `PUT /api/media/uploads/<key>`: the app writes it to the bucket, so the browser needs no access to the bucket and no CORS rule. Only larger files (videos) get a presigned `PutObject` URL valid for 15 minutes with the content type signed, and those need the bucket CORS rule.
 2. The browser `PUT`s the file to `url` with the returned `headers`.
 3. `POST /api/media/uploads/complete` with `{ key, alt }` checks the stored object (size, type, image decodes or video signature), stores the thumbnail and answers `201` with the `Media` row. A file that fails the checks is deleted from storage. A key can be completed once (`409 UPLOAD_ALREADY_COMPLETED`); a key with nothing stored is `400 UPLOAD_NOT_FOUND`.
 
 The presigned URL also signs `cache-control` and the declared `content-length`, so a PUT with different bytes is refused by R2 (the browser sets the length itself; the client forwards only the returned `headers`). Uploads that are never completed stay in the bucket: periodically prune objects under `arthouz/<year>/` that have no `Media` row (a script is a follow-up).
 
-With the `memory` driver (tests, local runs without R2) `url` is the same-origin `PUT /api/media/uploads/<key>`, which holds the body to the declared size and stores it in memory; with `r2` that route answers 404. `POST /api/media` (multipart) remains as the server-side alternative for API callers and small files.
+With the `memory` driver (tests, local runs without R2) `url` is the same-origin `PUT /api/media/uploads/<key>`, which holds the body to the declared size and stores it in memory; with `r2` that route stores files up to 4 MB in the bucket. `POST /api/media` (multipart) remains as the server-side alternative for API callers and small files.
 
-The bucket needs this CORS rule (Cloudflare dashboard) or browsers refuse the `PUT`:
+For files over 4 MB the bucket needs this CORS rule (Cloudflare dashboard) or browsers refuse the `PUT`:
 
 ```json
 [{ "AllowedOrigins": ["https://site-arthouz.vercel.app", "http://localhost:3300"],

@@ -52,10 +52,20 @@ describe('R2Storage', () => {
   })
 
   describe('upload target', () => {
-    it('presigns a 15 minute PUT with the content type signed and nothing sent to the network', async () => {
+    it('points a file small enough for a request body at the app upload route, with no bucket URL', async () => {
+      const key = 'arthouz/2026/12345678-1234-1234-1234-123456789012.jpg'
+      const target = await new R2Storage(config).createUploadTarget(key, 'image/jpeg', 4 * 1024 * 1024)
+
+      expect(target.url).toBe(`/api/media/uploads/${key}`)
+      expect(target.method).toBe('PUT')
+      expect(target.headers).toEqual({ 'content-type': 'image/jpeg', 'cache-control': 'public, max-age=31536000, immutable' })
+      expect(send).not.toHaveBeenCalled()
+    })
+
+    it('presigns a 15 minute PUT for a larger file with the content type signed and nothing sent to the network', async () => {
       const key = 'arthouz/2026/12345678-1234-1234-1234-123456789012.jpg'
       const before = Date.now()
-      const target = await new R2Storage(config).createUploadTarget(key, 'image/jpeg', 1234)
+      const target = await new R2Storage(config).createUploadTarget(key, 'image/jpeg', 4 * 1024 * 1024 + 1)
 
       const url = new URL(target.url)
       expect(url.host).toBe('arthouz-bucket.acct.r2.cloudflarestorage.com')

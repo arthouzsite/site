@@ -17,6 +17,11 @@ export const KEY_PREFIX = 'arthouz'
 export const MAX_CONCURRENT_UPLOADS = 2
 // Multipart framing (boundaries, the alt field) adds a little to the file itself; this slack keeps a maximal video legal.
 export const MULTIPART_OVERHEAD_BYTES = 1024 * 1024
+// Files up to this size are sent to this app, which writes them to the bucket; hosts cap request bodies (Vercel: 4.5 MB).
+// Larger files (videos) go straight to the bucket through a presigned URL.
+export const MAX_SERVER_UPLOAD_BYTES = 4 * 1024 * 1024
+// The same-origin route the browser PUTs a server-stored upload to.
+export const SERVER_UPLOAD_PATH = '/api/media/uploads/'
 // How long a presigned upload target stays valid.
 export const UPLOAD_URL_TTL_SECONDS = 900
 // The complete step reads this many leading bytes of a video to check its container signature.

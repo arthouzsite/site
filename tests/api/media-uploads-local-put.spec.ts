@@ -11,7 +11,8 @@ vi.mock('@/lib/server/auth/current-user', () => ({
 vi.mock('@/lib/server/prisma', () => ({ prisma: { media: { findUnique: async () => null } } }))
 
 import { PUT } from '@/app/api/media/uploads/[...key]/route'
-import { memoryStorage } from '@/lib/server/media/storage/storage.provider'
+import { MemoryStorage } from '@/lib/server/media/storage/memory.storage'
+import { memoryStorage, setStorageForTests } from '@/lib/server/media/storage/storage.provider'
 
 const KEY = 'arthouz/2026/12345678-1234-1234-1234-123456789012.png'
 const put = async () => {
@@ -24,12 +25,33 @@ const send = () =>
   })
 
 describe('PUT /api/media/uploads/[...key]', () => {
-  it('answers the 404 envelope and stores nothing with the r2 driver', async () => {
+  it('writes the body to the bucket with the r2 driver, without a prior declaration', async () => {
     hoisted.env.STORAGE_DRIVER = 'r2'
-    const res = await put()
-    expect(res.status).toBe(404)
-    expect(await res.json()).toMatchObject({ ok: false, error: { code: 'NOT_FOUND', message: 'No such endpoint' } })
-    expect(memoryStorage.has(KEY)).toBe(false)
+    const bucket = new MemoryStorage('https://cdn.test')
+    setStorageForTests(bucket)
+    try {
+      expect((await send()).status).toBe(200)
+      expect(await bucket.head(KEY)).toEqual({ bytes: 1, contentType: 'image/png' })
+      expect(memoryStorage.has(KEY)).toBe(false)
+    } finally {
+      setStorageForTests(undefined)
+    }
+  })
+
+  it('refuses an empty body and a type that is not allowed with the r2 driver', async () => {
+    hoisted.env.STORAGE_DRIVER = 'r2'
+    const bucket = new MemoryStorage('https://cdn.test')
+    setStorageForTests(bucket)
+    try {
+      const empty = await PUT(new Request(`http://localhost/api/media/uploads/${KEY}`, { method: 'PUT', headers: { 'content-type': 'image/png' }, body: '' }), {
+        params: Promise.resolve({ key: KEY.split('/') }),
+      })
+      expect(empty.status).toBe(400)
+      expect(await empty.json()).toMatchObject({ error: { code: 'EMPTY_UPLOAD' } })
+      expect(bucket.has(KEY)).toBe(false)
+    } finally {
+      setStorageForTests(undefined)
+    }
   })
 
   it('stores the body with the memory driver', async () => {

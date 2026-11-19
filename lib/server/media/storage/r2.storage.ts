@@ -2,7 +2,7 @@ import { DeleteObjectCommand, GetObjectCommand, HeadObjectCommand, PutObjectComm
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import type { Env } from '@/lib/server/env'
 import { logError } from '@/lib/server/log'
-import { CACHE_CONTROL, UPLOAD_URL_TTL_SECONDS } from '../media.constants'
+import { CACHE_CONTROL, MAX_SERVER_UPLOAD_BYTES, SERVER_UPLOAD_PATH, UPLOAD_URL_TTL_SECONDS } from '../media.constants'
 import { mediaUrlFor } from '../media-keys'
 import type { RangeRequest } from '../media-range'
 import { RangeNotSatisfiableError, type Storage, type StoredObjectInfo, type StoredStream, type UploadTarget } from './storage.interface'
@@ -97,22 +97,21 @@ export class R2Storage implements Storage {
   }
 
   /**
-   * A presigned PUT URL with content type, cache control and the declared length signed: a PUT with other bytes
-   * is refused by R2. Browsers send Content-Length themselves, so only content-type and cache-control are returned
-   * for the client to forward.
+   * Small files (every image) are PUT to this app, which writes them to the bucket, so the browser needs no access
+   * to the bucket. Larger files get a presigned PUT URL with content type, cache control and the declared length
+   * signed: a PUT with other bytes is refused by R2. Browsers send Content-Length themselves, so only content-type
+   * and cache-control are returned for the client to forward.
    */
   async createUploadTarget(key: string, contentType: string, bytes: number): Promise<UploadTarget> {
+    const expiresAt = new Date(Date.now() + UPLOAD_URL_TTL_SECONDS * MS_PER_SECOND).toISOString()
+    const headers = { 'content-type': contentType, 'cache-control': CACHE_CONTROL }
+    if (bytes <= MAX_SERVER_UPLOAD_BYTES) return { url: `${SERVER_UPLOAD_PATH}${key}`, method: 'PUT', headers, expiresAt }
     const url = await getSignedUrl(
       this.client,
       new PutObjectCommand({ Bucket: this.config.bucket, Key: key, ContentType: contentType, CacheControl: CACHE_CONTROL, ContentLength: bytes }),
       { expiresIn: UPLOAD_URL_TTL_SECONDS, signableHeaders: SIGNED_UPLOAD_HEADERS },
     )
-    return {
-      url,
-      method: 'PUT',
-      headers: { 'content-type': contentType, 'cache-control': CACHE_CONTROL },
-      expiresAt: new Date(Date.now() + UPLOAD_URL_TTL_SECONDS * MS_PER_SECOND).toISOString(),
-    }
+    return { url, method: 'PUT', headers, expiresAt }
   }
 
   async head(key: string): Promise<StoredObjectInfo | null> {

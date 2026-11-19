@@ -1,9 +1,8 @@
-import { CACHE_CONTROL, UPLOAD_URL_TTL_SECONDS } from '../media.constants'
+import { CACHE_CONTROL, SERVER_UPLOAD_PATH, UPLOAD_URL_TTL_SECONDS } from '../media.constants'
 import { mediaUrlFor } from '../media-keys'
 import { resolveRange, type RangeRequest } from '../media-range'
 import { RangeNotSatisfiableError, type Storage, type StoredObjectInfo, type StoredStream, type UploadTarget } from './storage.interface'
 
-const LOCAL_UPLOAD_PATH = '/api/media/uploads/'
 const MS_PER_SECOND = 1000
 const DEFAULT_MEDIA_URL_BASE = '/media'
 
@@ -30,7 +29,7 @@ export class MemoryStorage implements Storage {
   async createUploadTarget(key: string, contentType: string, bytes: number): Promise<UploadTarget> {
     this.declaredBytes.set(key, bytes)
     return {
-      url: `${LOCAL_UPLOAD_PATH}${key}`,
+      url: `${SERVER_UPLOAD_PATH}${key}`,
       method: 'PUT',
       headers: { 'content-type': contentType, 'cache-control': CACHE_CONTROL },
       expiresAt: new Date(Date.now() + UPLOAD_URL_TTL_SECONDS * MS_PER_SECOND).toISOString(),
