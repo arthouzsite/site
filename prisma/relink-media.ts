@@ -4,8 +4,7 @@ import { getStorage } from '@/lib/server/media/storage/storage.provider'
 import { prisma } from '@/lib/server/prisma'
 
 /**
- * Rewrites every Media.url / thumbUrl from whatever absolute host it points at to the app's own media path
- * (`${MEDIA_URL_BASE}/<key>`), after checking the object exists in the configured bucket. Idempotent; rows whose
+ * Rewrites every Media.url / thumbUrl to the configured media base (`${MEDIA_URL_BASE}/<key>`, the public CDN), after checking the object exists in the configured bucket. Idempotent; rows whose
  * object is missing are left alone and make the script exit non-zero. Run with `pnpm media:relink`.
  */
 

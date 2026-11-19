@@ -1,36 +1,28 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { logError } from '@/lib/server/log'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { presentMediaUrls } from './present-urls'
 import { MemoryStorage } from './storage/memory.storage'
 import { setStorageForTests } from './storage/storage.provider'
 
-vi.mock('@/lib/server/log', () => ({ logError: vi.fn() }))
-
 const KEY = 'arthouz/2026/10/0a1b2c3d-0a1b-4c3d-8e9f-0a1b2c3d4e5f.jpg'
 const THUMB_KEY = 'arthouz/2026/10/0a1b2c3d-0a1b-4c3d-8e9f-0a1b2c3d4e5f-thumb.webp'
-
-class SigningStorage extends MemoryStorage {
-  override async publicUrlFor(key: string): Promise<string> {
-    return `https://signed.test/${key}?sig=1`
-  }
-}
+const CDN = 'https://cdn.test'
 
 describe('presentMediaUrls', () => {
   afterEach(() => setStorageForTests(undefined))
 
-  describe('with a signing driver', () => {
-    beforeEach(() => setStorageForTests(new SigningStorage()))
+  describe('with a CDN media base', () => {
+    beforeEach(() => setStorageForTests(new MemoryStorage(CDN)))
 
-    it('rewrites nested url and thumbUrl fields and arrays', async () => {
+    it('rewrites nested legacy url and thumbUrl fields and arrays to CDN urls', async () => {
       const input = { items: [{ title: 'a', image: { url: `/media/${KEY}`, thumbUrl: `/media/${THUMB_KEY}`, width: 10 } }], hero: null }
       expect(await presentMediaUrls(input)).toEqual({
-        items: [{ title: 'a', image: { url: `https://signed.test/${KEY}?sig=1`, thumbUrl: `https://signed.test/${THUMB_KEY}?sig=1`, width: 10 } }],
+        items: [{ title: 'a', image: { url: `${CDN}/${KEY}`, thumbUrl: `${CDN}/${THUMB_KEY}`, width: 10 } }],
         hero: null,
       })
     })
 
     it('leaves other strings, absolute URLs and unservable keys alone', async () => {
-      const input = ['/media/other/x.jpg', '/media/arthouz/../secret.jpg', '/media/arthouz/2026/x.exe', 'https://picsum.photos/1.jpg', `see /media/${KEY}`, 7, true, null]
+      const input = ['/media/other/x.jpg', '/media/arthouz/../secret.jpg', '/media/arthouz/2026/x.exe', 'https://picsum.photos/1.jpg', `${CDN}/${KEY}`, `see /media/${KEY}`, 7, true, null]
       expect(await presentMediaUrls(input)).toEqual(input)
     })
 
@@ -53,24 +45,7 @@ describe('presentMediaUrls', () => {
     })
   })
 
-  it('falls back to the /media url and logs once per key when signing throws', async () => {
-    class FailingStorage extends MemoryStorage {
-      override async publicUrlFor(): Promise<string> {
-        throw new Error('no credentials')
-      }
-    }
-    setStorageForTests(new FailingStorage())
-    vi.mocked(logError).mockClear()
-    const input = { a: { url: `/media/${KEY}` }, b: [{ url: `/media/${KEY}` }, { url: `/media/${KEY}` }] }
-
-    await expect(presentMediaUrls(input)).resolves.toEqual(input)
-    await expect(presentMediaUrls(input)).resolves.toEqual(input)
-
-    expect(logError).toHaveBeenCalledTimes(1)
-    expect(vi.mocked(logError).mock.calls[0]![0]).toContain(KEY)
-  })
-
-  it('keeps /media paths under the memory driver', async () => {
+  it('keeps /media paths when the media base is /media', async () => {
     setStorageForTests(new MemoryStorage())
     const input = { url: `/media/${KEY}`, nested: [{ thumbUrl: `/media/${THUMB_KEY}` }] }
     expect(await presentMediaUrls(input)).toEqual(input)

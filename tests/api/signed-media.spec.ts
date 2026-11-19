@@ -11,12 +11,7 @@ import { loginAs, seedUser } from './helpers/users'
 vi.mock('@/lib/server/revalidate', () => ({ revalidateSite: vi.fn() }))
 vi.mock('@/lib/server/clock', () => ({ today: () => new Date('2026-10-30T00:00:00.000Z') }))
 
-/** Stands in for R2: media links come back as signed-looking absolute URLs. */
-class SigningMemoryStorage extends MemoryStorage {
-  override async publicUrlFor(key: string): Promise<string> {
-    return `https://signed.test/${key}?sig=1`
-  }
-}
+const cdnStorage = () => new MemoryStorage('https://cdn.test')
 
 describe('media URL presentation', () => {
   let cookie: string
@@ -45,7 +40,7 @@ describe('media URL presentation', () => {
     await prisma.$disconnect()
   })
 
-  it('keeps /media urls under the memory driver, and never changes what is stored', async () => {
+  it('keeps /media urls when the media base is /media', async () => {
     const list = await call('GET', '/api/media', { cookie })
     expect(list.body.data[0].url).toBe(`/media/${key}`)
     expect(list.body.data[0].thumbUrl).toMatch(/^\/media\/arthouz\/.*-thumb\.webp$/)
@@ -53,22 +48,22 @@ describe('media URL presentation', () => {
     expect(JSON.stringify(detail.body.data)).toContain(`/media/${key}`)
   })
 
-  it('presents the admin media list (data and pagination meta intact) as signed urls', async () => {
-    setStorageForTests(new SigningMemoryStorage())
+  it('presents the admin media list (data and pagination meta intact) as CDN urls', async () => {
+    setStorageForTests(cdnStorage())
     const list = await call('GET', '/api/media', { cookie })
     expect(list.status).toBe(200)
-    expect(list.body.data[0].url).toBe(`https://signed.test/${key}?sig=1`)
-    expect(list.body.data[0].thumbUrl).toMatch(/^https:\/\/signed\.test\/arthouz\/.*-thumb\.webp\?sig=1$/)
+    expect(list.body.data[0].url).toBe(`https://cdn.test/${key}`)
+    expect(list.body.data[0].thumbUrl).toMatch(/^https:\/\/cdn\.test\/arthouz\/.*-thumb\.webp$/)
     expect(list.body.meta).toBeDefined()
     expect((await prisma.media.findFirstOrThrow({ where: { key } })).url).toBe(`/media/${key}`)
   })
 
-  it('presents a public exhibition response as signed urls', async () => {
-    setStorageForTests(new SigningMemoryStorage())
+  it('presents a public exhibition response as CDN urls', async () => {
+    setStorageForTests(cdnStorage())
     const detail = await call('GET', '/api/public/exhibitions/sea-show')
     expect(detail.status).toBe(200)
     const urls = JSON.stringify(detail.body.data).match(/"https?:\/\/[^"]+"|"\/media\/[^"]+"/g) ?? []
     expect(urls.length).toBeGreaterThan(0)
-    for (const url of urls) expect(url).toMatch(/^"https:\/\/signed\.test\//)
+    for (const url of urls) expect(url).toMatch(/^"https:\/\/cdn\.test\//)
   })
 })

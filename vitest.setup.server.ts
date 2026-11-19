@@ -12,6 +12,7 @@ env.DATABASE_URL = TEST_DATABASE_URL
 env.DIRECT_DATABASE_URL = TEST_DATABASE_URL
 env.DATABASE_URL_TEST = TEST_DATABASE_URL
 env.STORAGE_DRIVER = 'memory'
+env.MEDIA_URL_BASE = '/media'
 env.JWT_SECRET ??= 'test-jwt-secret-test-jwt-secret-test'
 env.SEED_ADMIN_EMAIL ??= 'admin@example.test'
 env.SEED_ADMIN_PASSWORD ??= 'test-password-123'

@@ -32,10 +32,8 @@ export class RangeNotSatisfiableError extends Error {
 export interface Storage {
   put(key: string, body: Buffer, contentType: string): Promise<{ url: string }>
   delete(key: string): Promise<void>
-  /** Same-origin (or CDN) URL the app serves the object at; the bucket itself is private. */
+  /** URL the browser loads the object from and the value recorded in the database: `${MEDIA_URL_BASE}/<key>` (the public CDN, or this app's `/media` route). */
   urlFor(key: string): string
-  /** URL the browser loads the object from: a presigned bucket URL (stable within the hour) for R2, `urlFor(key)` for the memory driver. */
-  publicUrlFor(key: string): Promise<string>
   /** Where the browser sends the bytes for `key`; `bytes` is the declared size. */
   createUploadTarget(key: string, contentType: string, bytes: number): Promise<UploadTarget>
   /** Size and content type of a stored object, or null when nothing is stored under `key`. */

@@ -41,7 +41,7 @@ describe('relinkMedia', () => {
       where: { id: '1' },
       data: { url: '/media/arthouz/seed/a.jpg', thumbUrl: '/media/arthouz/seed/a-thumb.webp' },
     })
-    expect(summary).toEqual({ relinked: 1, alreadyRelative: 0, missingInBucket: 2, missingKeys: ['arthouz/seed/gone.jpg', 'arthouz/seed/nothumb.jpg'] })
+    expect(summary).toEqual({ relinked: 1, alreadyLinked: 0, missingInBucket: 2, missingKeys: ['arthouz/seed/gone.jpg', 'arthouz/seed/nothumb.jpg'] })
   })
 
   it('is idempotent: rows already on the media path are counted and not touched or looked up', async () => {
@@ -54,7 +54,7 @@ describe('relinkMedia', () => {
 
     const summary = await relinkMedia(db, storage)
 
-    expect(summary).toEqual({ relinked: 0, alreadyRelative: 2, missingInBucket: 0, missingKeys: [] })
+    expect(summary).toEqual({ relinked: 0, alreadyLinked: 2, missingInBucket: 0, missingKeys: [] })
     expect(update).not.toHaveBeenCalled()
     expect(head).not.toHaveBeenCalled()
   })
@@ -80,6 +80,6 @@ describe('relinkMedia', () => {
 
 describe('formatRelinkSummary', () => {
   it('prints the three counts', () => {
-    expect(formatRelinkSummary({ relinked: 70, alreadyRelative: 2, missingInBucket: 0, missingKeys: [] })).toBe('relinked 70, already relative 2, missing in bucket 0')
+    expect(formatRelinkSummary({ relinked: 70, alreadyLinked: 2, missingInBucket: 0, missingKeys: [] })).toBe('relinked 70, already linked 2, missing in bucket 0')
   })
 })

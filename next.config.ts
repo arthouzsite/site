@@ -20,29 +20,26 @@ export function assertProductionSiteUrl(env: Env, phase: string | undefined = en
   }
 }
 
-/**
- * Media links are presigned URLs on the R2 endpoint (virtual-hosted `<bucket>.<endpoint host>` or path-style
- * `<endpoint host>`), so `next/image` must accept them. `search` is left out on purpose: that allows any query, and
- * the signature (`X-Amz-*`) is one.
- */
-function r2Patterns(env: Env): RemotePattern[] {
-  const { S3_ENDPOINT: endpoint, AWS_S3_BUCKET_NAME: bucket } = env
-  if (!endpoint || !bucket) return []
-  let endpointHost: string
+/** Media links are `${MEDIA_URL_BASE}/<key>`; when that base is an absolute origin (the public CDN) `next/image` must accept its host. */
+function mediaBasePatterns(env: Env): RemotePattern[] {
+  const base = env.MEDIA_URL_BASE?.trim() ?? ''
+  if (!/^https?:\/\//i.test(base)) return []
+  let url: URL
   try {
-    endpointHost = new URL(endpoint).hostname
+    url = new URL(base)
   } catch {
     return []
   }
-  return [`${bucket}.${endpointHost}`, endpointHost].map((hostname) => ({ protocol: 'https', hostname, pathname: '/**' }))
+  const protocol = url.protocol === 'http:' ? 'http' : 'https'
+  return [{ protocol, hostname: url.hostname, pathname: `${url.pathname.replace(/\/+$/, '')}/**` }]
 }
 
-/** The R2 hosts signed media is served from, plus the seed's picsum placeholders, which production must not allow. */
+/** The media CDN host, plus the seed's picsum placeholders, which production must not allow. */
 export function buildRemotePatterns(env: Env): RemotePattern[] {
   const placeholders: RemotePattern[] = allowsTestOverrides(env)
     ? [{ protocol: 'https', hostname: 'picsum.photos' }, { protocol: 'https', hostname: 'fastly.picsum.photos' }]
     : []
-  return [...placeholders, ...r2Patterns(env)]
+  return [...placeholders, ...mediaBasePatterns(env)]
 }
 
 /** Section-level redirects from the old site's URL scheme; old detail slugs do not map one to one. */

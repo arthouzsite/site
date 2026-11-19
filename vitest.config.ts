@@ -9,6 +9,7 @@ const ALIAS = { '@': REPO_ROOT, 'server-only': fileURLToPath(new URL('./tests/su
 
 const SITE_TEST_ENV = {
   STORAGE_DRIVER: 'memory',
+  MEDIA_URL_BASE: '/media',
   DATABASE_URL: 'postgresql://localhost/unused',
   JWT_SECRET: 'site-test-jwt-secret-site-test-jwt-secret',
   SEED_ADMIN_EMAIL: 'admin@example.test',

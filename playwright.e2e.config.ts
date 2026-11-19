@@ -49,6 +49,7 @@ export default defineConfig({
       DATABASE_URL: E2E_DATABASE_URL,
       DIRECT_DATABASE_URL: E2E_DATABASE_URL,
       STORAGE_DRIVER: 'memory',
+      MEDIA_URL_BASE: '/media',
       TODAY_OVERRIDE: E2E_TODAY,
       JWT_SECRET: E2E_JWT_SECRET,
       SEED_ADMIN_EMAIL: SEED_ADMIN.email,

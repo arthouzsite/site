@@ -146,22 +146,22 @@ describe('next config guards', () => {
     expect(hosts({ NODE_ENV: 'production', ALLOW_TEST_OVERRIDES: '1' })).toEqual(['picsum.photos', 'fastly.picsum.photos'])
   })
 
-  it('allows the R2 hosts (virtual-hosted and path-style, any query) when the endpoint and bucket are set', () => {
-    const r2 = { S3_ENDPOINT: 'https://acct.r2.cloudflarestorage.com', AWS_S3_BUCKET_NAME: 'arthouz' }
+  it('allows the media CDN host when MEDIA_URL_BASE is an absolute origin', () => {
+    const cdn = { MEDIA_URL_BASE: 'https://cdn.example.test/' }
 
-    expect(buildRemotePatterns({ NODE_ENV: 'production', ...r2 })).toEqual([
-      { protocol: 'https', hostname: 'arthouz.acct.r2.cloudflarestorage.com', pathname: '/**' },
-      { protocol: 'https', hostname: 'acct.r2.cloudflarestorage.com', pathname: '/**' },
+    expect(buildRemotePatterns({ NODE_ENV: 'production', ...cdn })).toEqual([{ protocol: 'https', hostname: 'cdn.example.test', pathname: '/**' }])
+    expect(buildRemotePatterns({ NODE_ENV: 'production', MEDIA_URL_BASE: 'https://cdn.example.test/files' })).toEqual([
+      { protocol: 'https', hostname: 'cdn.example.test', pathname: '/files/**' },
     ])
-    expect(buildRemotePatterns({ NODE_ENV: 'development', ...r2 }).map((pattern) => pattern.hostname)).toEqual([
-      'picsum.photos', 'fastly.picsum.photos', 'arthouz.acct.r2.cloudflarestorage.com', 'acct.r2.cloudflarestorage.com',
+    expect(buildRemotePatterns({ NODE_ENV: 'development', ...cdn }).map((pattern) => pattern.hostname)).toEqual([
+      'picsum.photos', 'fastly.picsum.photos', 'cdn.example.test',
     ])
-    for (const pattern of buildRemotePatterns({ NODE_ENV: 'production', ...r2 })) expect(pattern).not.toHaveProperty('search')
   })
 
-  it('adds no R2 host when either variable is missing or the endpoint is not a URL', () => {
-    expect(buildRemotePatterns({ NODE_ENV: 'production', S3_ENDPOINT: 'https://acct.r2.cloudflarestorage.com' })).toEqual([])
-    expect(buildRemotePatterns({ NODE_ENV: 'production', AWS_S3_BUCKET_NAME: 'arthouz' })).toEqual([])
-    expect(buildRemotePatterns({ NODE_ENV: 'production', S3_ENDPOINT: 'nonsense', AWS_S3_BUCKET_NAME: 'arthouz' })).toEqual([])
+  it('adds no media host when MEDIA_URL_BASE is unset, a path or not a URL', () => {
+    expect(buildRemotePatterns({ NODE_ENV: 'production' })).toEqual([])
+    expect(buildRemotePatterns({ NODE_ENV: 'production', MEDIA_URL_BASE: '/media' })).toEqual([])
+    expect(buildRemotePatterns({ NODE_ENV: 'production', MEDIA_URL_BASE: 'https://' })).toEqual([])
+    expect(buildRemotePatterns({ NODE_ENV: 'production', S3_ENDPOINT: 'https://acct.r2.cloudflarestorage.com', AWS_S3_BUCKET_NAME: 'arthouz' })).toEqual([])
   })
 })
