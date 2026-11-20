@@ -2,9 +2,9 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { prisma } from '@/lib/server/prisma'
 import { authedClient, call } from './helpers/client'
 import { migrateTestDb, resetDb } from './helpers/db'
-import { loginAs, seedUser, TEST_PASSWORD } from './helpers/users'
+import { loginAs, seedUser, solvedCaptcha, TEST_PASSWORD, withCaptcha } from './helpers/users'
 
-const login = (body: unknown, headers?: Record<string, string>) => call('POST', '/api/auth/login', { body, headers })
+const login = (body: unknown, headers?: Record<string, string>) => call('POST', '/api/auth/login', { body: withCaptcha(body), headers })
 
 describe('auth', () => {
   beforeAll(() => {
@@ -16,6 +16,28 @@ describe('auth', () => {
   })
   afterAll(async () => {
     await prisma.$disconnect()
+  })
+
+  it('refuses the right password without a solved captcha, and with the wrong code', async () => {
+    const credentials = { email: 'admin@example.test', password: TEST_PASSWORD }
+    const raw = (body: unknown) => call('POST', '/api/auth/login', { body })
+
+    const missing = await raw(credentials)
+    expect(missing.status).toBe(400)
+    expect(missing.body.error.code).toBe('VALIDATION')
+
+    const { captchaToken } = solvedCaptcha()
+    const wrong = await raw({ ...credentials, captchaToken, captchaAnswer: 'wrong' })
+    expect(wrong.status).toBe(400)
+    expect(wrong.body.error).toMatchObject({ code: 'CAPTCHA_INVALID', fields: { captchaAnswer: expect.any(String) } })
+    expect(wrong.headers.get('set-cookie')).toBeNull()
+  })
+
+  it('hands out a challenge without revealing its code', async () => {
+    const res = await call('GET', '/api/auth/captcha')
+    expect(res.status).toBe(200)
+    expect(Object.keys(res.body.data).sort()).toEqual(['image', 'token'])
+    expect(res.body.data.image).toMatch(/^<svg/)
   })
 
   it('login sets ah_session cookie and returns user', async () => {

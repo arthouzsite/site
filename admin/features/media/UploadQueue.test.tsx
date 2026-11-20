@@ -53,7 +53,7 @@ describe('UploadQueue', () => {
     await waitFor(() => expect(calls.completed).toHaveLength(1))
     expect(calls.authorised).toEqual([{ filename: 'hero.jpg', mime: 'image/jpeg', bytes: 1, alt: 'A hero image' }])
     expect(calls.puts).toEqual([{ key: 'arthouz/2026/hero.jpg', contentType: 'image/jpeg', bytes: 1 }])
-    expect(calls.completed).toEqual([{ key: 'arthouz/2026/hero.jpg', alt: 'A hero image' }])
+    expect(calls.completed).toEqual([{ key: 'arthouz/2026/hero.jpg', alt: 'A hero image', filename: 'hero.jpg' }])
   })
 
   it('progress updates from onProgress', async () => {

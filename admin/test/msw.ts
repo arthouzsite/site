@@ -14,6 +14,7 @@ export const server = setupServer(
   http.get(`${API_URL}/auth/me`, () =>
     HttpResponse.json(errorEnvelope('UNAUTHENTICATED', 'Not signed in'), { status: 401 }),
   ),
+  http.get(`${API_URL}/auth/captcha`, () => HttpResponse.json(envelope({ token: 'captcha-token', image: '<svg xmlns="http://www.w3.org/2000/svg"/>' }))),
 )
 
 export { http, HttpResponse }

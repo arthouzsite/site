@@ -3,7 +3,7 @@
 Public gallery website and content management system (CMS) for Art Houz, one Next.js 16 app. Editors manage exhibitions, artists, artworks, fairs, news, services, locations, media and site settings in the CMS; the public site reads that content straight from the database.
 
 - Site: `/` (App Router, `app/(site)/`)
-- CMS: `/admin` (a client-rendered React Router app mounted by `app/admin/`; sources in `admin/`)
+- CMS: `/<cms path>` (a client-rendered React Router app mounted by `app/admin/`; sources in `admin/`). The path is a long random segment, `DEFAULT_CMS_PATH` in `lib/cms-path.ts`, and `/admin` answers 404; see Sign-in protection.
 - API: `/api` (route handlers in `app/api/**`; logic in `lib/server`)
 
 ## Layout
@@ -54,11 +54,13 @@ Configuration is read from the process environment; locally from `.env` at the r
 | `TRUST_PROXY` | behind a proxy | Number of reverse-proxy hops whose `X-Forwarded-For` is trusted for the per-IP login limit and the per-IP public enquiry limit. Default `0`; set `1` behind one proxy | `1` |
 | `SEED_FORCE` | no | `1` makes the seed reload content over a database that already has it | `1` |
 | `NEXT_DIST_DIR` | no | Build output directory, default `.next`; the Playwright harnesses use `.next-visual` and `.next-e2e` | `.next` |
+| `NEXT_PUBLIC_CMS_PATH` | no | First path segment of the CMS (letters, digits, hyphens), replacing the default in `lib/cms-path.ts`. Inlined at build time | `staff-9f2c71ab` |
+| `CAPTCHA_CODE_OVERRIDE` | tests only | Pins the sign-in captcha code for the browser harnesses; needs `ALLOW_TEST_OVERRIDES=1` under `next start` | `ACE23` |
 | `TODAY_OVERRIDE` | tests only | Freezes "today" (`YYYY-MM-DD`) for exhibition status and the footer year | `2026-01-15` |
 | `ALLOW_TEST_OVERRIDES` | tests only | `1` lets `TODAY_OVERRIDE` and `NEXT_IMAGE_UNOPTIMIZED` apply under `next start` | `1` |
 | `NEXT_IMAGE_UNOPTIMIZED` | tests only | `1` serves images unoptimised | `1` |
 
-`NODE_ENV` is set by Next. Never set `TODAY_OVERRIDE`, `ALLOW_TEST_OVERRIDES`, `NEXT_IMAGE_UNOPTIMIZED` or `DATABASE_URL_TEST` in a deployment. The harness-only variables `VISUAL_DATABASE_URL`, `VISUAL_WEB_PORT`, `VISUAL_PORT_URL`, `VISUAL_WRITE_ALL`, `E2E_DATABASE_URL` and `E2E_PORT` are read by the Playwright configs (see Tests).
+`NODE_ENV` is set by Next. Never set `TODAY_OVERRIDE`, `CAPTCHA_CODE_OVERRIDE`, `ALLOW_TEST_OVERRIDES`, `NEXT_IMAGE_UNOPTIMIZED` or `DATABASE_URL_TEST` in a deployment. The harness-only variables `VISUAL_DATABASE_URL`, `VISUAL_WEB_PORT`, `VISUAL_PORT_URL`, `VISUAL_WRITE_ALL`, `E2E_DATABASE_URL` and `E2E_PORT` are read by the Playwright configs (see Tests).
 
 ## Development
 
@@ -71,7 +73,7 @@ pnpm dev                        # next dev on http://localhost:3300
 ```
 
 - Site: http://localhost:3300/
-- CMS: http://localhost:3300/admin (sign in with `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`)
+- CMS: http://localhost:3300/<cms path> (the segment in `lib/cms-path.ts`; sign in with `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`)
 - API: http://localhost:3300/api (`GET /api/health`)
 
 The seed loads the prototype content, including the five services (published with placeholder copy to replace in the CMS), and writes picsum placeholder image URLs. It skips a database that already has content unless `SEED_FORCE=1`. `STORAGE_DRIVER=memory` accepts uploads but persists nothing; use `r2` with the four bucket variables for real files. The bucket is read through its public CDN hostname (see Media URLs); `GET /media/<key>` streams an object through the app when no CDN is configured (byte ranges honoured for video, cached for a year). The media library takes images (JPEG, PNG, WebP, AVIF, up to 25 MB) and videos (MP4, WebM, MOV, up to 200 MB); videos are library-only and never offered in image pickers.
@@ -82,7 +84,7 @@ Content is cached with tags and refreshed when the CMS publishes. To move the se
 
 `services:framing` creates the published `framing-services` Service from the About page's old Framing Services content (idempotent; skips if the slug exists; leaves the About setting in place) and, like the others, needs `POST /api/revalidate` afterwards.
 
-`db:seed`, `media:rehome` and `media:relink` run `tsx` and need the variables in the environment. Run other scripts the same way: `pnpm exec tsx --env-file=.env prisma/some-script.ts`.
+`db:seed`, `admin:password`, `media:rehome` and `media:relink` run `tsx` and need the variables in the environment. Run other scripts the same way: `pnpm exec tsx --env-file=.env prisma/some-script.ts`.
 
 | Command | What it does |
 | --- | --- |
@@ -129,6 +131,12 @@ Details in `docs/deploy.md`. In short:
 - The build and deploy steps need devDependencies installed (`prisma`, `tsx`, `typescript`, `@tailwindcss/postcss`), so do not install with `--prod`.
 - Allow request bodies of 200 MB and read timeouts of 600 s on `POST /api/media` at the proxy.
 - Vercel's 4.5 MB request body limit blocks `POST /api/media` for larger files, so the CMS uploads straight to the bucket (see Uploads below), which needs a CORS rule on the R2 bucket. On Vercel set `TRUST_PROXY=1`, otherwise all clients share one login-throttle bucket and one site-wide enquiry cap. The upload route sets `maxDuration = 600`, which exceeds the Hobby plan's function limit; deploy on a plan that allows it or lower the value.
+
+### Sign-in protection
+
+- **CMS address.** The CMS is served at `/<cms path>`, a 40-character random segment, so scanners probing `/admin` find a 404. `next.config.ts` rewrites the public path to the `app/admin` route and hides the folder's own name. The default lives in `lib/cms-path.ts`; a deployment can use its own with `NEXT_PUBLIC_CMS_PATH`. The path is an obstacle, not a secret: it is in this repository and in the CMS bundle, so access still rests on the password, the captcha and the login throttle.
+- **Captcha.** `GET /api/auth/captcha` returns a picture of a five-character code and a token; `POST /api/auth/login` needs both the token and the typed code. The picture is drawn on the server as pen strokes (no text in the markup, no third-party service), the token is an HMAC over the code with `JWT_SECRET`, and a challenge expires after five minutes. Tokens are not stored, so one solved challenge can be reused until it expires; the login throttle still limits attempts.
+- **Admin password.** `pnpm admin:password [email]` replaces a user's password with a 24-character random one and prints it once (defaults to `SEED_ADMIN_EMAIL`). Sessions that are already signed in stay valid until they expire.
 
 ### Media URLs
 

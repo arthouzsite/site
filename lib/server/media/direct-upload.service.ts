@@ -39,16 +39,17 @@ function assertStoredObjectAllowed(key: string, stored: StoredObjectInfo): void 
   }
 }
 
-async function completeVideo(key: string, mime: string, bytes: number, alt: string, userId: string | null): Promise<Media> {
+async function completeVideo(upload: CompleteUploadInput, mime: string, bytes: number, userId: string | null): Promise<Media> {
+  const { key, alt, filename } = upload
   const storage = getStorage()
   await deleteIfRejected(key, async () => {
     const head = await storage.getRange(key, 0, VIDEO_SIGNATURE_BYTES - 1)
     if (!isVideoMime(mime) || !hasVideoSignature(head, mime)) throw badRequest('INVALID_VIDEO', 'File is not a valid video')
   })
-  return recordVideo({ key, url: storage.urlFor(key) }, mime, bytes, alt, userId)
+  return recordVideo({ key, url: storage.urlFor(key), filename }, mime, bytes, alt, userId)
 }
 
-function completeImage(key: string, alt: string, userId: string | null): Promise<Media> {
+function completeImage({ key, alt, filename }: CompleteUploadInput, userId: string | null): Promise<Media> {
   return withUploadSlot(async () => {
     const storage = getStorage()
     const buffer = await storage.get(key)
@@ -58,7 +59,7 @@ function completeImage(key: string, alt: string, userId: string | null): Promise
       if (problem) throw payloadTooLarge(problem)
       return processImage(buffer)
     })
-    return recordImage({ key, url: storage.urlFor(key) }, processed, buffer.length, alt, userId)
+    return recordImage({ key, url: storage.urlFor(key), filename }, processed, buffer.length, alt, userId)
   })
 }
 
@@ -71,12 +72,12 @@ export async function assertNotCompleted(key: string): Promise<void> {
 
 /** Step 3: verifies the object the browser put in storage and records it as a Media row. */
 export async function completeUpload(input: CompleteUploadInput, userId: string | null): Promise<Media> {
-  const { key, alt } = input
+  const { key } = input
   await assertNotCompleted(key)
   const stored = await getStorage().head(key)
   if (!stored) throw badRequest('UPLOAD_NOT_FOUND', 'No uploaded file was found for this key')
   await deleteIfRejected(key, () => assertStoredObjectAllowed(key, stored))
   return isVideoMime(stored.contentType)
-    ? completeVideo(key, stored.contentType, stored.bytes, alt, userId)
-    : completeImage(key, alt, userId)
+    ? completeVideo(input, stored.contentType, stored.bytes, userId)
+    : completeImage(input, userId)
 }

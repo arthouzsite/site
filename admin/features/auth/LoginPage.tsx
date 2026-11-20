@@ -9,15 +9,19 @@ import { Icon } from '../../components/ui/Icon'
 import { Input } from '../../components/ui/Input'
 import { api, ApiError } from '../../lib/api'
 import { useZodForm } from '../../lib/useZodForm'
+import { CaptchaChallenge, useCaptcha } from './CaptchaChallenge'
 import { PasswordInput } from './PasswordInput'
 import { SESSION_KEY, type SessionUser } from './useSession'
 
 const schema = z.object({
   email: z.string().trim().min(1, 'Enter your email address').pipe(z.email('Enter a valid email address')),
   password: z.string().min(1, 'Enter your password'),
+  captchaAnswer: z.string().trim().min(1, 'Enter the security code'),
 })
 
 const BAD_CREDENTIALS = 'Email or password is incorrect'
+const CAPTCHA_INVALID = 'CAPTCHA_INVALID'
+const CAPTCHA_UNAVAILABLE = 'The security code could not load. Show a different code and try again.'
 const RATE_LIMITED = 'Too many attempts. Try again in a minute.'
 
 /** Only same-origin paths are honoured, so `?next=` cannot bounce a user to another site. */
@@ -30,24 +34,37 @@ export default function LoginPage() {
   const client = useQueryClient()
   const [params] = useSearchParams()
   const [rateLimited, setRateLimited] = useState(false)
-  const form = useZodForm(schema, { email: '', password: '' })
-  const { register, handleSubmit, formState, applyServerErrors } = form
+  const captcha = useCaptcha()
+  const form = useZodForm(schema, { email: '', password: '', captchaAnswer: '' })
+  const { register, handleSubmit, formState, applyServerErrors, resetField, setError } = form
   const { errors, isSubmitting, submitCount } = formState
 
   const summary: SummaryError[] = [
     errors.email?.message ? { name: 'email', message: errors.email.message } : null,
     errors.password?.message ? { name: 'password', message: errors.password.message } : null,
-    errors.root?.server?.message ? { name: 'email', message: errors.root.server.message } : null,
+    errors.captchaAnswer?.message ? { name: 'captchaAnswer', message: errors.captchaAnswer.message } : null,
+    // A wrong code is already listed against its own field.
+    errors.root?.server?.message && errors.root.server.type !== CAPTCHA_INVALID ? { name: 'email', message: errors.root.server.message } : null,
   ].filter((e): e is SummaryError => e !== null)
+
+  /** Every challenge is for one attempt: after a failure the old code is cleared and a new picture is drawn. */
+  const newCaptcha = () => {
+    resetField('captchaAnswer')
+    void captcha.refetch()
+  }
 
   const onSubmit = handleSubmit(async (values) => {
     setRateLimited(false)
+    // A submit can arrive before the first challenge has loaded; wait for it instead of failing the attempt.
+    const challenge = captcha.data ?? (await captcha.refetch()).data
+    if (!challenge) return setError('captchaAnswer', { type: 'server', message: CAPTCHA_UNAVAILABLE })
     try {
-      const result = await api.post<{ user: SessionUser } | SessionUser>('/auth/login', values)
+      const result = await api.post<{ user: SessionUser } | SessionUser>('/auth/login', { ...values, captchaToken: challenge.token })
       const user: SessionUser = 'user' in result ? result.user : result
       client.setQueryData(SESSION_KEY, user)
       navigate(safeNext(params.get('next')), { replace: true })
     } catch (err) {
+      newCaptcha()
       if (err instanceof ApiError && err.status === 429) return setRateLimited(true)
       if (err instanceof ApiError && err.status === 401) {
         return applyServerErrors(new ApiError(401, { code: err.code, message: BAD_CREDENTIALS }))
@@ -78,6 +95,12 @@ export default function LoginPage() {
           <Field name="password" label="Password" error={errors.password?.message}>
             <PasswordInput autoComplete="current-password" {...register('password')} />
           </Field>
+          <div className="flex flex-col gap-2.5">
+            <CaptchaChallenge captcha={captcha.data} isUnavailable={captcha.isError} onRefresh={newCaptcha} />
+            <Field name="captchaAnswer" label="Security code" error={errors.captchaAnswer?.message}>
+              <Input autoComplete="off" autoCapitalize="characters" spellCheck={false} maxLength={12} className="uppercase tracking-eyebrow" {...register('captchaAnswer')} />
+            </Field>
+          </div>
           <Button type="submit" variant="primary" disabled={isSubmitting} className="w-full">Sign in</Button>
           <div className="flex flex-col gap-1.5">
             {rateLimited && (

@@ -1,3 +1,4 @@
+import { TEST_CAPTCHA_CODE } from '../captcha'
 import { userInfo } from 'node:os'
 import sharp from 'sharp'
 import type { Page } from '@playwright/test'
@@ -58,6 +59,7 @@ export async function signIn(page: Page): Promise<void> {
   await page.goto(`${ADMIN_URL}/login`)
   await page.getByLabel('Email').fill(SEED_ADMIN.email)
   await page.getByRole('textbox', { name: 'Password' }).fill(SEED_ADMIN.password)
+  await page.getByLabel('Security code').fill(TEST_CAPTCHA_CODE)
   await page.getByRole('button', { name: 'Sign in' }).click()
   await page.waitForURL((url) => url.pathname !== '/admin/login')
 }

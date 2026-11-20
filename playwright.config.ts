@@ -1,3 +1,4 @@
+import { TEST_CAPTCHA_CODE } from './tests/captcha'
 import { defineConfig } from '@playwright/test'
 import { SEED_ADMIN, VISUAL_DATABASE_URL, VISUAL_WEB_PORT, VISUAL_TODAY } from './tests/visual/env'
 
@@ -48,6 +49,9 @@ export default defineConfig({
       NEXT_IMAGE_UNOPTIMIZED: '1',
       // next start forces NODE_ENV=production; opt in to the frozen date (footer year) and unoptimised images.
       ALLOW_TEST_OVERRIDES: '1',
+      // The harness cannot read the captcha picture, and its pages are addressed at /admin.
+      CAPTCHA_CODE_OVERRIDE: TEST_CAPTCHA_CODE,
+      NEXT_PUBLIC_CMS_PATH: 'admin',
     },
   },
 })

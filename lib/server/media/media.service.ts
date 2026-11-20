@@ -35,8 +35,8 @@ export async function cleanup(keys: string[]): Promise<void> {
   )
 }
 
-/** An original already in storage: its key and public URL. */
-export type StoredOriginal = { key: string; url: string }
+/** An original already in storage: its key, public URL and the name the file had on the uploader's device. */
+export type StoredOriginal = { key: string; url: string; filename?: string }
 
 const isDuplicateKey = (error: unknown): boolean =>
   error instanceof Prisma.PrismaClientKnownRequestError && error.code === PRISMA_UNIQUE_VIOLATION
@@ -56,7 +56,7 @@ async function createRow(data: Prisma.MediaUncheckedCreateInput, orphanKeys: str
 /** Records a video whose bytes are already stored. Videos get no thumbnail: the admin grid renders the video itself. */
 export function recordVideo(original: StoredOriginal, mime: string, bytes: number, alt: string, userId: string | null): Promise<Media> {
   return createRow(
-    { key: original.key, url: original.url, thumbUrl: original.url, width: 0, height: 0, mime, kind: 'VIDEO', bytes, alt, uploadedById: userId },
+    { key: original.key, filename: original.filename, url: original.url, thumbUrl: original.url, width: 0, height: 0, mime, kind: 'VIDEO', bytes, alt, uploadedById: userId },
     [original.key],
   )
 }
@@ -81,6 +81,7 @@ export async function recordImage(
   return createRow(
     {
       key: original.key,
+      filename: original.filename,
       url: original.url,
       thumbUrl: thumb.url,
       width: processed.width,
@@ -116,7 +117,7 @@ export function upload(file: UploadedFile, alt: string, userId: string | null): 
 export async function list(query: MediaListQuery): Promise<{ items: Media[]; total: number }> {
   const filters: Prisma.MediaWhereInput[] = []
   if (query.q) {
-    filters.push({ OR: [{ key: { contains: query.q, mode: 'insensitive' } }, { alt: { contains: query.q, mode: 'insensitive' } }] })
+    filters.push({ OR: [{ key: { contains: query.q, mode: 'insensitive' } }, { filename: { contains: query.q, mode: 'insensitive' } }, { alt: { contains: query.q, mode: 'insensitive' } }] })
   }
   if (query.missingAlt) filters.push({ alt: '' })
   if (query.kind) filters.push({ kind: query.kind })

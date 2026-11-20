@@ -19,6 +19,8 @@ export function parseKindFilter(value: string | null): MediaKindFilter {
 export type Media = {
   id: string
   key: string
+  /** Name the file had when it was uploaded; null for media that predates this field. */
+  filename?: string | null
   url: string
   thumbUrl: string
   width: number
@@ -68,8 +70,9 @@ export function acceptedFormats(accept: string): string {
   return `${labels.slice(0, -1).join(', ')} or ${labels.at(-1)}`
 }
 
-export function fileName(m: Pick<Media, 'key'>): string {
-  return m.key.split('/').pop() ?? m.key
+/** The name the file was uploaded with; older media falls back to the last part of its storage key. */
+export function fileName(m: Pick<Media, 'key' | 'filename'>): string {
+  return m.filename || (m.key.split('/').pop() ?? m.key)
 }
 
 export type UploadErrorInfo = { status: number; code?: string; fields?: Record<string, string>; message: string }

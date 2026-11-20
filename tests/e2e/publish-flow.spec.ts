@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { TEST_CAPTCHA_CODE } from '../captcha'
 import { ADMIN_URL, API_URL, HERO_ALT, HERO_FILE_NAME, SEED_ADMIN, WEB_URL, makeHeroJpeg, signIn } from './fixtures'
 
 const TITLE = 'Salt Line'
@@ -91,6 +92,7 @@ test('a signed-out deep link returns to the editor after login', async ({ page }
 
   await page.getByLabel('Email').fill(SEED_ADMIN.email)
   await page.getByRole('textbox', { name: 'Password' }).fill(SEED_ADMIN.password)
+  await page.getByLabel('Security code').fill(TEST_CAPTCHA_CODE)
   await page.getByRole('button', { name: 'Sign in' }).click()
   await expect(page).toHaveURL(deepLink)
   await expect(page.getByRole('heading', { level: 1, name: exhibition!.title })).toBeVisible()

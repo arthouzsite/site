@@ -65,7 +65,7 @@ async function putToStorage(args: UploadArgs): Promise<UploadTarget> {
 /** Authorise, PUT straight to storage, then ask the server to record and process the object. */
 async function uploadViaStorage(args: UploadArgs): Promise<Media> {
   const target = await putToStorage(args)
-  const media = await api.post<Media>('/media/uploads/complete', { key: target.key, alt: args.alt })
+  const media = await api.post<Media>('/media/uploads/complete', { key: target.key, alt: args.alt, filename: args.file.name })
   args.onProgress?.(1)
   return media
 }

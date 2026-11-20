@@ -1,3 +1,4 @@
+import { solvedCaptcha } from '../captcha'
 import { SEED_ADMIN } from './env'
 import { PORT_URL } from './paths'
 
@@ -6,7 +7,7 @@ async function signIn(): Promise<string> {
   const response = await fetch(`${PORT_URL}/api/auth/login`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(SEED_ADMIN),
+    body: JSON.stringify({ ...SEED_ADMIN, ...(await solvedCaptcha(PORT_URL)) }),
   })
   const cookie = response.headers.getSetCookie()[0]?.split(';')[0]
   if (!response.ok || !cookie) throw new Error(`visual settings: sign-in failed with HTTP ${response.status}`)

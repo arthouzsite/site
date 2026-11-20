@@ -1,3 +1,4 @@
+import { cmsPath } from '@/lib/cms-path'
 import { createBrowserRouter, type RouteObject } from 'react-router'
 import { AppShell } from './AppShell'
 import { RequireAuth } from './RequireAuth'
@@ -48,6 +49,6 @@ export const routes: RouteObject[] = [
 ]
 
 /** Where the Next.js app mounts the CMS; React Router strips it, so route paths and `?next=` stay basename-relative. */
-export const ADMIN_BASENAME = '/admin'
+export const ADMIN_BASENAME = `/${cmsPath()}`
 
 export const createAppRouter = (basename: string = ADMIN_BASENAME) => createBrowserRouter(routes, { basename })

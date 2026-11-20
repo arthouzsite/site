@@ -51,6 +51,8 @@ enum MediaKind {
 model Media {
   id           String    @id @default(uuid())
   key          String    @unique
+  // Name of the file as it was on the uploader's device; null for seeded media, which is named by its key.
+  filename     String?
   url          String
   thumbUrl     String
   width        Int

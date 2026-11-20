@@ -19,9 +19,11 @@ const uploadSchema = z.object({
   alt: altSchema,
 })
 
+const filenameSchema = z.string('Filename is required').trim().min(1, 'Filename is required').max(MAX_FILENAME_LENGTH)
+
 /** Body of `POST /api/media/uploads`: what the browser is about to send, checked before a target is issued. */
 export const createUploadSchema = z.object({
-  filename: z.string('Filename is required').trim().min(1, 'Filename is required').max(MAX_FILENAME_LENGTH),
+  filename: filenameSchema,
   mime: z.string('Mime type is required').min(1, 'Mime type is required'),
   bytes: z.number('Size is required').int('Size must be a whole number of bytes').positive('Size must be positive'),
   alt: altSchema,
@@ -32,6 +34,7 @@ export type CreateUploadInput = z.infer<typeof createUploadSchema>
 export const completeUploadSchema = z.object({
   key: z.string('Key is required').refine(isUploadKey, 'Not a valid upload key'),
   alt: altSchema,
+  filename: filenameSchema.optional(),
 })
 export type CompleteUploadInput = z.infer<typeof completeUploadSchema>
 

@@ -42,6 +42,8 @@ export const payloadTooLarge = (message: string): ApiException => new ApiExcepti
 export const unsupportedMediaType = (message: string): ApiException =>
   new ApiException(415, 'UNSUPPORTED_MEDIA_TYPE', message)
 
+export const badGateway = (code: string, message: string): ApiException => new ApiException(502, code, message)
+
 export type MappedError = { status: number; body: ApiEnvelope<null> }
 
 export function zodFields(error: ZodError): Record<string, string> {

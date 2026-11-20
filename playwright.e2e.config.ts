@@ -8,6 +8,7 @@
  *   - Google Chrome installed (channel 'chrome'); browsers are never downloaded.
  * `next build` writes .next-e2e (NEXT_DIST_DIR), so it never shares a build or cache with the other harnesses.
  */
+import { TEST_CAPTCHA_CODE } from './tests/captcha'
 import { defineConfig } from '@playwright/test'
 import { ADMIN_URL, E2E_DATABASE_URL, E2E_JWT_SECRET, E2E_PORT, E2E_TODAY, SEED_ADMIN, WEB_URL } from './tests/e2e/fixtures'
 
@@ -59,6 +60,9 @@ export default defineConfig({
       NEXT_IMAGE_UNOPTIMIZED: '1',
       // next start forces NODE_ENV=production; opt in to the frozen date and unoptimised images.
       ALLOW_TEST_OVERRIDES: '1',
+      // The harness cannot read the captcha picture, and its pages are addressed at /admin.
+      CAPTCHA_CODE_OVERRIDE: TEST_CAPTCHA_CODE,
+      NEXT_PUBLIC_CMS_PATH: 'admin',
     },
   },
 })

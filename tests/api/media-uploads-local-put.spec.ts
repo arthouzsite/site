@@ -38,6 +38,23 @@ describe('PUT /api/media/uploads/[...key]', () => {
     }
   })
 
+  it('answers 502 with the storage error name when the bucket rejects the write', async () => {
+    hoisted.env.STORAGE_DRIVER = 'r2'
+    const bucket = new MemoryStorage('https://cdn.test')
+    const denied = Object.assign(new Error('Access Denied'), { name: 'AccessDenied' })
+    vi.spyOn(bucket, 'put').mockRejectedValue(denied)
+    setStorageForTests(bucket)
+    try {
+      const response = await send()
+      expect(response.status).toBe(502)
+      expect(await response.json()).toMatchObject({
+        error: { code: 'STORAGE_WRITE_FAILED', message: 'The file storage did not accept the file (AccessDenied)' },
+      })
+    } finally {
+      setStorageForTests(undefined)
+    }
+  })
+
   it('refuses an empty body and a type that is not allowed with the r2 driver', async () => {
     hoisted.env.STORAGE_DRIVER = 'r2'
     const bucket = new MemoryStorage('https://cdn.test')

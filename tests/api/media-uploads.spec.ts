@@ -122,6 +122,16 @@ describe('presigned media uploads', () => {
       expect(activeUploadCount()).toBe(0)
     })
 
+    it('keeps the name the file was uploaded with, and leaves it empty when none is sent', async () => {
+      const named = await stage(jpeg, 'image/jpeg')
+      const withName = await complete({ key: named.key, alt: 'A calm sea', filename: '  image (17).jpg ' })
+      expect(withName.status).toBe(201)
+      expect(withName.body.data.filename).toBe('image (17).jpg')
+
+      const unnamed = await stage(png, 'image/png')
+      expect((await complete({ key: unnamed.key, alt: 'A calm sea' })).body.data.filename).toBeNull()
+    })
+
     it('records a video from its signature alone, with thumbUrl equal to url', async () => {
       const target = await stage(mp4(), 'video/mp4')
       const res = await complete({ key: target.key, alt: 'A short film' })

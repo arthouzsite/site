@@ -83,6 +83,16 @@ function isSameOrigin(resolved: URL | null): boolean {
   return resolved?.origin === window.location.origin
 }
 
+/** The error our own API put in its response envelope, so a failed upload says why instead of only a status. */
+function envelopeError(responseText: string): { code: string; message: string } | null {
+  try {
+    const error = (JSON.parse(responseText) as { error?: { code?: unknown; message?: unknown } | null }).error
+    return typeof error?.code === 'string' && typeof error.message === 'string' ? { code: error.code, message: error.message } : null
+  } catch {
+    return null
+  }
+}
+
 /** PUTs the raw bytes to a presigned storage URL. Cookies only go to our own origin, never to the bucket. */
 function putRaw(url: string, body: Blob, headers: Record<string, string>, onProgress?: (fraction: number) => void): Promise<void> {
   return new Promise<void>((resolve, reject) => {
@@ -108,7 +118,7 @@ function putRaw(url: string, body: Blob, headers: Record<string, string>, onProg
         return
       }
       if (xhr.status === 401 && resolved && isOwnOrigin) notifySessionExpired(401, resolved.pathname)
-      reject(new ApiError(xhr.status, { code: 'UPLOAD_FAILED', message: `Storage returned ${xhr.status}` }))
+      reject(new ApiError(xhr.status, (isOwnOrigin && envelopeError(xhr.responseText)) || { code: 'UPLOAD_FAILED', message: `Storage returned ${xhr.status}` }))
     }
     xhr.send(body)
   })

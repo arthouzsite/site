@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider, createMemoryRouter } from 'react-router'
@@ -27,6 +27,8 @@ async function fill(email: string, password: string) {
   const user = userEvent.setup()
   await user.type(screen.getByLabelText('Email'), email)
   if (password) await user.type(screen.getByLabelText('Password'), password)
+  await screen.findByRole('img', { name: 'Security code' })
+  await user.type(screen.getByLabelText('Security code'), 'ab2f6')
   await user.click(screen.getByRole('button', { name: 'Sign in' }))
   return user
 }
@@ -72,6 +74,85 @@ describe('LoginPage', () => {
     setup('/login?next=%2Fartists')
     await fill('priya@arthouz.com', 'secret')
     expect(await screen.findByText('Artists page')).toBeInTheDocument()
+  })
+
+  it('sends the challenge token with the typed code', async () => {
+    let sent: unknown
+    server.use(
+      http.post(`${API_URL}/auth/login`, async ({ request }) => {
+        sent = await request.json()
+        return HttpResponse.json(envelope({ id: '1', email: 'priya@arthouz.com', name: 'Priya', role: 'EDITOR' }))
+      }),
+    )
+    setup()
+    await fill('priya@arthouz.com', 'secret')
+    expect(await screen.findByText('Home page')).toBeInTheDocument()
+    expect(sent).toEqual({ email: 'priya@arthouz.com', password: 'secret', captchaAnswer: 'ab2f6', captchaToken: 'captcha-token' })
+  })
+
+  it('shows a wrong code against its field once, clears it and draws a new challenge', async () => {
+    let challenges = 0
+    const message = 'The security code does not match. Try the new one.'
+    server.use(
+      http.get(`${API_URL}/auth/captcha`, () => {
+        challenges += 1
+        return HttpResponse.json(envelope({ token: `token-${challenges}`, image: '<svg xmlns="http://www.w3.org/2000/svg"/>' }))
+      }),
+      http.post(`${API_URL}/auth/login`, () =>
+        HttpResponse.json(errorEnvelope('CAPTCHA_INVALID', message, { captchaAnswer: message }), { status: 400 }),
+      ),
+    )
+    setup()
+    await fill('priya@arthouz.com', 'secret')
+    expect(await screen.findByRole('link', { name: message })).toHaveAttribute('href', '#field-captchaAnswer')
+    expect(screen.getAllByRole('link', { name: message })).toHaveLength(1)
+    await waitFor(() => expect(challenges).toBe(2))
+    expect(screen.getByLabelText('Security code')).toHaveValue('')
+  })
+
+  it('draws a different code on request and asks for the code when it is left empty', async () => {
+    let challenges = 0
+    server.use(
+      http.get(`${API_URL}/auth/captcha`, () => {
+        challenges += 1
+        return HttpResponse.json(envelope({ token: `token-${challenges}`, image: '<svg xmlns="http://www.w3.org/2000/svg"/>' }))
+      }),
+    )
+    setup()
+    const user = userEvent.setup()
+    await screen.findByRole('img', { name: 'Security code' })
+    await user.click(screen.getByRole('button', { name: 'Show a different code' }))
+    await waitFor(() => expect(challenges).toBe(2))
+    await user.click(screen.getByRole('button', { name: 'Sign in' }))
+    expect(await screen.findByRole('link', { name: 'Enter the security code' })).toBeInTheDocument()
+  })
+
+  it('waits for the challenge when the form is submitted before it has loaded', async () => {
+    let sent: { captchaToken?: string } = {}
+    server.use(
+      http.get(`${API_URL}/auth/captcha`, async () => {
+        await new Promise((resolve) => setTimeout(resolve, 150))
+        return HttpResponse.json(envelope({ token: 'late-token', image: '<svg xmlns="http://www.w3.org/2000/svg"/>' }))
+      }),
+      http.post(`${API_URL}/auth/login`, async ({ request }) => {
+        sent = (await request.json()) as { captchaToken?: string }
+        return HttpResponse.json(envelope({ id: '1', email: 'priya@arthouz.com', name: 'Priya', role: 'EDITOR' }))
+      }),
+    )
+    setup()
+    const user = userEvent.setup()
+    await user.type(screen.getByLabelText('Email'), 'priya@arthouz.com')
+    await user.type(screen.getByLabelText('Password'), 'secret')
+    await user.type(screen.getByLabelText('Security code'), 'ab2f6')
+    await user.click(screen.getByRole('button', { name: 'Sign in' }))
+    expect(await screen.findByText('Home page')).toBeInTheDocument()
+    expect(sent.captchaToken).toBe('late-token')
+  })
+
+  it('says so when the challenge cannot load', async () => {
+    server.use(http.get(`${API_URL}/auth/captcha`, () => HttpResponse.json(errorEnvelope('INTERNAL', 'x'), { status: 500 })))
+    setup()
+    expect(await screen.findByText('The security code could not load.')).toBeInTheDocument()
   })
 
   it('toggles password visibility', async () => {

@@ -28,6 +28,7 @@ const PATHS = {
   media: (<><rect x="3" y="5" width="18" height="14" /><circle cx="9" cy="10" r="1.5" /><path d="M21 16l-5-5-8 8" /></>),
   users: (<><circle cx="9" cy="8" r="3.5" /><path d="M2 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5" /><circle cx="17.5" cy="9" r="2.5" /><path d="M22 19c0-2.5-2-4-4.5-4" /></>),
   copy: (<><rect x="8" y="8" width="12" height="12" /><path d="M16 8V4H4v12h4" /></>),
+  refresh: (<><path d="M20 12a8 8 0 1 1-2.4-5.7" /><path d="M20 4v5h-5" /></>),
   upload: <path d="M12 16V4M7 9l5-5 5 5M4 20h16" />,
 } as const
 

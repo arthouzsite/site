@@ -30,6 +30,7 @@ const baseSchema = z.object({
   SEED_ADMIN_EMAIL: z.string().email(),
   SEED_ADMIN_PASSWORD: z.string().min(1),
   ALLOW_TEST_OVERRIDES: optionalString,
+  CAPTCHA_CODE_OVERRIDE: optionalString,
   TODAY_OVERRIDE: z.string().regex(ISO_DATE_PATTERN, 'Expected YYYY-MM-DD').optional(),
 })
 

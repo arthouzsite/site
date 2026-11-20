@@ -2,7 +2,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { prisma } from '@/lib/server/prisma'
 import { authedClient, call } from './helpers/client'
 import { migrateTestDb, resetDb } from './helpers/db'
-import { loginAs, seedUser } from './helpers/users'
+import { loginAs, seedUser, solvedCaptcha } from './helpers/users'
 
 const NEW_PASSWORD = 'a-brand-new-password'
 const UNKNOWN_UUID = '00000000-0000-0000-0000-000000000000'
@@ -11,7 +11,7 @@ describe('users', () => {
   let adminCookie: string
   let adminId: string
   const admin = authedClient(() => adminCookie)
-  const login = (email: string, password: string) => call('POST', '/api/auth/login', { body: { email, password } })
+  const login = (email: string, password: string) => call('POST', '/api/auth/login', { body: { email, password, ...solvedCaptcha() } })
 
   beforeAll(() => {
     migrateTestDb()

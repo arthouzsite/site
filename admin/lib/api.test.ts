@@ -157,6 +157,17 @@ describe('api.putRaw', () => {
     await expect(api.putRaw(`${STORAGE}/x`, blob(), {})).rejects.toMatchObject({ status: 403, code: 'UPLOAD_FAILED', message: 'Storage returned 403' })
   })
 
+  it('rejects with the reason our own API gave when it answers a failed upload', async () => {
+    const error = { code: 'STORAGE_WRITE_FAILED', message: 'The file storage did not accept the file (AccessDenied)' }
+    server.use(http.put(`${API_URL}/media/uploads/*`, () => HttpResponse.json({ ok: false, data: null, error }, { status: 502 })))
+    await expect(api.putRaw(`${API_URL}/media/uploads/k.png`, blob(), {})).rejects.toMatchObject({ status: 502, ...error })
+  })
+
+  it('falls back to the status when our own API answers without an error envelope', async () => {
+    server.use(http.put(`${API_URL}/media/uploads/*`, () => new HttpResponse('<html>', { status: 500 })))
+    await expect(api.putRaw(`${API_URL}/media/uploads/k.png`, blob(), {})).rejects.toMatchObject({ code: 'UPLOAD_FAILED', message: 'Storage returned 500' })
+  })
+
   it('announces an expired session when our own origin answers 401', async () => {
     server.use(http.put(`${API_URL}/media/uploads/*`, () => new HttpResponse(null, { status: 401 })))
     const listener = vi.fn()

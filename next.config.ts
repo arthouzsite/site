@@ -1,5 +1,6 @@
 import type { NextConfig } from 'next'
 import type { RemotePattern } from 'next/dist/shared/lib/image-config'
+import { cmsPath, INTERNAL_CMS_PATH } from './lib/cms-path'
 import { DEFAULT_MEDIA_URL_BASE } from './lib/media-base'
 import { allowsTestOverrides } from './lib/test-overrides'
 
@@ -52,11 +53,31 @@ const LEGACY_REDIRECTS = [
   { source: '/contact', destination: '/visit' },
 ] as const
 
+type Rewrite = { source: string; destination: string }
+
+/** A path no route serves, so a request sent there ends at the site's not-found page. */
+const HIDDEN_PATH = '/cms-not-here'
+
+/**
+ * Serves the CMS at its unguessable public path and answers the route folder's own name (`/admin`) as not found.
+ * The hiding rule comes first: `beforeFiles` rules chain, and a hidden request must not reach the second rule.
+ */
+export function cmsRewrites(publicPath: string = cmsPath()): Rewrite[] {
+  if (publicPath === INTERNAL_CMS_PATH) return []
+  return [
+    { source: `/${INTERNAL_CMS_PATH}/:path*`, destination: HIDDEN_PATH },
+    { source: `/${publicPath}/:path*`, destination: `/${INTERNAL_CMS_PATH}/:path*` },
+  ]
+}
+
 const nextConfig: NextConfig = {
   // Each Playwright harness builds into its own directory: .next/cache is the unstable_cache store, which otherwise leaks data across harness databases.
   distDir: process.env.NEXT_DIST_DIR || '.next',
   async redirects() {
     return LEGACY_REDIRECTS.map((redirect) => ({ ...redirect, permanent: true }))
+  },
+  async rewrites() {
+    return { beforeFiles: cmsRewrites(), afterFiles: [], fallback: [] }
   },
   serverExternalPackages: ['@prisma/client', '@prisma/adapter-pg', 'sharp', 'argon2'],
   devIndicators: false,
