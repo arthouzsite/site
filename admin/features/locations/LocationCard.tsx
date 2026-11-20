@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { locationInputSchema } from '@/lib/shared'
+import { PHONE_INPUT_MAX, locationInputSchema } from '@/lib/shared'
 import { Button, ConfirmModal, ErrorSummary, Field, Icon, Input, PrefixInput, Textarea, collectErrors } from '../../components/ui'
 import { ApiError } from '../../lib/api'
 import { useToast } from '../../lib/toast'
@@ -109,7 +109,7 @@ export function LocationCard({ location, canMoveUp, canMoveDown, moving, onMove,
         <Field name="city" idPrefix={idPrefix} label="City" required error={err('city')}><Input {...cityField} ref={(el) => { cityField.ref(el); cityInput.current = el }} /></Field>
         <Field name="address" idPrefix={idPrefix} label="Address" error={err('address')}><Textarea rows={2} className="min-h-0" {...register('address')} /></Field>
         <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
-          <Field name="phone" idPrefix={idPrefix} label="Phone" error={err('phone')}><Input inputMode="tel" {...register('phone')} /></Field>
+          <Field name="phone" idPrefix={idPrefix} label="Phone" error={err('phone')}><Input inputMode="numeric" maxLength={PHONE_INPUT_MAX} {...register('phone')} /></Field>
           <Field name="tel" idPrefix={idPrefix} label="Tel" help="E.164, used for the call link" error={err('tel')}><PrefixInput prefix="tel:" type="tel" {...register('tel')} /></Field>
         </div>
         <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">

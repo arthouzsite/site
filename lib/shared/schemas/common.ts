@@ -14,10 +14,12 @@ export const optionalUrlSchema = urlSchema.nullable().default(null)
 export const TEL_PATTERN = /^\+\d{8,15}$/
 export const TEL_MESSAGE = 'Use international format, e.g. +914412345678'
 
-/** Display phone number as people write it: digits with spaces, +, -, dots, slashes or brackets, nothing else (FIN-3500). */
-export const PHONE_PATTERN = /^[\d\s+().\-/]*\d[\d\s+().\-/]*$/
-export const PHONE_MESSAGE = 'Use digits only, with spaces, +, - or brackets'
-export const optionalPhone = (max = 50) => z.string().trim().max(max).regex(PHONE_PATTERN, PHONE_MESSAGE).or(z.literal('')).default('')
+/** A location's phone number: exactly ten digits, grouped with spaces or hyphens if wanted (FIN-3500, FIN-3526). */
+export const PHONE_PATTERN = /^(?:[\s-]*\d){10}[\s-]*$/
+export const PHONE_MESSAGE = 'Enter a 10-digit phone number'
+/** Room for the ten digits plus the separators people group them with. */
+export const PHONE_INPUT_MAX = 13
+export const optionalPhone = () => z.string().trim().regex(PHONE_PATTERN, PHONE_MESSAGE).or(z.literal('')).default('')
 
 /** A person's name never contains digits (FIN-3483). */
 export const NO_DIGITS_PATTERN = /^\D*$/

@@ -5,7 +5,7 @@ export const locationInputSchema = z.object({
   slug: slugSchema,
   city: requiredText(100),
   address: optionalText(500),
-  phone: optionalPhone(50),
+  phone: optionalPhone(),
   tel: z.string().trim().regex(TEL_PATTERN, TEL_MESSAGE).or(z.literal('')).default(''),
   days: optionalText(200),
   hours: optionalText(200),

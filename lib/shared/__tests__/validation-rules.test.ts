@@ -1,12 +1,12 @@
 import { describe, expect, test } from 'vitest'
 import { PHONE_MESSAGE, NAME_MESSAGE, locationInputSchema, userInputSchema } from '../index'
 
-describe('location phone (FIN-3500)', () => {
-  test.each(['98861 12400', '+91 98861-12400', '(044) 2345 6789', '044-2345-6789', ''])('accepts %j', (phone) => {
+describe('location phone (FIN-3500, FIN-3526)', () => {
+  test.each(['98861 12400', '9886112400', '98861-12400', ' 44 2345 6789 ', ''])('accepts %j', (phone) => {
     expect(locationInputSchema.safeParse({ city: 'Chennai', phone }).success).toBe(true)
   })
 
-  test.each(['wertyuiytrertyui', '9886 call me', '98861@12400'])('rejects %j with the phone message', (phone) => {
+  test.each(['wertyuiytrertyui', '9886 call me', '98861@12400', '343443434324443434343434', '98861 1240', '+91 98861 12400'])('rejects %j with the phone message', (phone) => {
     const result = locationInputSchema.safeParse({ city: 'Chennai', phone })
     expect(result.success).toBe(false)
     expect(result.error?.issues.map((i) => i.message)).toContain(PHONE_MESSAGE)

@@ -86,7 +86,7 @@ describe('LocationsPage', () => {
     expect(screen.getByText('Footer hours')).toBeInTheDocument()
   })
 
-  it('opens the new card first with City focused, and rejects letters in Phone', async () => {
+  it('opens the new card first with City focused, and rejects a Phone that is not ten digits', async () => {
     server.use(http.get(`${API_URL}/locations`, () => HttpResponse.json(envelope(locations))))
     mount()
     await screen.findByRole('region', { name: 'Chennai' })
@@ -94,9 +94,9 @@ describe('LocationsPage', () => {
     expect(screen.getAllByRole('region')[0]).toHaveAccessibleName('New location')
     const fresh = card('New location')
     expect(within(fresh).getByLabelText(/City/)).toHaveFocus()
-    await userEvent.type(within(fresh).getByLabelText(/^Phone/), 'wertyuiytrertyui')
+    await userEvent.type(within(fresh).getByLabelText(/^Phone/), '98861 1240')
     await userEvent.click(within(fresh).getByRole('button', { name: 'Save' }))
-    expect(await within(fresh).findAllByText('Use digits only, with spaces, +, - or brackets')).not.toHaveLength(0)
+    expect(await within(fresh).findAllByText('Enter a 10-digit phone number')).not.toHaveLength(0)
   })
 
   it('deletes through a confirm modal', async () => {

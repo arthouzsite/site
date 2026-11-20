@@ -31,7 +31,7 @@ describe('schemas', () => {
     expect(artistInputSchema.safeParse({ name: 'K.M. Adimoolam', sortName: 'Adimoolam', medium: 'Painting', base: 'Chennai', lede: 'l', bio: 'b', portraitImageId: id }).success).toBe(true)
     expect(artworkInputSchema.safeParse({ artistId: id, title: 't', year: '2020', medium: 'oil', size: '1x1', imageId: id }).success).toBe(true)
     expect(fairInputSchema.safeParse({ title: 't', venue: 'v', city: 'c', dateLabel: 'March 2026', booth: 'A1', text: 't', imageId: id }).success).toBe(true)
-    expect(locationInputSchema.safeParse({ city: 'c', address: 'a', phone: '+91 1', tel: '+914412345678', days: 'Mon', hours: '10', mapUrl: 'https://maps.example.com', imageId: id }).success).toBe(true)
+    expect(locationInputSchema.safeParse({ city: 'c', address: 'a', phone: '73977 45684', tel: '+914412345678', days: 'Mon', hours: '10', mapUrl: 'https://maps.example.com', imageId: id }).success).toBe(true)
     expect(mediaPatchSchema.safeParse({ alt: 'x' }).success).toBe(true)
     expect(mediaPatchSchema.safeParse({ alt: '' }).success).toBe(false)
     expect(userInputSchema.safeParse({ email: 'a@b.co', name: 'A', role: 'EDITOR', password: 'longenough1' }).success).toBe(true)
