@@ -186,7 +186,9 @@ describe('public API', () => {
     expect(about.gallery.image).toEqual({ url: 'https://x/o.jpg', thumbUrl: 'https://x/ot.jpg', width: 5, height: 5, alt: 'og' })
     expect(about.proprietor.image).toBeNull()
     const settings = await ok('/api/public/settings', publicSettingsSchema)
-    expect(settings).toMatchObject({ heroLayout: 'FULL_BLEED', artistIndexLayout: 'GROUPED', site: { title: 'Art Houz', ogImage: { alt: 'og' } } })
+    expect(settings).toMatchObject({ heroLayout: 'FULL_BLEED', artistIndexLayout: 'GROUPED', site: { title: 'Art Houz', ogImage: { alt: 'og' } }, maintenance: { isEnabled: false } })
+    await prisma.setting.create({ data: { key: 'maintenance', value: { isEnabled: true } } })
+    expect((await ok('/api/public/settings', publicSettingsSchema)).maintenance).toEqual({ isEnabled: true })
   })
 
   it('exhibition detail meta and Format', async () => {

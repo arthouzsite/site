@@ -55,6 +55,7 @@ import SiteLayout, { generateMetadata as layoutMeta } from '@/app/(site)/layout'
 import SiteNotFound from '@/app/(site)/not-found'
 import RootNotFound from '@/app/not-found'
 import UnmatchedPage from '@/app/(site)/[...notFound]/page'
+import { MaintenanceScreen } from '@/components/site/MaintenanceScreen'
 import { SiteFrame } from '@/components/site/SiteFrame'
 import NewsPage, { generateMetadata as newsMeta } from '@/app/(site)/news/page'
 import HomePage, { generateMetadata as homeMeta } from '@/app/(site)/page'
@@ -72,6 +73,7 @@ const settings = {
   heroLayout: 'SPLIT', artistIndexLayout: 'GROUPED',
   footer: { tagline: 'Tagline', instagramUrl: '', facebookUrl: '', linkedinUrl: '', youtubeUrl: '', twitterUrl: '', copyrightFrom: 2012 },
   site: { title: 'Art Houz', description: 'Gallery.', ogImage: null },
+  maintenance: { isEnabled: false },
 }
 
 const byPath: Record<string, unknown> = {
@@ -296,10 +298,26 @@ describe('shell', () => {
   })
 
   it('puts the public header and footer in the (site) layout and builds site metadata', async () => {
-    const layout = SiteLayout({ children: (<p>page body</p>) as ReactNode })
+    const layout = await SiteLayout({ children: (<p>page body</p>) as ReactNode })
     // Header and Footer are async boundaries; assert on the returned tree rather than serialising it.
     expect(layout.type).toBe(SiteFrame)
-    expect(await layoutMeta()).toHaveProperty('title.default', 'Art Houz')
+    const metadata = await layoutMeta()
+    expect(metadata).toHaveProperty('title.default', 'Art Houz')
+    expect(metadata).not.toHaveProperty('robots')
+  })
+
+  it('replaces every public page with the maintenance screen while the break is switched on', async () => {
+    apiGet.mockImplementation(async (path) => (path === '/public/settings' ? { ...settings, maintenance: { isEnabled: true } } : null))
+    loadFooterData.mockResolvedValue({ locations: [{ ...location, phone: '73977 45684', tel: null }, { ...location, id: 'l2', city: 'Mysuru', phone: '' }] })
+    const layout = await SiteLayout({ children: (<p>page body</p>) as ReactNode })
+    expect(layout.type).toBe(MaintenanceScreen)
+    expect(await layoutMeta()).toMatchObject({ robots: { index: false, follow: false } })
+    const html = renderToStaticMarkup(await MaintenanceScreen())
+    expect(html).toContain('We are rehanging the gallery.')
+    expect(html).toContain('href="tel:7397745684"')
+    expect(html).not.toContain('Mysuru')
+    expect(html).not.toContain('page body')
+    expect(html).not.toContain('<nav')
   })
 
   it('resolves any unmatched URL to notFound() so the 404 renders inside the site layout', () => {

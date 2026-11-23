@@ -42,6 +42,16 @@ describe('SettingsPage', () => {
     expect(await screen.findByText('Saved')).toBeInTheDocument()
   })
 
+  it('switches the maintenance break on from its own card', async () => {
+    const puts = setup()
+    const user = userEvent.setup()
+    const toggle = await screen.findByRole('switch', { name: 'Show the maintenance screen on the public site' })
+    expect(toggle).not.toBeChecked()
+    await user.click(toggle)
+    await user.click(card('Maintenance break').getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(puts).toEqual([{ key: 'maintenance', value: { isEnabled: true } }]))
+  })
+
   it('PUTs the chosen hero exhibition and null for automatic', async () => {
     const puts = setup()
     const user = userEvent.setup()

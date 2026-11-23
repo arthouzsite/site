@@ -6,7 +6,7 @@ import { httpUrl, idSchema } from './common'
 
 export const SETTING_KEYS = [
   'heroLayout', 'artistIndexLayout', 'homeHeroExhibitionId', 'homeFocus',
-  'about.gallery', 'about.proprietor', 'about.services', 'about.publications', 'footer', 'site',
+  'about.gallery', 'about.proprietor', 'about.services', 'about.publications', 'footer', 'site', 'maintenance',
 ] as const
 export type SettingKey = (typeof SETTING_KEYS)[number]
 
@@ -33,6 +33,8 @@ export const settingSchemas: { [K in SettingKey]: ZodType } = {
     linkedinUrl: optionalSocialUrl.default(''), youtubeUrl: optionalSocialUrl.default(''), twitterUrl: optionalSocialUrl.default(''),
   }),
   site: z.object({ title: text, description: text, ogImageId: nullableId }),
+  /** While enabled, every public page shows the maintenance screen instead of its content; the CMS stays open. */
+  maintenance: z.object({ isEnabled: z.boolean() }),
 }
 
 export const SETTING_DEFAULTS: Record<SettingKey, unknown> = {
@@ -48,4 +50,5 @@ export const SETTING_DEFAULTS: Record<SettingKey, unknown> = {
     tagline: '', instagramUrl: '', facebookUrl: '', linkedinUrl: '', youtubeUrl: '', twitterUrl: '', copyrightFrom: DEFAULT_COPYRIGHT_FROM,
   },
   site: { title: '', description: '', ogImageId: null },
+  maintenance: { isEnabled: false },
 }

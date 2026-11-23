@@ -6,6 +6,7 @@ import { CardRegistryContext, type CardHandle, type CardRegistry } from './cardR
 import { FocusArtistCard } from './FocusArtistCard'
 import { FooterCard } from './FooterCard'
 import { HeroLayoutCards } from './HeroLayoutCards'
+import { MaintenanceCard } from './MaintenanceCard'
 import { SiteCard } from './SiteCard'
 import { useCanEditSettings, useSettings } from './useSettings'
 
@@ -56,6 +57,7 @@ export default function SettingsPage() {
             <ArtistIndexCards settings={settings.data} readOnly={!canEdit} />
             <FooterCard settings={settings.data} readOnly={!canEdit} />
             <SiteCard settings={settings.data} readOnly={!canEdit} />
+            <MaintenanceCard settings={settings.data} readOnly={!canEdit} />
             {canEdit && (
               <div className="sticky bottom-0 -mx-1 flex justify-end border-t border-line bg-bg px-1 py-3">
                 <Button variant="primary" disabled={dirty.size === 0 || saving} onClick={() => void saveAll()}>Save settings</Button>

@@ -189,6 +189,7 @@ export async function getSiteSettings(): Promise<PublicSettings> {
     artistIndexLayout: all.artistIndexLayout as ArtistIndexLayout,
     footer: all.footer as FooterSetting,
     site: { ...site, ogImage: ogImageId ? (images.get(ogImageId) ?? null) : null },
+    maintenance: all.maintenance as PublicSettings['maintenance'],
   }
 }
 

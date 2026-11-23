@@ -97,6 +97,8 @@ export const publicSettingsSchema = z.object({
     copyrightFrom: z.number(),
   }),
   site: z.object({ title: z.string(), description: z.string(), ogImage: image }),
+  // Defaulted: a settings payload cached before this key existed must still parse after a deploy.
+  maintenance: z.object({ isEnabled: z.boolean() }).default({ isEnabled: false }),
 })
 
 export const publicAboutSchema = z.object({
