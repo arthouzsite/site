@@ -1,6 +1,7 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { todayInKolkata } from '@/lib/shared'
 import { ENQUIRY_BODY_MAX_BYTES, ENQUIRY_SITEWIDE_THROTTLE, ENQUIRY_THROTTLE } from '@/lib/server/enquiries/enquiries.constants'
+import { createCaptcha } from '@/lib/server/auth/captcha'
 import { enquiriesService } from '@/lib/server/enquiries/enquiries.service'
 import { prisma } from '@/lib/server/prisma'
 import { authedClient, call } from './helpers/client'
@@ -20,6 +21,11 @@ const serviceBody = (over: Record<string, unknown> = {}) => ({
   kind: 'SERVICE', slug: 'photo-shoots', ...contact, dateFrom: day(SERVICE_INPUT_DAYS), dateTo: day(5), purpose: 'Photography', location: 'Chennai', ...over,
 })
 const artistBody = (over: Record<string, unknown> = {}) => ({ kind: 'ARTIST', slug: 'vijay', ...contact, ...over })
+const PRINT_URL = 'https://x/etching.jpg'
+const printBody = (over: Record<string, unknown> = {}) => {
+  const { token, code } = createCaptcha()
+  return { kind: 'PRINT', slug: 'etchings', imageUrl: PRINT_URL, name: 'Asha Rao', mobile: '98765 43210', email: 'Asha@Example.com', captchaToken: token, captcha: code.toLowerCase(), ...over }
+}
 
 // The form's own requests carry the site Origin; tests that omit it say so explicitly.
 const SITE_ORIGIN = { origin: 'http://localhost' }
@@ -40,6 +46,10 @@ describe('enquiries', () => {
     await prisma.artist.create({ data: { slug: 'vijay', name: 'Vijay Pichumani', sortName: 'Pichumani', isPublished: true } })
     await prisma.artist.create({ data: { slug: 'draft-artist', name: 'Draft Artist', sortName: 'Artist', isPublished: false } })
     await prisma.location.create({ data: { slug: 'chennai', city: 'Chennai' } })
+    const print = await prisma.media.create({
+      data: { key: 'etching', url: PRINT_URL, thumbUrl: 'https://x/etching-t.jpg', width: 8, height: 10, mime: 'image/jpeg', bytes: 1, alt: 'Harbour at dusk' },
+    })
+    await prisma.printCategory.create({ data: { slug: 'etchings', name: 'Etchings', images: { create: { mediaId: print.id } } } })
   }
 
   beforeAll(() => {
@@ -69,6 +79,44 @@ describe('enquiries', () => {
       })
       expect(row.dateFrom?.toISOString().slice(0, 10)).toBe(day(3))
       expect(row.dateTo?.toISOString().slice(0, 10)).toBe(day(5))
+    })
+
+    it('stores a print order with the category, the print and a snapshot of both', async () => {
+      const res = await submit(printBody())
+      expect(res.status).toBe(201)
+      const row = await prisma.enquiry.findFirstOrThrow()
+      const category = await prisma.printCategory.findUniqueOrThrow({ where: { slug: 'etchings' } })
+      const print = await prisma.media.findUniqueOrThrow({ where: { key: 'etching' } })
+      expect(row).toMatchObject({
+        kind: 'PRINT', printCategoryId: category.id, printMediaId: print.id, serviceId: null, artistId: null, subject: 'Etchings: Harbour at dusk',
+        name: 'Asha Rao', email: 'asha@example.com', mobile: '+919876543210', message: '', isHandled: false,
+      })
+      const listed = await api.get('/api/enquiries?kind=PRINT')
+      expect(listed.body.data).toEqual([expect.objectContaining({ kind: 'PRINT', subject: 'Etchings: Harbour at dusk', subjectRemoved: false, imageUrl: 'https://x/etching-t.jpg' })])
+    })
+
+    it('refuses a print order with a wrong or missing security code and stores nothing', async () => {
+      const wrong = await submit(printBody({ captcha: 'ZZZZZ' }))
+      expect(wrong.status).toBe(400)
+      expect(wrong.body.error).toMatchObject({ code: 'CAPTCHA_INVALID', fields: { captcha: expect.stringContaining('does not match') } })
+      const missing = await submit(printBody({ captcha: '' }))
+      expect(missing.status).toBe(400)
+      expect(missing.body.error.fields).toMatchObject({ captcha: 'Enter the security code' })
+      expect(await prisma.enquiry.count()).toBe(0)
+    })
+
+    it('refuses a print order for an image that is not in that category', async () => {
+      expect((await submit(printBody({ imageUrl: 'https://x/other.jpg' }))).status).toBe(404)
+      expect((await submit(printBody({ slug: 'unknown' }))).status).toBe(404)
+      expect(await prisma.enquiry.count()).toBe(0)
+    })
+
+    it('keeps a print order readable after its print and category are deleted', async () => {
+      await submit(printBody())
+      await prisma.printCategory.delete({ where: { slug: 'etchings' } })
+      await prisma.media.delete({ where: { key: 'etching' } })
+      const listed = await api.get('/api/enquiries')
+      expect(listed.body.data).toEqual([expect.objectContaining({ subject: 'Etchings: Harbour at dusk', subjectRemoved: true, imageUrl: null })])
     })
 
     it('stores an artist enquiry', async () => {
@@ -267,7 +315,7 @@ describe('enquiries', () => {
       expect(res.body.data.map((e: { subject: string }) => e.subject)).toEqual(['Subject 2', 'Subject 1', 'Subject 0'])
       expect(res.body.meta).toEqual({ page: 1, limit: 50, total: 3 })
       expect(res.body.data[0]).toEqual({
-        id: expect.any(String), kind: 'ARTIST', subject: 'Subject 2', subjectRemoved: true, name: 'Person 2', email: 'p@example.com',
+        id: expect.any(String), kind: 'ARTIST', subject: 'Subject 2', subjectRemoved: true, imageUrl: null, name: 'Person 2', email: 'p@example.com',
         mobile: '+919876543210', message: '', dateFrom: null, dateTo: null, purpose: null, location: null, isHandled: false,
         createdAt: '2026-11-03T00:00:00.000Z',
       })

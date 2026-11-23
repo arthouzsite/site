@@ -24,12 +24,12 @@ function Chevron() {
 }
 
 /** Shown in place of the form once the enquiry is stored; takes focus so the change is announced and reachable. */
-function Confirmation() {
+export function Confirmation({ children = THANKS }: { children?: string }) {
   const message = useRef<HTMLParagraphElement>(null)
   useEffect(() => message.current?.focus(), [])
   return (
     <p ref={message} role="status" tabIndex={-1} className="m-0 font-display text-[clamp(24px,2.4vw,32px)] leading-[1.3] text-pretty outline-none">
-      {THANKS}
+      {children}
     </p>
   )
 }

@@ -8,7 +8,7 @@ import type { EnquiryTarget } from './useEnquiryForm'
 
 type Props = { target: EnquiryTarget; onClose: () => void; returnFocus: HTMLElement | null }
 
-const subjectOf = (target: EnquiryTarget): string => (target.kind === 'SERVICE' ? target.title : target.name)
+const subjectOf = (target: EnquiryTarget): string => ('name' in target ? target.name : target.title)
 
 /** Full-screen paper overlay, like the search and menu overlays: Close at the top, the form below. */
 export function EnquiryDialog({ target, onClose, returnFocus }: Props) {

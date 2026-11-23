@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import type { EnquiryInput } from '@/lib/shared'
 import { ENQUIRY_KINDS } from '@/lib/shared'
+import { verifyCaptcha } from '@/lib/server/auth/captcha'
 import { parsePagination } from '@/lib/server/common/pagination'
 import { claimThrottleSlot } from '@/lib/server/common/throttle'
 import { Prisma } from '@/lib/server/generated/prisma/client'
@@ -9,10 +10,12 @@ import { withMeta } from '@/lib/server/http/route'
 import { prisma } from '@/lib/server/prisma'
 import { ENQUIRY_FAILED_MESSAGE, ENQUIRY_THROTTLED_MESSAGE } from './enquiries.constants'
 import { enquiryThrottleFor } from './enquiry-throttle'
-import { toAdminEnquiry } from './enquiries.mapper'
+import { ENQUIRY_INCLUDE, toAdminEnquiry } from './enquiries.mapper'
 
 const SERVICE_NOT_FOUND = 'Service not found'
 const ARTIST_NOT_FOUND = 'Artist not found'
+const PRINT_NOT_FOUND = 'Print not found'
+const WRONG_CAPTCHA = 'The security code does not match. Try the new one.'
 const ENQUIRY_NOT_FOUND = 'Enquiry not found'
 const BAD_LOCATION = 'Choose one of our locations'
 const BAD_REQUEST_STATUS = 400
@@ -40,6 +43,17 @@ async function publishedArtist(slug: string): Promise<Subject> {
   return { id: row.id, label: row.name }
 }
 
+/** The print as the public page shows it: an image of that category, matched by its public URL. */
+async function listedPrint(slug: string, imageUrl: string): Promise<Subject & { mediaId: string }> {
+  const row = await prisma.printImage.findFirst({
+    where: { category: { slug }, media: { url: imageUrl } },
+    select: { mediaId: true, category: { select: { id: true, name: true } }, media: { select: { alt: true } } },
+  })
+  if (!row) throw notFound(PRINT_NOT_FOUND)
+  const label = row.media.alt ? `${row.category.name}: ${row.media.alt}` : row.category.name
+  return { id: row.category.id, label, mediaId: row.mediaId }
+}
+
 /**
  * A location the public list offers: that list is every Location row, shown by `city`, so the match is exact on
  * `city` (no case folding) and a made-up place is refused.
@@ -64,6 +78,10 @@ async function rowFor(input: EnquiryInput): Promise<Prisma.EnquiryUncheckedCreat
     const artist = await publishedArtist(input.slug)
     return { kind: 'ARTIST', artistId: artist.id, subject: artist.label, ...contact(input) }
   }
+  if (input.kind === 'PRINT') {
+    const print = await listedPrint(input.slug, input.imageUrl)
+    return { kind: 'PRINT', printCategoryId: print.id, printMediaId: print.mediaId, subject: print.label, ...contact(input) }
+  }
   const service = await publishedService(input.slug)
   const location = await knownLocation(input.location)
   return {
@@ -73,11 +91,15 @@ async function rowFor(input: EnquiryInput): Promise<Prisma.EnquiryUncheckedCreat
 }
 
 /**
- * Stores a public enquiry. A filled honeypot is accepted and dropped so a bot learns nothing. The rejection logged
+ * Stores a public enquiry. A filled honeypot is accepted and dropped so a bot learns nothing; a print order must
+ * also answer its picture challenge. The rejection logged
  * for any storage failure carries only the Prisma code, never the submission (it holds personal data).
  */
 export async function submit(input: EnquiryInput, ip: string): Promise<{ received: true }> {
   if (input.refCode !== '') return { received: true }
+  if (input.kind === 'PRINT' && !verifyCaptcha(input.captchaToken, input.captcha)) {
+    throw new ApiException(BAD_REQUEST_STATUS, 'CAPTCHA_INVALID', WRONG_CAPTCHA, { captcha: WRONG_CAPTCHA })
+  }
   // Targets are checked first so unknown slugs and locations (probing) do not use up a visitor's slots.
   const data = await rowFor(input)
   await claimSlot(ip)
@@ -94,7 +116,7 @@ export async function list(query: EnquiryListQuery = {}) {
   const { page, limit, skip } = parsePagination(query)
   const where: Prisma.EnquiryWhereInput = query.kind ? { kind: query.kind } : {}
   const [rows, total] = await Promise.all([
-    prisma.enquiry.findMany({ where, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], skip, take: limit }),
+    prisma.enquiry.findMany({ where, include: ENQUIRY_INCLUDE, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], skip, take: limit }),
     prisma.enquiry.count({ where }),
   ])
   return withMeta(rows.map(toAdminEnquiry), { page, limit, total })
@@ -106,7 +128,7 @@ async function assertExists(id: string): Promise<void> {
 
 export async function setHandled(id: string, isHandled: boolean) {
   await assertExists(id)
-  return toAdminEnquiry(await prisma.enquiry.update({ where: { id }, data: { isHandled } }))
+  return toAdminEnquiry(await prisma.enquiry.update({ where: { id }, data: { isHandled }, include: ENQUIRY_INCLUDE }))
 }
 
 export async function remove(id: string) {

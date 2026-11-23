@@ -39,7 +39,7 @@ export default async function PrintCategoryPage({ params }: Props) {
         <PageTitle variant="detail" className="mt-4 max-w-[1200px]">{category.name}</PageTitle>
       </Container>
       <Container className="pb-[clamp(72px,9vw,140px)]">
-        <PrintGrid title={category.name} images={category.images} />
+        <PrintGrid slug={category.slug} title={category.name} images={category.images} />
       </Container>
     </main>
   )

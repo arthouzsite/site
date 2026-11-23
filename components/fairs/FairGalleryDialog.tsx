@@ -4,6 +4,7 @@ import { useId, useRef } from 'react'
 import Image from 'next/image'
 import type { PublicImage } from '@/lib/shared'
 import { OutlineButton } from '@/components/site/OutlineButton'
+import { PRIMARY_BUTTON_CLASS, PRIMARY_BUTTON_ELEMENT_CLASS } from '@/components/site/PrimaryButton'
 import { useGalleryIndex } from '@/hooks/useGalleryIndex'
 import { useModalDialog } from '@/hooks/useModalDialog'
 import { FairGalleryThumbs } from './FairGalleryThumbs'
@@ -17,10 +18,12 @@ type Props = {
   returnFocus: HTMLElement | null
   /** The image shown first; the gallery of a fair starts at its first one. */
   startIndex?: number
+  /** A call-to-action about the image on show (prints: Order), placed beside Close. */
+  action?: { label: string; onSelect: (index: number) => void }
 }
 
 /** Full-screen paper overlay like the enquiry dialog: title and Close on top, one contained image at a time below. */
-export function FairGalleryDialog({ title, images, onClose, returnFocus, startIndex = 0 }: Props) {
+export function FairGalleryDialog({ title, images, onClose, returnFocus, startIndex = 0, action }: Props) {
   const panel = useRef<HTMLDivElement>(null)
   const headingId = useId()
   useModalDialog(panel, onClose, returnFocus)
@@ -34,9 +37,16 @@ export function FairGalleryDialog({ title, images, onClose, returnFocus, startIn
         <h2 id={headingId} className="m-0 min-w-0 font-display text-[clamp(26px,3vw,40px)] leading-[1.1] font-normal break-words">
           {title}
         </h2>
-        <OutlineButton tone="ink" onClick={onClose}>
-          Close
-        </OutlineButton>
+        <div className="flex shrink-0 items-stretch gap-3">
+          {action && (
+            <button type="button" aria-haspopup="dialog" onClick={() => action.onSelect(index)} className={`${PRIMARY_BUTTON_CLASS} ${PRIMARY_BUTTON_ELEMENT_CLASS} self-stretch py-0`}>
+              {action.label}
+            </button>
+          )}
+          <OutlineButton tone="ink" onClick={onClose}>
+            Close
+          </OutlineButton>
+        </div>
       </div>
       <div className="relative mx-[clamp(20px,4vw,56px)] min-h-0 flex-1 bg-imgph">
         {current && <Image key={current.url} src={current.url} alt={current.alt} fill sizes={STAGE_SIZES} className="object-contain" />}

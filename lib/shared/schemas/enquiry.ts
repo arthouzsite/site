@@ -9,7 +9,11 @@ export const ENQUIRY_MOBILE_MAX = 30
 export const ENQUIRY_MESSAGE_MAX = 2000
 export const ENQUIRY_PURPOSE_MAX = 200
 export const ENQUIRY_LOCATION_MAX = 100
+export const ENQUIRY_CAPTCHA_MAX = 20
 const SLUG_MAX = 200
+const IMAGE_URL_MAX = 2000
+const CAPTCHA_TOKEN_MAX = 200
+const CAPTCHA_MESSAGE = 'Enter the security code'
 const HONEYPOT_MAX = 200
 
 const ISO_DATE_LENGTH = 10
@@ -96,8 +100,21 @@ export const serviceEnquirySchema = z
 
 export const artistEnquirySchema = z.object({ kind: z.literal('ARTIST'), slug, ...person })
 
+/**
+ * An order request for one print: `slug` is its category and `imageUrl` the print, as the public site knows it.
+ * It carries the answer to a picture challenge, checked by the server before anything is stored.
+ */
+export const printEnquirySchema = z.object({
+  kind: z.literal('PRINT'),
+  slug,
+  imageUrl: z.string().trim().min(1).max(IMAGE_URL_MAX),
+  ...person,
+  captchaToken: z.string(CAPTCHA_MESSAGE).min(1, CAPTCHA_MESSAGE).max(CAPTCHA_TOKEN_MAX),
+  captcha: required(CAPTCHA_MESSAGE, ENQUIRY_CAPTCHA_MAX),
+})
+
 /** The one definition of a public enquiry, used by the forms on the site and by the endpoint. */
-export const enquiryInputSchema = z.discriminatedUnion('kind', [serviceEnquirySchema, artistEnquirySchema])
+export const enquiryInputSchema = z.discriminatedUnion('kind', [serviceEnquirySchema, artistEnquirySchema, printEnquirySchema])
 
 export const enquiryKindSchema = z.enum(ENQUIRY_KINDS)
 
@@ -105,5 +122,6 @@ export const enquiryHandledSchema = z.object({ isHandled: z.boolean() })
 
 export type ServiceEnquiryInput = z.infer<typeof serviceEnquirySchema>
 export type ArtistEnquiryInput = z.infer<typeof artistEnquirySchema>
+export type PrintEnquiryInput = z.infer<typeof printEnquirySchema>
 export type EnquiryInput = z.infer<typeof enquiryInputSchema>
 export type EnquiryHandledInput = z.infer<typeof enquiryHandledSchema>

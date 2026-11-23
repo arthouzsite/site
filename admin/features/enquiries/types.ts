@@ -5,6 +5,7 @@ export type AdminEnquiry = {
   kind: EnquiryKind
   subject: string
   subjectRemoved: boolean
+  imageUrl: string | null
   name: string
   email: string
   mobile: string

@@ -41,6 +41,7 @@ model User {
 enum EnquiryKind {
   SERVICE
   ARTIST
+  PRINT
 }
 
 enum MediaKind {
@@ -74,6 +75,7 @@ model Media {
   fairs           Fair[]
   fairImages      FairImage[]
   printImages     PrintImage[]
+  printEnquiries  Enquiry[]
   services        Service[]
   news            News[]
   locations       Location[]
@@ -230,7 +232,8 @@ model PrintCategory {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  images PrintImage[]
+  images    PrintImage[]
+  enquiries Enquiry[]
 }
 
 model PrintImage {
@@ -307,13 +310,16 @@ model Location {
   image Media? @relation(fields: [imageId], references: [id], onDelete: Restrict)
 }
 
-/// A public enquiry about a service or an artist. `subject` snapshots the title/name so the row stays readable
-/// after the service or artist is deleted (the relation is then set to null).
+/// A public enquiry about a service or an artist, or an order request for a print. `subject` snapshots the
+/// title/name so the row stays readable after its target is deleted (the relation is then set to null).
 model Enquiry {
   id        String       @id @default(uuid())
   kind      EnquiryKind
   serviceId String?
   artistId  String?
+  printCategoryId String?
+  /// The print that was ordered; cleared when that media is deleted.
+  printMediaId    String?
   subject   String
   name      String
   email     String
@@ -328,11 +334,15 @@ model Enquiry {
 
   service Service? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
   artist  Artist?  @relation(fields: [artistId], references: [id], onDelete: SetNull)
+  printCategory PrintCategory? @relation(fields: [printCategoryId], references: [id], onDelete: SetNull)
+  printMedia    Media?         @relation(fields: [printMediaId], references: [id], onDelete: SetNull)
 
   @@index([createdAt])
   @@index([kind, createdAt])
   @@index([serviceId])
   @@index([artistId])
+  @@index([printCategoryId])
+  @@index([printMediaId])
 }
 
 model Setting {

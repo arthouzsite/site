@@ -3,7 +3,8 @@ import { Button, Dialog } from '../../components/ui'
 import { formatDateTime } from '../../lib/format'
 import type { AdminEnquiry } from './types'
 
-const KIND_LABEL = { SERVICE: 'Service', ARTIST: 'Artist' } as const
+const KIND_LABEL = { SERVICE: 'Service', ARTIST: 'Artist', PRINT: 'Print order' } as const
+const SUBJECT_LABEL = { SERVICE: 'Service', ARTIST: 'Artist', PRINT: 'Print' } as const
 const dayFmt = new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
 const formatDay = (iso: string): string => dayFmt.format(new Date(`${iso}T00:00:00.000Z`))
 
@@ -23,7 +24,11 @@ export function EnquiryDetailDialog({ enquiry, onClose }: { enquiry: AdminEnquir
       <dl className="m-0 flex flex-col">
         <Row label="Received">{formatDateTime(enquiry.createdAt)}</Row>
         <Row label="Type">{KIND_LABEL[enquiry.kind]}</Row>
-        <Row label={KIND_LABEL[enquiry.kind]}>{enquiry.subject}{enquiry.subjectRemoved ? ' (deleted)' : ''}</Row>
+        <Row label={SUBJECT_LABEL[enquiry.kind]}>
+          {enquiry.subject}{enquiry.subjectRemoved ? ' (deleted)' : ''}
+          {/* eslint-disable-next-line @next/next/no-img-element -- a stored thumbnail on the CDN; next/image has nothing to add at this size. */}
+          {enquiry.imageUrl && <img src={enquiry.imageUrl} alt="" className="mt-2 block h-24 w-auto border border-line" />}
+        </Row>
         <Row label="Name">{enquiry.name}</Row>
         <Row label="Mobile"><a href={`tel:${enquiry.mobile}`} className="text-ink underline-offset-2 hover:underline">{enquiry.mobile}</a></Row>
         <Row label="Email"><a href={`mailto:${enquiry.email}`} className="text-ink underline-offset-2 hover:underline">{enquiry.email}</a></Row>

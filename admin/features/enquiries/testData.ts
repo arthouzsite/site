@@ -2,7 +2,7 @@ import type { AdminEnquiry } from './types'
 
 export function makeEnquiry(over: Partial<AdminEnquiry> = {}): AdminEnquiry {
   return {
-    id: 'e1', kind: 'ARTIST', subject: 'Vijay Pichumani', subjectRemoved: false, name: 'Asha Rao', email: 'asha@example.com',
+    id: 'e1', kind: 'ARTIST', subject: 'Vijay Pichumani', subjectRemoved: false, imageUrl: null, name: 'Asha Rao', email: 'asha@example.com',
     mobile: '+919876543210', message: 'Is the large canvas available?', dateFrom: null, dateTo: null, purpose: null, location: null,
     isHandled: false, createdAt: '2026-11-16T09:30:00.000Z', ...over,
   }

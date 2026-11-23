@@ -3,20 +3,25 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import type { ZodError } from 'zod'
 import { EnquiryError, sendEnquiry } from '@/lib/enquiry-client'
-import { artistEnquirySchema, serviceEnquirySchema } from '@/lib/shared'
+import { artistEnquirySchema, printEnquirySchema, serviceEnquirySchema } from '@/lib/shared'
 
 export type EnquiryTarget =
   | { kind: 'SERVICE'; slug: string; title: string; locations: readonly string[] }
   | { kind: 'ARTIST'; slug: string; name: string }
+  | { kind: 'PRINT'; slug: string; title: string; imageUrl: string }
 
-export const FIELD_NAMES = ['name', 'mobile', 'email', 'dateFrom', 'dateTo', 'purpose', 'location', 'message', 'refCode'] as const
+/** A print order also answers a picture challenge: its token, and what to do once the server refused the submission. */
+export type EnquiryFormOptions = { captchaToken?: string; onRejected?: () => void }
+
+export const FIELD_NAMES = ['name', 'mobile', 'email', 'dateFrom', 'dateTo', 'purpose', 'location', 'message', 'captcha', 'refCode'] as const
 export type FieldName = (typeof FIELD_NAMES)[number]
 export type FieldValues = Record<FieldName, string>
 export type FieldErrors = Partial<Record<FieldName, string>>
 export type FormStatus = 'editing' | 'sending' | 'sent'
 
-const EMPTY: FieldValues = { name: '', mobile: '', email: '', dateFrom: '', dateTo: '', purpose: '', location: '', message: '', refCode: '' }
+const EMPTY: FieldValues = { name: '', mobile: '', email: '', dateFrom: '', dateTo: '', purpose: '', location: '', message: '', captcha: '', refCode: '' }
 const RETRY_MESSAGE = 'We could not send your enquiry. Please try again in a moment.'
+const SCHEMAS = { SERVICE: serviceEnquirySchema, ARTIST: artistEnquirySchema, PRINT: printEnquirySchema } as const
 const isField = (name: string): name is FieldName => (FIELD_NAMES as readonly string[]).includes(name)
 
 /** Keeps the first message per known field, so a field never shows more than one error. */
@@ -28,16 +33,17 @@ function firstPerField(pairs: ReadonlyArray<readonly [string, string]>): FieldEr
 
 const fromIssues = (error: ZodError): FieldErrors => firstPerField(error.issues.map((issue) => [String(issue.path[0] ?? ''), issue.message]))
 
-function payloadFor(target: EnquiryTarget, values: FieldValues): unknown {
+function payloadFor(target: EnquiryTarget, values: FieldValues, captchaToken: string | undefined): unknown {
   const { name, mobile, email, message, refCode } = values
   const common = { slug: target.slug, name, mobile, email, message, refCode }
   if (target.kind === 'ARTIST') return { kind: 'ARTIST', ...common }
+  if (target.kind === 'PRINT') return { kind: 'PRINT', ...common, imageUrl: target.imageUrl, captcha: values.captcha, captchaToken }
   const { dateFrom, dateTo, purpose, location } = values
   return { kind: 'SERVICE', ...common, dateFrom, dateTo, purpose, location }
 }
 
 /** Form state for the enquiry dialog: validates with the shared schema, posts, and tracks inline errors. */
-export function useEnquiryForm(target: EnquiryTarget) {
+export function useEnquiryForm(target: EnquiryTarget, { captchaToken, onRejected }: EnquiryFormOptions = {}) {
   const [values, setValues] = useState<FieldValues>(EMPTY)
   const [errors, setErrors] = useState<FieldErrors>({})
   const [formError, setFormError] = useState<string | null>(null)
@@ -58,8 +64,7 @@ export function useEnquiryForm(target: EnquiryTarget) {
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     if (status === 'sending') return
-    const schema = target.kind === 'SERVICE' ? serviceEnquirySchema : artistEnquirySchema
-    const parsed = schema.safeParse(payloadFor(target, values))
+    const parsed = SCHEMAS[target.kind].safeParse(payloadFor(target, values, captchaToken))
     setFormError(null)
     if (!parsed.success) {
       setErrors(fromIssues(parsed.error))
@@ -73,6 +78,9 @@ export function useEnquiryForm(target: EnquiryTarget) {
       setStatus('sent')
     } catch (error) {
       const failure = error instanceof EnquiryError ? error : new EnquiryError(RETRY_MESSAGE)
+      // A challenge is answered once: after a refusal the form gets a new picture and an empty answer.
+      onRejected?.()
+      setValues((current) => (current.captcha ? { ...current, captcha: '' } : current))
       const fields = firstPerField(Object.entries(failure.fields))
       const hasFieldErrors = Object.keys(fields).length > 0
       setErrors(fields)
