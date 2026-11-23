@@ -75,7 +75,6 @@ export function Topbar({ user, breadcrumb, onLogout }: Props) {
         >
           <Icon name="search" />
           <span className="max-[1024px]:hidden">Search records</span>
-          <kbd className="ml-auto border border-line px-1.5 py-px font-ui text-11 tracking-[0.08em] text-faint max-[1024px]:hidden">⌘K</kbd>
         </button>
         <AccountMenu user={user} onLogout={onLogout} />
       </div>

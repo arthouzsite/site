@@ -1,5 +1,5 @@
 import { MIN_PASSWORD_LENGTH, NAME_MESSAGE, NO_DIGITS_PATTERN, ROLES } from '@/lib/shared'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { z } from 'zod'
 import { Button } from '../../components/ui/Button'
 import { ConfirmModal } from '../../components/ui/ConfirmModal'
@@ -39,7 +39,17 @@ export function UserDialog({ user, isSelf, onClose }: Props) {
   const update = useUpdateUser()
   const [pending, setPending] = useState<UserPatch | null>(null)
   const form = useZodForm(schema, { editName: user.name, editRole: user.role, editPassword: '', isDisabled: user.isDisabled })
-  const { register, handleSubmit, setValue, formState, applyServerErrors } = form
+  const { register, handleSubmit, setValue, setFocus, formState, applyServerErrors } = form
+  const [isResettingPassword, setIsResettingPassword] = useState(false)
+
+  useEffect(() => {
+    if (isResettingPassword) setFocus('editPassword')
+  }, [isResettingPassword, setFocus])
+
+  const keepPassword = () => {
+    setValue('editPassword', '', { shouldDirty: true, shouldValidate: true })
+    setIsResettingPassword(false)
+  }
   const { errors } = formState
 
   const send = async (patch: UserPatch) => {
@@ -84,10 +94,19 @@ export function UserDialog({ user, isSelf, onClose }: Props) {
               <option value="ADMIN">Admin</option>
             </Select>
           </Field>
-          <Field name="editPassword" label="Reset password" help="Leave empty to keep the current password." error={errors.editPassword?.message}>
-            <Input autoComplete="new-password" spellCheck={false} {...register('editPassword')} />
-          </Field>
-          <Button size="sm" className="self-start" onClick={() => setValue('editPassword', generatePassword(), { shouldDirty: true })}>Generate</Button>
+          {isResettingPassword ? (
+            <>
+              <Field name="editPassword" label="New password" error={errors.editPassword?.message}>
+                <Input autoComplete="new-password" spellCheck={false} {...register('editPassword')} />
+              </Field>
+              <div className="flex gap-2">
+                <Button size="sm" onClick={() => setValue('editPassword', generatePassword(), { shouldDirty: true })}>Generate</Button>
+                <Button size="sm" onClick={keepPassword}>Keep current password</Button>
+              </div>
+            </>
+          ) : (
+            <Button size="sm" className="self-start" onClick={() => setIsResettingPassword(true)}>Reset password</Button>
+          )}
           {!isSelf && <Switch label="Disabled" {...register('isDisabled')} />}
         </form>
       </Dialog>

@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, type KeyboardEvent, type ReactNode } from 'react'
+import { useEffect, useId, useRef, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { portalRoot } from '../../lib/portalRoot'
 import { cx } from './cx'
@@ -17,12 +17,14 @@ type Props = {
   hideTitle?: boolean
   /** `top` anchors the dialog near the top so it does not jump as its content grows. */
   placement?: 'center' | 'top'
+  /** Close when the pointer goes down on the backdrop; only for surfaces that hold nothing to lose (search). */
+  closeOnOutsideClick?: boolean
 }
 
 const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
 /** Modal shell with focus trap, Escape to close and focus return. Mark the preferred first focus with `data-autofocus`. */
-export function Dialog({ open, title, onClose, children, footer, role = 'dialog', width = 'w-[min(480px,calc(100vw-32px))]', hideTitle = false, placement = 'center' }: Props) {
+export function Dialog({ open, title, onClose, children, footer, role = 'dialog', width = 'w-[min(480px,calc(100vw-32px))]', hideTitle = false, placement = 'center', closeOnOutsideClick = false }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null)
   const titleId = useId()
 
@@ -57,10 +59,14 @@ export function Dialog({ open, title, onClose, children, footer, role = 'dialog'
     }
   }
 
+  const onBackdropMouseDown = (e: MouseEvent) => {
+    if (closeOnOutsideClick && e.target === e.currentTarget) onClose()
+  }
+
   return createPortal(
-    // Backdrop only traps Tab and Escape for the dialog inside it; it is not itself interactive.
+    // Backdrop traps Tab and Escape for the dialog inside it; a press on it can close the dialog, Escape does the same from the keyboard.
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions
-    <div className={cx('fixed inset-0 z-[60] grid bg-scrim', placement === 'top' ? 'place-items-start justify-items-center pt-[12vh] max-sm:pt-4' : 'place-items-center')} onKeyDown={onKeyDown}>
+    <div className={cx('fixed inset-0 z-[60] grid bg-scrim', placement === 'top' ? 'place-items-start justify-items-center pt-[12vh] max-sm:pt-4' : 'place-items-center')} onKeyDown={onKeyDown} onMouseDown={onBackdropMouseDown}>
       <div
         ref={dialogRef}
         role={role}

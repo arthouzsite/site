@@ -12,7 +12,7 @@ type Props = { open: boolean; onClose: () => void }
 
 export function CommandPalette({ open, onClose }: Props) {
   return (
-    <Dialog open={open} onClose={onClose} title="Search records" hideTitle placement="top" width="w-[min(640px,calc(100vw-32px))]">
+    <Dialog open={open} onClose={onClose} title="Search records" hideTitle closeOnOutsideClick placement="top" width="w-[min(640px,calc(100vw-32px))]">
       <Palette onClose={onClose} />
     </Dialog>
   )

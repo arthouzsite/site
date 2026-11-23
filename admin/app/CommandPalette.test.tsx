@@ -147,6 +147,18 @@ describe('command palette', () => {
     expect(button).toHaveFocus()
   })
 
+  it('closes on a press outside the search box and stays open on a press inside it', async () => {
+    const { button } = setup()
+    const u = userEvent.setup()
+    await u.click(button)
+    const dialog = (await searchBox()).closest('[role="dialog"]') as HTMLElement
+    await u.click(dialog)
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    await u.click(dialog.parentElement as HTMLElement)
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(button).not.toHaveTextContent('⌘K')
+  })
+
   it('leaves ⌘K alone while another dialog is open', async () => {
     setup()
     const modal = document.createElement('div')
