@@ -1,6 +1,6 @@
 import { formatDateRange, formatMonthYear, indexLetter, resolveExhibitionStatus, STATUS_BADGE } from '@/lib/shared'
 import type {
-  PublicArtist, PublicExhibition, PublicExhibitionDetail, PublicFair, PublicFairDetail, PublicLocation, PublicNews, PublicService,
+  PublicArtist, PublicExhibition, PublicExhibitionDetail, PublicFair, PublicFairDetail, PublicLocation, PublicPrintCategory, PublicNews, PublicService,
 } from '@/lib/shared'
 import type { Prisma } from '@/lib/server/generated/prisma/client'
 import { toPublicImage } from './public.images'
@@ -94,6 +94,14 @@ export function toPublicFair(row: Prisma.FairGetPayload<{ include: typeof PUBLIC
     id: row.id, slug: row.slug, title: row.title, where: [place, row.dateLabel].filter(Boolean).join(' · '), booth: row.booth,
     text: row.text, image: toPublicImage(row.image), gallery: row.gallery.flatMap((g) => toPublicImage(g.media) ?? []),
   }
+}
+
+export const PUBLIC_PRINT_INCLUDE = {
+  images: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }], include: { media: true } },
+} satisfies Prisma.PrintCategoryInclude
+
+export function toPublicPrintCategory(row: Prisma.PrintCategoryGetPayload<{ include: typeof PUBLIC_PRINT_INCLUDE }>): PublicPrintCategory {
+  return { id: row.id, slug: row.slug, name: row.name, images: row.images.flatMap((image) => toPublicImage(image.media) ?? []) }
 }
 
 export const toPublicFairDetail = (row: Prisma.FairGetPayload<{ include: typeof PUBLIC_FAIR_INCLUDE }>): PublicFairDetail => toPublicFair(row)

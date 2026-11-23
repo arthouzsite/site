@@ -80,7 +80,7 @@ describe('desktop Services dropdown', () => {
     await user.tab()
     await user.tab()
     await user.tab()
-    expect(document.activeElement).toBe(screen.getByRole('link', { name: 'About' }))
+    expect(document.activeElement).toBe(screen.getByRole('link', { name: 'Prints' }))
     expect(trigger.getAttribute('aria-expanded')).toBe('false')
   })
 
@@ -244,7 +244,7 @@ describe('mobile menu', () => {
     const at = hrefs.indexOf('/services')
     expect(hrefs.slice(at, at + 4)).toEqual(['/services', '/services/art-sales', '/services/art-for-rent', '/services/gallery-on-rent'])
     expect(hrefs[at - 1]).toBe('/news')
-    expect(hrefs[at + 4]).toBe('/about')
+    expect(hrefs[at + 4]).toBe('/prints')
     const link = within(dialog).getByRole('link', { name: 'Art for rent' })
     link.addEventListener('click', (event) => event.preventDefault())
     await user.click(link)

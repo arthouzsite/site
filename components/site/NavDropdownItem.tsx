@@ -2,11 +2,10 @@
 
 import Link from 'next/link'
 import { useEffect, useId, useRef, useState, type FocusEvent, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react'
-import { isActive, type NavItem } from '@/lib/nav'
-import type { NavService } from '@/lib/services'
+import { isActive, type NavChild, type NavItem } from '@/lib/nav'
 import { navLinkClass } from './navLinkClass'
 
-type Props = { item: NavItem; pathname: string; services: readonly NavService[] }
+type Props = { item: NavItem; pathname: string; links: readonly NavChild[]; toggleLabel: string }
 type OpenState = { open: boolean; pathname: string }
 type Press = { wasOpen: boolean; at: number }
 
@@ -14,7 +13,7 @@ type Press = { wasOpen: boolean; at: number }
 const PRESS_WINDOW_MS = 800
 
 /**
- * The Services link plus its dropdown of published services. A mouse hover or focus-within opens it; Enter follows
+ * A section link (Services, Prints) plus its dropdown of that section's pages. A mouse hover or focus-within opens it; Enter follows
  * the link; ArrowDown enters the list, the arrow keys, Home and End move within it, Escape closes and returns focus
  * to the link, and a press outside closes. A separate chevron button toggles the panel on click or tap, which is
  * how touch reaches it (a touch never hover-opens, so a tap on the link just navigates). The panel is always in
@@ -22,7 +21,7 @@ const PRESS_WINDOW_MS = 800
  * chevron is out of flow in the gap beside the link, so no other nav item moves. The chevron is drawn only for
  * coarse pointers, keyboard focus or while open; otherwise it is transparent, keeping the header as designed.
  */
-export function ServicesNavItem({ item, pathname, services }: Props) {
+export function NavDropdownItem({ item, pathname, links, toggleLabel }: Props) {
   const panelId = useId()
   const wrapper = useRef<HTMLDivElement>(null)
   const trigger = useRef<HTMLAnchorElement>(null)
@@ -130,9 +129,9 @@ export function ServicesNavItem({ item, pathname, services }: Props) {
       </Link>
       <button
         type="button"
-        // The 44 px target starts at the button's own left edge: centring it would cover the end of the Services link
-        // (the button paints above the earlier link), turning a click on "…ES" into a toggle instead of navigation.
-        aria-label="Show services"
+        // The 44 px target starts at the button's own left edge: centring it would cover the end of the section link
+        // (the button paints above the earlier link), turning a click on its last letters into a toggle instead of navigation.
+        aria-label={toggleLabel}
         aria-expanded={open}
         aria-controls={panelId}
         onPointerDown={() => {
@@ -149,20 +148,20 @@ export function ServicesNavItem({ item, pathname, services }: Props) {
         ref={panel}
         id={panelId}
         hidden={!open}
-        className="absolute top-full right-0 z-10 m-0 max-w-[min(360px,calc(100vw-40px))] min-w-[240px] list-none border border-line-18 bg-paper p-0"
+        className="absolute top-full right-0 z-10 m-0 max-h-[calc(100dvh-96px)] max-w-[min(360px,calc(100vw-40px))] min-w-[240px] list-none overflow-y-auto border border-line-18 bg-paper p-0"
       >
-        {services.map((service) => {
-          const href = `${item.href}/${encodeURIComponent(service.slug)}`
+        {links.map((link) => {
+          const href = `${item.href}/${encodeURIComponent(link.slug)}`
           const current = pathname === href
           return (
-            <li key={service.slug}>
+            <li key={link.slug}>
               <Link
                 href={href}
                 onClick={() => setOpen(false)}
                 aria-current={current ? 'page' : undefined}
                 className={`flex min-h-[44px] items-center px-5 py-3 text-[12.5px] tracking-[0.16em] break-words whitespace-normal uppercase hover:bg-line-12 focus-visible:bg-line-12 ${current ? 'text-rust' : 'text-ink'}`}
               >
-                {service.title}
+                {link.title}
               </Link>
             </li>
           )

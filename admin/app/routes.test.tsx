@@ -9,7 +9,7 @@ import { API_URL, HttpResponse, envelope, http, server } from '../test/msw'
 // Pages with real data calls get empty answers so these route tests stay about routing.
 const empty = (path: string, data: unknown = []) => http.get(`${API_URL}${path}`, () => HttpResponse.json(envelope(data)))
 const emptyHandlers = [
-  empty('/exhibitions'), empty('/artists'), empty('/news'), empty('/media'), empty('/users'), empty('/settings', {}),
+  empty('/exhibitions'), empty('/artists'), empty('/news'), empty('/media'), empty('/prints'), empty('/users'), empty('/settings', {}),
   empty('/public/home', { hero: null, heroLayout: 'FULL_BLEED', upcoming: null, focus: { artist: null }, artistsLine: [] }),
 ]
 
@@ -18,7 +18,7 @@ const PAGES: Array<[string, string | RegExp]> = [
   ['/artists', 'Artists'], ['/artists/new', 'New artist'], ['/artists/a1', 'Alpha Artist'],
   ['/fairs', 'Fairs'], ['/fairs/new', 'New fair'],
   ['/services', 'Services'], ['/enquiries', 'Enquiries'], ['/services/new', 'New service'], ['/news', 'News'], ['/news/new', 'New news item'], ['/locations', 'Locations'], ['/about', 'About page'],
-  ['/settings', 'Home & settings'], ['/media', 'Media'], ['/users', 'Users'],
+  ['/settings', 'Home & settings'], ['/media', 'Media'], ['/prints', 'Prints'], ['/users', 'Users'],
 ]
 
 describe('routes', () => {

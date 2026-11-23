@@ -46,6 +46,8 @@ const ROUTES: readonly PublicRoute[] = [
   { pattern: '/public/artists/:slug', resolve: ({ slug }) => () => publicReads.getArtist(slug) },
   { pattern: '/public/fairs', resolve: () => () => publicReads.getFairs() },
   { pattern: '/public/fairs/:slug', resolve: ({ slug }) => () => publicReads.getFair(slug) },
+  { pattern: '/public/prints', resolve: () => () => publicReads.getPrints() },
+  { pattern: '/public/prints/:slug', resolve: ({ slug }) => () => publicReads.getPrint(slug) },
   { pattern: '/public/news', resolve: () => () => publicReads.getNews() },
   { pattern: '/public/services', resolve: () => () => publicReads.getServices() },
   { pattern: '/public/services/:slug', resolve: ({ slug }) => () => publicReads.getService(slug) },

@@ -113,6 +113,11 @@ async function serviceUsageTags(prisma: PrismaClient, ids: string[]): Promise<st
   return rows.flatMap((r) => tagsFor('service', r.slug))
 }
 
+async function printUsageTags(prisma: PrismaClient, ids: string[]): Promise<string[]> {
+  const rows = await prisma.printCategory.findMany({ where: { id: { in: ids } }, select: { slug: true } })
+  return rows.flatMap((r) => tagsFor('print', r.slug))
+}
+
 async function fairUsageTags(prisma: PrismaClient, ids: string[]): Promise<string[]> {
   const rows = await prisma.fair.findMany({ where: { id: { in: ids } }, select: { slug: true } })
   return rows.flatMap((r) => tagsFor('fair', r.slug))
@@ -124,6 +129,7 @@ export async function mediaUsageTags(prisma: PrismaClient, usage: readonly Media
   const staticTags: Record<string, string[]> = {
     fair: tagsFor('fair'),
     fairGallery: tagsFor('fair'),
+    print: tagsFor('print'),
     news: tagsFor('news'),
     location: tagsFor('location'),
     setting: tagsFor('setting'),
@@ -137,6 +143,7 @@ export async function mediaUsageTags(prisma: PrismaClient, usage: readonly Media
     ['service', (ids) => serviceUsageTags(prisma, ids)],
     ['fair', (ids) => fairUsageTags(prisma, ids)],
     ['fairGallery', (ids) => fairUsageTags(prisma, ids)],
+    ['print', (ids) => printUsageTags(prisma, ids)],
   ]
   const resolved = await Promise.all(
     lookups.filter(([type]) => buckets[type]).map(([type, run]) => safely(`media usage ${type}`, () => run(buckets[type] as string[]))),

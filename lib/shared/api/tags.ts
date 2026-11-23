@@ -1,4 +1,4 @@
-export type TagEntity = 'exhibition' | 'artist' | 'artwork' | 'fair' | 'service' | 'news' | 'location' | 'setting' | 'media'
+export type TagEntity = 'exhibition' | 'artist' | 'artwork' | 'fair' | 'print' | 'service' | 'news' | 'location' | 'setting' | 'media'
 
 const BASE_TAGS = ['home', 'search'] as const
 
@@ -11,6 +11,8 @@ function entityTags(entity: TagEntity, slug?: string): string[] {
       return ['artists', ...(slug ? [`artist:${slug}`] : []), 'exhibitions']
     case 'fair':
       return ['fairs', ...(slug ? [`fair:${slug}`] : [])]
+    case 'print':
+      return ['prints', ...(slug ? [`print:${slug}`] : [])]
     case 'service':
       return ['services', ...(slug ? [`service:${slug}`] : [])]
     case 'news':

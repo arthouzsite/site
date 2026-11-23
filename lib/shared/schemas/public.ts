@@ -31,6 +31,11 @@ export const publicFairSchema = z.object({
 
 export const publicFairDetailSchema = publicFairSchema.extend({ gallery: z.array(publicImageSchema) })
 
+export const publicPrintCategorySchema = z.object({
+  id: z.string(), slug: z.string(), name: z.string(), images: z.array(publicImageSchema),
+})
+export const publicPrintCategoryListSchema = z.array(publicPrintCategorySchema)
+
 export const publicServiceSchema = z.object({
   slug: z.string(), title: z.string(), summary: z.string(), body: z.string(), image,
   ctaLabel: z.string(), ctaHref: z.string(),
@@ -129,6 +134,7 @@ export type PublicArtist = z.infer<typeof publicArtistSchema>
 export type PublicArtistDetail = z.infer<typeof publicArtistDetailSchema>
 export type PublicFair = z.infer<typeof publicFairSchema>
 export type PublicFairDetail = z.infer<typeof publicFairDetailSchema>
+export type PublicPrintCategory = z.infer<typeof publicPrintCategorySchema>
 export type PublicService = z.infer<typeof publicServiceSchema>
 export type PublicServiceList = z.infer<typeof publicServiceListSchema>
 export type PublicNews = z.infer<typeof publicNewsSchema>

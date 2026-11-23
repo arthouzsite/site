@@ -10,14 +10,21 @@ import { FairGalleryThumbs } from './FairGalleryThumbs'
 
 const STAGE_SIZES = '(min-width: 1024px) 80vw, 100vw'
 
-type Props = { title: string; images: readonly PublicImage[]; onClose: () => void; returnFocus: HTMLElement | null }
+type Props = {
+  title: string
+  images: readonly PublicImage[]
+  onClose: () => void
+  returnFocus: HTMLElement | null
+  /** The image shown first; the gallery of a fair starts at its first one. */
+  startIndex?: number
+}
 
 /** Full-screen paper overlay like the enquiry dialog: title and Close on top, one contained image at a time below. */
-export function FairGalleryDialog({ title, images, onClose, returnFocus }: Props) {
+export function FairGalleryDialog({ title, images, onClose, returnFocus, startIndex = 0 }: Props) {
   const panel = useRef<HTMLDivElement>(null)
   const headingId = useId()
   useModalDialog(panel, onClose, returnFocus)
-  const { index, setIndex, next, prev } = useGalleryIndex(images.length)
+  const { index, setIndex, next, prev } = useGalleryIndex(images.length, startIndex)
   const current = images[index]
   const isSingle = images.length < 2
 

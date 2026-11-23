@@ -73,6 +73,7 @@ model Media {
   exhibitionWorks ExhibitionWork[]
   fairs           Fair[]
   fairImages      FairImage[]
+  printImages     PrintImage[]
   services        Service[]
   news            News[]
   locations       Location[]
@@ -218,6 +219,32 @@ model FairImage {
 
   @@unique([fairId, mediaId])
   @@index([fairId, sortOrder])
+  @@index([mediaId])
+}
+
+model PrintCategory {
+  id        String   @id @default(uuid())
+  slug      String   @unique
+  name      String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  images PrintImage[]
+}
+
+model PrintImage {
+  id         String   @id @default(uuid())
+  categoryId String
+  mediaId    String
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  category PrintCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  media    Media         @relation(fields: [mediaId], references: [id], onDelete: Restrict)
+
+  @@unique([categoryId, mediaId])
+  @@index([categoryId, sortOrder])
   @@index([mediaId])
 }
 

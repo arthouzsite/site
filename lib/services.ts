@@ -2,10 +2,11 @@ import { publicServiceListSchema, publicServiceSchema, type PublicService } from
 import { unstable_rethrow } from 'next/navigation'
 import { connection } from 'next/server'
 import { apiGet } from './api'
+import type { NavChild } from './nav'
 import { TAGS } from './tags'
 
 /** What the navigation needs from a service: enough to link to it, none of the body copy. */
-export type NavService = Pick<PublicService, 'slug' | 'title'>
+export type NavService = NavChild
 
 export function getServices(): Promise<PublicService[]> {
   return apiGet('/public/services', publicServiceListSchema, [TAGS.services])

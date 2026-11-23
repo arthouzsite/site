@@ -9,6 +9,7 @@ vi.mock('@/lib/server/prisma', () => ({
     service: { findMany: vi.fn() },
     news: { findMany: vi.fn() },
     fair: { findMany: vi.fn() },
+    printCategory: { findMany: vi.fn() },
   },
 }))
 
@@ -21,17 +22,18 @@ beforeEach(() => {
   vi.mocked(prisma.service.findMany).mockResolvedValue(rows('advisory') as never)
   vi.mocked(prisma.news.findMany).mockResolvedValue(rows('press-note') as never)
   vi.mocked(prisma.fair.findMany).mockResolvedValue(rows('art-dubai') as never)
+  vi.mocked(prisma.printCategory.findMany).mockResolvedValue(rows('etchings') as never)
 })
 
 describe('allSiteTags', () => {
   it('includes every entity-level tag', async () => {
     const tags = await allSiteTags()
-    expect(tags).toEqual(expect.arrayContaining(['home', 'search', 'exhibitions', 'artists', 'fairs', 'services', 'news', 'locations', 'about', 'settings']))
+    expect(tags).toEqual(expect.arrayContaining(['home', 'search', 'exhibitions', 'artists', 'fairs', 'prints', 'services', 'news', 'locations', 'about', 'settings']))
   })
 
   it('adds the per-slug tags for exhibitions, artists and services', async () => {
     const tags = await allSiteTags()
-    expect(tags).toEqual(expect.arrayContaining(['exhibition:spring-show', 'exhibition:autumn-show', 'artist:jane-doe', 'service:advisory', 'fair:art-dubai']))
+    expect(tags).toEqual(expect.arrayContaining(['exhibition:spring-show', 'exhibition:autumn-show', 'artist:jane-doe', 'service:advisory', 'fair:art-dubai', 'print:etchings']))
   })
 
   it('has no per-slug tag for news (tagsFor yields none) and no duplicates', async () => {
@@ -42,7 +44,7 @@ describe('allSiteTags', () => {
 
   it('queries only the slug column', async () => {
     await allSiteTags()
-    for (const model of [prisma.exhibition, prisma.artist, prisma.service, prisma.news, prisma.fair]) {
+    for (const model of [prisma.exhibition, prisma.artist, prisma.service, prisma.news, prisma.fair, prisma.printCategory]) {
       expect(model.findMany).toHaveBeenCalledWith({ select: { slug: true } })
     }
   })

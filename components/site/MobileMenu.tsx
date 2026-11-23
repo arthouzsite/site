@@ -3,14 +3,20 @@
 import Link from 'next/link'
 import { Fragment, useRef } from 'react'
 import { useModalDialog } from '@/hooks/useModalDialog'
-import { NAV_ITEMS, SERVICES_HREF, isActive } from '@/lib/nav'
-import type { NavService } from '@/lib/services'
+import { NAV_ITEMS, PRINTS_HREF, SERVICES_HREF, isActive, type NavChild } from '@/lib/nav'
 import { OutlineButton } from './OutlineButton'
 
-type Props = { pathname: string; services: readonly NavService[]; onClose: () => void; returnFocus?: HTMLElement | null }
+type Props = {
+  pathname: string
+  services: readonly NavChild[]
+  prints?: readonly NavChild[]
+  onClose: () => void
+  returnFocus?: HTMLElement | null
+}
 
 /** Full-screen ink menu for narrow viewports, as the prototype's `menuOpen` block. */
-export function MobileMenu({ pathname, services, onClose, returnFocus }: Props) {
+export function MobileMenu({ pathname, services, prints = [], onClose, returnFocus }: Props) {
+  const children: Record<string, readonly NavChild[]> = { [SERVICES_HREF]: services, [PRINTS_HREF]: prints }
   const panel = useRef<HTMLDivElement>(null)
   useModalDialog(panel, onClose, returnFocus)
 
@@ -39,19 +45,19 @@ export function MobileMenu({ pathname, services, onClose, returnFocus }: Props) 
             >
               {item.label}
             </Link>
-            {item.href === SERVICES_HREF && services.length > 0 && (
+            {(children[item.href]?.length ?? 0) > 0 && (
               <ul className="m-0 list-none p-0 pl-6">
-                {services.map((service) => {
-                  const href = `${item.href}/${encodeURIComponent(service.slug)}`
+                {children[item.href]?.map((child) => {
+                  const href = `${item.href}/${encodeURIComponent(child.slug)}`
                   return (
-                    <li key={service.slug}>
+                    <li key={child.slug}>
                       <Link
                         href={href}
                         onClick={onClose}
                         aria-current={pathname === href ? 'page' : undefined}
                         className="block border-b border-line-dark-16 py-3 font-display text-[28px] leading-none text-ondark hover:text-paper"
                       >
-                        {service.title}
+                        {child.title}
                       </Link>
                     </li>
                   )

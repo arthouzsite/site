@@ -38,6 +38,7 @@ export const routes: RouteObject[] = [
           { path: 'about', ...page(() => import('../features/about/AboutPage')) },
           { path: 'settings', ...page(() => import('../features/settings/SettingsPage')) },
           { path: 'media', ...page(() => import('../features/media/MediaPage')) },
+          { path: 'prints', ...page(() => import('../features/prints/PrintsPage')) },
           {
             element: <RequireRole allow="ADMIN" />,
             children: [{ path: 'users', ...page(() => import('../features/users/UsersPage')) }],

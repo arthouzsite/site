@@ -8,6 +8,8 @@ export const TAGS = {
   artist: (slug: string) => `artist:${slug}`,
   fairs: 'fairs',
   fair: (slug: string) => `fair:${slug}`,
+  prints: 'prints',
+  print: (slug: string) => `print:${slug}`,
   services: 'services',
   service: (slug: string) => `service:${slug}`,
   news: 'news',

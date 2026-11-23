@@ -26,6 +26,7 @@ const PATHS = {
   enquiries: (<><rect x="3" y="5" width="18" height="14" /><path d="M3 7l9 6 9-6" /></>),
   settings: (<><path d="M4 6h16M4 12h16M4 18h16" /><circle cx="9" cy="6" r="2" /><circle cx="15" cy="12" r="2" /><circle cx="8" cy="18" r="2" /></>),
   media: (<><rect x="3" y="5" width="18" height="14" /><circle cx="9" cy="10" r="1.5" /><path d="M21 16l-5-5-8 8" /></>),
+  prints: (<><rect x="5" y="3" width="14" height="18" /><rect x="8" y="6" width="8" height="9" /><path d="M9 18h6" /></>),
   users: (<><circle cx="9" cy="8" r="3.5" /><path d="M2 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5" /><circle cx="17.5" cy="9" r="2.5" /><path d="M22 19c0-2.5-2-4-4.5-4" /></>),
   copy: (<><rect x="8" y="8" width="12" height="12" /><path d="M16 8V4H4v12h4" /></>),
   refresh: (<><path d="M20 12a8 8 0 1 1-2.4-5.7" /><path d="M20 4v5h-5" /></>),

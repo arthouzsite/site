@@ -1,6 +1,6 @@
 import type {
   PublicAbout, PublicArtistDetail, PublicArtistList, PublicExhibitionDetail, PublicExhibitionList, PublicFair,
-  PublicFairDetail,
+  PublicFairDetail, PublicPrintCategory,
   PublicLocation, PublicNews, PublicService, PublicSettings,
 } from '@/lib/shared'
 import { indexLetter, resolveExhibitionStatus } from '@/lib/shared'
@@ -11,7 +11,7 @@ import { settingsService } from '@/lib/server/settings/settings.service'
 import { sortByTitle } from '@/lib/server/services/services.order'
 import { resolveImages, toPublicImage } from './public.images'
 import {
-  PUBLIC_ARTIST_INCLUDE, PUBLIC_FAIR_INCLUDE, PUBLIC_EXHIBITION_DETAIL_INCLUDE, PUBLIC_EXHIBITION_INCLUDE, PUBLIC_NEWS_INCLUDE,
+  PUBLIC_ARTIST_INCLUDE, PUBLIC_FAIR_INCLUDE, PUBLIC_PRINT_INCLUDE, toPublicPrintCategory, PUBLIC_EXHIBITION_DETAIL_INCLUDE, PUBLIC_EXHIBITION_INCLUDE, PUBLIC_NEWS_INCLUDE,
   toPublicArtist, toPublicExhibition, toPublicExhibitionDetail, toPublicFair, toPublicFairDetail, toPublicLocation, toPublicNews, toPublicService,
 } from './public.mapper'
 import type { PublicExhibitionsQuery } from './public.queries'
@@ -114,6 +114,22 @@ export async function getFair(slug: string): Promise<PublicFairDetail> {
   const row = await prisma.fair.findFirst({ where: { slug, isPublished: true }, include: PUBLIC_FAIR_INCLUDE })
   if (!row) throw notFound(NOT_FOUND)
   return toPublicFairDetail(row)
+}
+
+/** Only categories that hold at least one image reach the site: an empty one has nothing to show. */
+export async function listPrints(): Promise<PublicPrintCategory[]> {
+  const rows = await prisma.printCategory.findMany({
+    where: { images: { some: {} } },
+    include: PUBLIC_PRINT_INCLUDE,
+    orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
+  })
+  return rows.map(toPublicPrintCategory)
+}
+
+export async function getPrint(slug: string): Promise<PublicPrintCategory> {
+  const row = await prisma.printCategory.findFirst({ where: { slug, images: { some: {} } }, include: PUBLIC_PRINT_INCLUDE })
+  if (!row) throw notFound(NOT_FOUND)
+  return toPublicPrintCategory(row)
 }
 
 export async function listServices(): Promise<PublicService[]> {

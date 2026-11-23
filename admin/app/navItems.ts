@@ -14,5 +14,6 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/about', label: 'About page', icon: 'about' },
   { to: '/settings', label: 'Home & settings', icon: 'settings' },
   { to: '/media', label: 'Media', icon: 'media', countKey: 'media' },
+  { to: '/prints', label: 'Prints', icon: 'prints' },
   { to: '/users', label: 'Users', icon: 'users', adminOnly: true },
 ]

@@ -81,6 +81,7 @@ const byPath: Record<string, unknown> = {
   '/public/fairs': [fair],
   '/public/news': [news],
   '/public/services': publicServiceList,
+  '/public/prints': [],
   '/public/locations': [location],
   '/public/exhibitions': { items: [exhibition], cities: ['Chennai'] },
   '/public/exhibitions/salt-line': exhibitionDetail,
@@ -315,11 +316,13 @@ describe('shell', () => {
     apiGet.mockImplementation(async (path) => {
       if (path.startsWith('/public/services')) return publicServiceList
       if (path === '/public/fairs') return [fair]
+      if (path === '/public/prints') return [{ id: 'p1', slug: 'etchings', name: 'Etchings', images: [] }]
       return path.startsWith('/public/artists') ? artistList : { items: [exhibition], cities: [] }
     })
     const entries = await sitemap()
     expect(entries.map((e) => e.url)).toContain('https://arthouz.test/exhibitions/salt-line')
     expect(entries.map((e) => e.url)).toContain('https://arthouz.test/services/art-sales')
     expect(entries.map((e) => e.url)).toContain('https://arthouz.test/fairs/f1')
+    expect(entries.map((e) => e.url)).toContain('https://arthouz.test/prints/etchings')
   })
 })

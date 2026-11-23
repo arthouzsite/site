@@ -10,6 +10,7 @@ vi.mock('next/image', () => ({
 }))
 
 vi.mock('@/lib/services', () => ({ loadNavServices: async () => [{ slug: 'art-sales', title: 'Art sales' }] }))
+vi.mock('@/lib/prints', () => ({ loadNavPrints: async () => [{ slug: 'etchings', title: 'Etchings' }] }))
 vi.mock('next/navigation', () => ({ usePathname: () => '/', useRouter: () => ({ push: vi.fn(), replace: vi.fn() }) }))
 
 import { GalleryTab } from '@/components/about/GalleryTab'
@@ -209,6 +210,7 @@ describe('site chrome', () => {
     expect(out).toContain('aria-label="Art Houz, home"')
     expect(out).toContain('href="/services"')
     expect(out).toContain('href="/services/art-sales"')
+    expect(out).toContain('href="/prints/etchings"')
   })
 })
 

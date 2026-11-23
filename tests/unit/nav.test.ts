@@ -1,15 +1,17 @@
 import { describe, expect, it } from 'vitest'
-import { FOOTER_NAV, NAV_ITEMS, SERVICES_HREF, isActive } from '@/lib/nav'
+import { FOOTER_NAV, NAV_ITEMS, PRINTS_HREF, SERVICES_HREF, isActive } from '@/lib/nav'
 
 describe('navigation items', () => {
-  it('places Services between News and About in the header and footer', () => {
+  it('places Services after News, then Prints, then About in the header and footer', () => {
     for (const items of [NAV_ITEMS, FOOTER_NAV]) {
       const labels = items.map((item) => item.label)
       expect(labels.indexOf('Services')).toBe(labels.indexOf('News') + 1)
-      expect(labels.indexOf('About')).toBe(labels.indexOf('Services') + 1)
+      expect(labels.indexOf('Prints')).toBe(labels.indexOf('Services') + 1)
+      expect(labels.indexOf('About')).toBe(labels.indexOf('Prints') + 1)
     }
     expect(NAV_ITEMS.find((item) => item.label === 'Services')?.href).toBe(SERVICES_HREF)
     expect(FOOTER_NAV.find((item) => item.label === 'Services')?.href).toBe('/services')
+    expect(NAV_ITEMS.find((item) => item.label === 'Prints')?.href).toBe(PRINTS_HREF)
   })
 
   it('marks Services active on the index and on any service page, but not on a lookalike path', () => {

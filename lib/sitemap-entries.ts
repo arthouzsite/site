@@ -1,4 +1,4 @@
-import { publicFairSchema, publicServiceListSchema } from '@/lib/shared'
+import { publicFairSchema, publicPrintCategoryListSchema, publicServiceListSchema } from '@/lib/shared'
 import { z } from 'zod'
 import type { MetadataRoute } from 'next'
 import { unstable_rethrow } from 'next/navigation'
@@ -6,7 +6,7 @@ import { apiGet } from './api'
 import { siteUrl } from './site-url'
 import { TAGS } from './tags'
 
-const STATIC_PATHS = ['/', '/exhibitions', '/artists', '/fairs', '/news', '/services', '/about', '/visit'] as const
+const STATIC_PATHS = ['/', '/exhibitions', '/artists', '/fairs', '/news', '/services', '/prints', '/about', '/visit'] as const
 const slugs = z.array(z.object({ slug: z.string().min(1) }))
 const exhibitionSlugs = z.object({ items: slugs })
 const artistSlugs = z.object({ flat: slugs })
@@ -23,14 +23,15 @@ async function sectionPaths(load: () => Promise<{ slug: string }[]>, prefix: str
   }
 }
 
-/** Static routes followed by every published exhibition, artist, fair and service page. */
+/** Static routes followed by every published exhibition, artist, fair, service and print category page. */
 export async function buildSitemap(): Promise<MetadataRoute.Sitemap> {
-  const [exhibitions, artists, fairs, services] = await Promise.all([
+  const [exhibitions, artists, fairs, services, prints] = await Promise.all([
     sectionPaths(async () => (await apiGet('/public/exhibitions', exhibitionSlugs, [TAGS.exhibitions])).items, '/exhibitions'),
     sectionPaths(async () => (await apiGet('/public/artists', artistSlugs, [TAGS.artists])).flat, '/artists'),
     sectionPaths(() => apiGet('/public/fairs', z.array(publicFairSchema), [TAGS.fairs]), '/fairs'),
     sectionPaths(() => apiGet('/public/services', publicServiceListSchema, [TAGS.services]), '/services'),
+    sectionPaths(() => apiGet('/public/prints', publicPrintCategoryListSchema, [TAGS.prints]), '/prints'),
   ])
   const origin = siteUrl()
-  return [...STATIC_PATHS, ...exhibitions, ...artists, ...fairs, ...services].map((path) => ({ url: path === '/' ? `${origin}/` : `${origin}${path}` }))
+  return [...STATIC_PATHS, ...exhibitions, ...artists, ...fairs, ...services, ...prints].map((path) => ({ url: path === '/' ? `${origin}/` : `${origin}${path}` }))
 }
