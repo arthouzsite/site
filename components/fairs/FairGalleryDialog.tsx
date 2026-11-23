@@ -4,7 +4,6 @@ import { useId, useRef } from 'react'
 import Image from 'next/image'
 import type { PublicImage } from '@/lib/shared'
 import { OutlineButton } from '@/components/site/OutlineButton'
-import { PRIMARY_BUTTON_CLASS, PRIMARY_BUTTON_ELEMENT_CLASS } from '@/components/site/PrimaryButton'
 import { useGalleryIndex } from '@/hooks/useGalleryIndex'
 import { useModalDialog } from '@/hooks/useModalDialog'
 import { FairGalleryThumbs } from './FairGalleryThumbs'
@@ -37,11 +36,11 @@ export function FairGalleryDialog({ title, images, onClose, returnFocus, startIn
         <h2 id={headingId} className="m-0 min-w-0 font-display text-[clamp(26px,3vw,40px)] leading-[1.1] font-normal break-words">
           {title}
         </h2>
-        <div className="flex shrink-0 items-stretch gap-3">
+        <div className="flex shrink-0 items-center gap-3">
           {action && (
-            <button type="button" aria-haspopup="dialog" onClick={() => action.onSelect(index)} className={`${PRIMARY_BUTTON_CLASS} ${PRIMARY_BUTTON_ELEMENT_CLASS} self-stretch py-0`}>
+            <OutlineButton tone="solid" aria-haspopup="dialog" onClick={() => action.onSelect(index)}>
               {action.label}
-            </button>
+            </OutlineButton>
           )}
           <OutlineButton tone="ink" onClick={onClose}>
             Close

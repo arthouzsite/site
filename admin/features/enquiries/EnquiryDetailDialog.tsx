@@ -3,8 +3,8 @@ import { Button, Dialog } from '../../components/ui'
 import { formatDateTime } from '../../lib/format'
 import type { AdminEnquiry } from './types'
 
-const KIND_LABEL = { SERVICE: 'Service', ARTIST: 'Artist', PRINT: 'Print order' } as const
-const SUBJECT_LABEL = { SERVICE: 'Service', ARTIST: 'Artist', PRINT: 'Print' } as const
+const KIND_LABEL = { SERVICE: 'Service', ARTIST: 'Artist', PRINT: 'Print' } as const
+const SUBJECT_LABEL = { SERVICE: 'Service', ARTIST: 'Artist', PRINT: 'Subject' } as const
 const dayFmt = new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
 const formatDay = (iso: string): string => dayFmt.format(new Date(`${iso}T00:00:00.000Z`))
 
@@ -35,7 +35,7 @@ export function EnquiryDetailDialog({ enquiry, onClose }: { enquiry: AdminEnquir
         {dateFrom && dateTo && <Row label="Dates">{formatDay(dateFrom)} to {formatDay(dateTo)}</Row>}
         {enquiry.purpose && <Row label="Purpose">{enquiry.purpose}</Row>}
         {enquiry.location && <Row label="Location">{enquiry.location}</Row>}
-        <Row label="Message">{enquiry.message || '—'}</Row>
+        {enquiry.kind !== 'PRINT' && <Row label="Message">{enquiry.message || '—'}</Row>}
         <Row label="Status">{enquiry.isHandled ? 'Handled' : 'Not handled yet'}</Row>
       </dl>
     </Dialog>

@@ -12,7 +12,7 @@ import type { AdminEnquiry } from './types'
 import { useDeleteEnquiry, useEnquiries, useSetHandled } from './useEnquiries'
 
 const PAGE_SIZE = 25
-const KIND_LABEL: Record<EnquiryKind, string> = { SERVICE: 'Service', ARTIST: 'Artist', PRINT: 'Print order' }
+const KIND_LABEL: Record<EnquiryKind, string> = { SERVICE: 'Service', ARTIST: 'Artist', PRINT: 'Print' }
 const isKind = (value: string | null): value is EnquiryKind => ENQUIRY_KINDS.some((kind) => kind === value)
 
 export default function EnquiriesPage() {

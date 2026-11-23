@@ -90,6 +90,19 @@ describe('EnquiriesPage', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
+  it('labels a print order as Print, offers Print enquiries in the filter and shows no message row for it', async () => {
+    server.use(http.get(`${API_URL}/enquiries`, () => page([makeEnquiry({ kind: 'PRINT', subject: 'Golden Sunset Fields: work', message: '' })])))
+    renderRoutes(routes, '/enquiries')
+    const table = await screen.findByRole('table')
+    expect(within(within(table).getAllByRole('row')[1]!).getByText('Print')).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Print enquiries' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Golden Sunset Fields: work' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Enquiry from Asha Rao' })
+    expect(within(dialog).getByText('Subject')).toBeInTheDocument()
+    expect(within(dialog).getByText('Print')).toBeInTheDocument()
+    expect(within(dialog).queryByText('Message')).not.toBeInTheDocument()
+  })
+
   it('marks a subject whose service or artist was deleted', async () => {
     server.use(http.get(`${API_URL}/enquiries`, () => page([makeEnquiry({ subjectRemoved: true })])))
     renderRoutes(routes, '/enquiries')
