@@ -5,6 +5,7 @@ import { Fragment, useRef } from 'react'
 import { useModalDialog } from '@/hooks/useModalDialog'
 import { NAV_ITEMS, PRINTS_HREF, SERVICES_HREF, isActive, type NavChild } from '@/lib/nav'
 import { OutlineButton } from './OutlineButton'
+import { Wordmark } from './Wordmark'
 
 type Props = {
   pathname: string
@@ -29,7 +30,7 @@ export function MobileMenu({ pathname, services, prints = [], onClose, returnFoc
       className="fixed inset-0 z-100 flex flex-col overflow-auto bg-ink font-ui px-[clamp(20px,4vw,56px)] pb-8 text-paper"
     >
       <div className="flex h-[76px] items-center justify-between">
-        <span className="text-[16px] font-medium tracking-[0.34em]">ART HOUZ</span>
+        <Wordmark tone="paper" />
         <OutlineButton tone="paper" onClick={onClose}>
           Close
         </OutlineButton>

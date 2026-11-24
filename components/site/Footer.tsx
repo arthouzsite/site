@@ -30,9 +30,7 @@ export async function Footer() {
       <Container className="pt-[clamp(56px,7vw,96px)] pb-8">
         <div className="flex flex-wrap justify-between gap-12">
           <div className="flex flex-[1_1_320px] flex-col gap-5">
-            <div className="flex items-end gap-[10px]">
-              <Wordmark />
-            </div>
+            <Wordmark tone="paper" className="h-[72px] self-start" />
             <p className="m-0 max-w-[360px] font-display text-[24px] leading-[1.3] text-ondark">{data.tagline}</p>
           </div>
           <div className="flex flex-[1_1_420px] flex-wrap gap-x-16 gap-y-10">

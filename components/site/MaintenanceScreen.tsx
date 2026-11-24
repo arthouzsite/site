@@ -48,9 +48,7 @@ export async function MaintenanceScreen() {
   return (
     <div className="grid min-h-dvh grid-rows-[auto_1fr_auto]">
       <header className={`flex items-center justify-between gap-6 border-b border-solid border-line-16 py-[22px] ${GUTTER}`}>
-        <div className="flex items-end gap-[10px]">
-          <Wordmark />
-        </div>
+        <Wordmark />
         <p className="m-0 flex items-center gap-[10px] text-[12.5px] tracking-[0.04em] text-muted">
           <span aria-hidden="true" className="block h-2 w-2 rounded-full bg-amber" />
           Closed for maintenance

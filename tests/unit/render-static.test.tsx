@@ -179,7 +179,8 @@ describe('site chrome', () => {
     // A plain anchor is the point here (any href renders); /x now matches the (site) catch-all page for the lint rule.
     // eslint-disable-next-line @next/next/no-html-link-for-pages
     expect(html(<SectionRule title="Title" action={<a href="/x">All</a>} as="h3" />)).toContain('<h3')
-    expect(html(<Wordmark />)).toContain('ART HOUZ')
+    expect(html(<Wordmark />)).toContain('alt="Art Houz"')
+    expect(html(<Wordmark tone="paper" />)).toContain('/brand/logo-on-dark.png')
   })
 
   it('renders a status badge for every status', () => {

@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { z } from 'zod'
+import { BrandLogo } from '../../components/BrandLogo'
 import { Button } from '../../components/ui/Button'
 import { ErrorSummary, type SummaryError } from '../../components/ui/ErrorSummary'
 import { Field } from '../../components/ui/Field'
@@ -76,10 +77,7 @@ export default function LoginPage() {
   return (
     <div className="grid min-h-screen grid-cols-2 max-[880px]:grid-cols-1">
       <section aria-label="Art Houz" className="flex flex-col justify-between bg-ink p-12 text-paper max-[880px]:min-h-[220px]">
-        <div className="flex items-end gap-2.5">
-          <span className="brand-mark" />
-          <span className="text-14 font-medium leading-none tracking-brand">ART HOUZ</span>
-        </div>
+        <BrandLogo variant="full" alt="Art Houz" className="h-16 self-start" />
         <p className="m-0 max-w-[14em] font-display text-[clamp(32px,4vw,56px)] leading-[1.05]">
           Contemporary art from South India. Chennai &amp; Bengaluru, since 2012.
         </p>

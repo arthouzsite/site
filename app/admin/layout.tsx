@@ -5,7 +5,7 @@ import '@/styles/admin.css'
 export const metadata: Metadata = {
   title: { absolute: 'Art Houz CMS' },
   robots: { index: false, follow: false },
-  icons: { icon: ['/cms-icons/favicon.svg', '/cms-icons/favicon-32.png'], apple: '/cms-icons/apple-touch-icon.png' },
+  icons: { icon: '/cms-icons/favicon-32.png', apple: '/cms-icons/apple-touch-icon.png' },
 }
 
 /**

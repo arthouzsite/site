@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router'
+import { BrandLogo } from '../components/BrandLogo'
 import { Icon } from '../components/ui/Icon'
 import { ROLE_LABEL } from '../features/auth/roleLabel'
 import type { SessionUser } from '../features/auth/useSession'
@@ -16,9 +17,9 @@ export function Sidebar({ user, counts = {} }: Props) {
       aria-label="CMS navigation"
       className="sticky top-0 flex h-screen flex-col overflow-auto bg-ink pb-6 text-paper max-sm:fixed max-sm:bottom-0 max-sm:top-auto max-sm:z-30 max-sm:h-14 max-sm:w-full max-sm:flex-row max-sm:overflow-visible max-sm:p-0"
     >
-      <NavLink to="/" aria-label="Art Houz CMS home" className="flex h-topbar items-end gap-2.5 border-b border-line-dark px-6 pb-[22px] max-[1024px]:justify-center max-[1024px]:px-0 max-sm:hidden">
-        <span className="brand-mark" />
-        <span className="text-14 font-medium leading-none tracking-brand max-[1024px]:hidden">ART HOUZ</span>
+      <NavLink to="/" aria-label="Art Houz CMS home" className="flex h-topbar items-center border-b border-line-dark px-6 max-[1024px]:justify-center max-[1024px]:px-0 max-sm:hidden">
+        <BrandLogo variant="full" className="h-10 max-[1024px]:hidden" />
+        <BrandLogo variant="mark" className="hidden h-8 max-[1024px]:block" />
       </NavLink>
       <div className="px-6 pb-2 pt-5 text-11 uppercase tracking-eyebrow text-on-dark-muted max-[1024px]:hidden">Content</div>
       <nav aria-label="Sections" className="flex flex-col max-sm:w-full max-sm:flex-row max-sm:overflow-x-auto">
