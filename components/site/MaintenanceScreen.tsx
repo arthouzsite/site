@@ -1,6 +1,5 @@
 import { loadFooterData } from '@/lib/footer-data'
 import { currentYear } from '@/lib/site-clock'
-import { PRIMARY_BUTTON_CLASS } from './PrimaryButton'
 import { Wordmark } from './Wordmark'
 
 const GUTTER = 'px-[clamp(20px,4vw,56px)]'
@@ -39,13 +38,12 @@ function EmptyWall({ year }: { year: number }) {
 }
 
 /**
- * Shown in place of every public page during a maintenance break: no navigation, the reason, and how to reach
+ * Shown in place of the home page during a maintenance break: no navigation, the reason, and how to reach
  * the galleries meanwhile.
  */
 export async function MaintenanceScreen() {
   const { locations } = await loadFooterData()
   const reachable = locations.filter((location) => location.phone)
-  const first = reachable[0]
 
   return (
     <div className="grid min-h-dvh grid-rows-[auto_1fr_auto]">
@@ -67,11 +65,6 @@ export async function MaintenanceScreen() {
           <p className="mt-[clamp(20px,2.4vw,32px)] mb-0 max-w-[30em] font-display text-[clamp(19px,1.6vw,23px)] leading-[1.5] text-pretty text-body">
             The Art Houz website is closed for a short maintenance break while new work goes up on the walls. It will be open again soon.
           </p>
-          {first && (
-            <a href={telHref(first.tel ?? first.phone)} className={`${PRIMARY_BUTTON_CLASS} mt-[clamp(28px,3.4vw,44px)] inline-flex no-underline`}>
-              Call the gallery
-            </a>
-          )}
         </div>
         <EmptyWall year={currentYear()} />
       </main>

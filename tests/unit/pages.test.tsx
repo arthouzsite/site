@@ -320,6 +320,7 @@ describe('shell', () => {
     const html = renderToStaticMarkup(await MaintenanceScreen())
     expect(html).toContain('We are rehanging the gallery.')
     expect(html).toContain('href="tel:7397745684"')
+    expect(html).not.toContain('Call the gallery')
     expect(html).not.toContain('Mysuru')
     expect(html).not.toContain('page body')
     expect(html).not.toContain('<nav')
