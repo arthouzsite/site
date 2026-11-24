@@ -12,7 +12,7 @@ export function MaintenanceCard({ settings, readOnly }: Props) {
   const card = useSettingCard('maintenance', KEYS, settings)
   return (
     <SettingCardShell title="Maintenance break" card={card} readOnly={readOnly}>
-      <Switch label="Show the maintenance screen on the public site" {...card.form.register('maintenance.isEnabled')} />
+      <Switch label="Show the maintenance screen in place of the home page" {...card.form.register('maintenance.isEnabled')} />
     </SettingCardShell>
   )
 }

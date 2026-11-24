@@ -51,6 +51,7 @@ import ExhibitionPage, { generateMetadata as exhibitionMeta } from '@/app/(site)
 import ExhibitionNotFound from '@/app/(site)/exhibitions/[slug]/not-found'
 import FairsPage, { generateMetadata as fairsMeta } from '@/app/(site)/fairs/page'
 import RootLayout, { metadata as rootMeta } from '@/app/layout'
+import HomeLayout, { generateMetadata as homeLayoutMeta } from '@/app/(home)/layout'
 import SiteLayout, { generateMetadata as layoutMeta } from '@/app/(site)/layout'
 import SiteNotFound from '@/app/(site)/not-found'
 import RootNotFound from '@/app/not-found'
@@ -58,7 +59,7 @@ import UnmatchedPage from '@/app/(site)/[...notFound]/page'
 import { MaintenanceScreen } from '@/components/site/MaintenanceScreen'
 import { SiteFrame } from '@/components/site/SiteFrame'
 import NewsPage, { generateMetadata as newsMeta } from '@/app/(site)/news/page'
-import HomePage, { generateMetadata as homeMeta } from '@/app/(site)/page'
+import HomePage, { generateMetadata as homeMeta } from '@/app/(home)/page'
 import robots from '@/app/robots'
 import sitemap from '@/app/sitemap'
 import VisitPage, { generateMetadata as visitMeta } from '@/app/(site)/visit/page'
@@ -298,7 +299,9 @@ describe('shell', () => {
   })
 
   it('puts the public header and footer in the (site) layout and builds site metadata', async () => {
-    const layout = await SiteLayout({ children: (<p>page body</p>) as ReactNode })
+    const layout = SiteLayout({ children: (<p>page body</p>) as ReactNode })
+    expect((await HomeLayout({ children: (<p>page body</p>) as ReactNode })).type).toBe(SiteFrame)
+    expect(await homeLayoutMeta()).not.toHaveProperty('robots')
     // Header and Footer are async boundaries; assert on the returned tree rather than serialising it.
     expect(layout.type).toBe(SiteFrame)
     const metadata = await layoutMeta()
@@ -306,12 +309,14 @@ describe('shell', () => {
     expect(metadata).not.toHaveProperty('robots')
   })
 
-  it('replaces every public page with the maintenance screen while the break is switched on', async () => {
+  it('replaces only the home page with the maintenance screen while the break is switched on', async () => {
     apiGet.mockImplementation(async (path) => (path === '/public/settings' ? { ...settings, maintenance: { isEnabled: true } } : null))
     loadFooterData.mockResolvedValue({ locations: [{ ...location, phone: '73977 45684', tel: null }, { ...location, id: 'l2', city: 'Mysuru', phone: '' }] })
-    const layout = await SiteLayout({ children: (<p>page body</p>) as ReactNode })
+    const layout = await HomeLayout({ children: (<p>page body</p>) as ReactNode })
     expect(layout.type).toBe(MaintenanceScreen)
-    expect(await layoutMeta()).toMatchObject({ robots: { index: false, follow: false } })
+    expect(await homeLayoutMeta()).toMatchObject({ robots: { index: false, follow: false } })
+    expect(SiteLayout({ children: (<p>page body</p>) as ReactNode }).type).toBe(SiteFrame)
+    expect(await layoutMeta()).not.toHaveProperty('robots')
     const html = renderToStaticMarkup(await MaintenanceScreen())
     expect(html).toContain('We are rehanging the gallery.')
     expect(html).toContain('href="tel:7397745684"')

@@ -45,7 +45,7 @@ describe('SettingsPage', () => {
   it('switches the maintenance break on from its own card', async () => {
     const puts = setup()
     const user = userEvent.setup()
-    const toggle = await screen.findByRole('switch', { name: 'Show the maintenance screen on the public site' })
+    const toggle = await screen.findByRole('switch', { name: 'Show the maintenance screen in place of the home page' })
     expect(toggle).not.toBeChecked()
     await user.click(toggle)
     await user.click(card('Maintenance break').getByRole('button', { name: 'Save' }))
