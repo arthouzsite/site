@@ -3,6 +3,8 @@ import { currentYear } from '@/lib/site-clock'
 import { Wordmark } from './Wordmark'
 
 const GUTTER = 'px-[clamp(20px,4vw,56px)]'
+/** The one gallery whose phone number is shown while the home page is under maintenance. */
+const CONTACT_CITY = 'Chennai'
 const WIRE_PATH = 'M0 60 100 0 200 60'
 
 const telHref = (phone: string): string => `tel:${phone.replace(/[^\d+]/g, '')}`
@@ -31,7 +33,7 @@ function EmptyWall({ year }: { year: number }) {
       </div>
       <div className="relative mt-5 w-[min(100%,300px)] bg-surface px-[18px] pt-4 pb-[18px] shadow-[0_10px_22px_-12px_var(--color-scrim),0_0_0_1px_var(--color-line-16)] nav:-mt-9 nav:mr-[clamp(0px,1.5vw,20px)] nav:w-[min(100%,250px)] nav:justify-self-end">
         <p className="m-0 font-display text-[19px] leading-[1.2] font-medium">Website maintenance</p>
-        <p className="mt-1 mb-0 font-display text-[16px] leading-[1.35] text-body italic">Work in progress, {year}</p>
+        <p className="mt-1 mb-0 font-display text-[16px] leading-[1.35] text-body italic">Art Houz, {year}</p>
       </div>
     </div>
   )
@@ -43,7 +45,7 @@ function EmptyWall({ year }: { year: number }) {
  */
 export async function MaintenanceScreen() {
   const { locations } = await loadFooterData()
-  const reachable = locations.filter((location) => location.phone)
+  const reachable = locations.filter((location) => location.phone && location.city === CONTACT_CITY)
 
   return (
     <div className="grid min-h-dvh grid-rows-[auto_1fr_auto]">
@@ -58,7 +60,7 @@ export async function MaintenanceScreen() {
       <main className={`grid items-center gap-[clamp(32px,6vw,96px)] py-[clamp(32px,4.5vw,64px)] nav:grid-cols-2 ${GUTTER}`}>
         <div className="max-w-[560px]">
           <h1 className="m-0 font-display text-[clamp(44px,6.4vw,92px)] leading-[0.98] font-normal tracking-[-0.015em] text-balance">
-            We are rehanging the gallery.
+            Work in progress
           </h1>
           <p className="mt-[clamp(20px,2.4vw,32px)] mb-0 max-w-[30em] font-display text-[clamp(19px,1.6vw,23px)] leading-[1.5] text-pretty text-body">
             The Art Houz website is closed for a short maintenance break while new work goes up on the walls. It will be open again soon.
@@ -78,7 +80,7 @@ export async function MaintenanceScreen() {
             </li>
           ))}
         </ul>
-        <span>The galleries are open as usual.</span>
+        <span>The gallery is open as usual.</span>
       </footer>
     </div>
   )
