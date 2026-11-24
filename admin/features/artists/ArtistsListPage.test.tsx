@@ -46,9 +46,13 @@ describe('ArtistsListPage', () => {
     await screen.findByRole('table', { name: 'Artists' })
     expect(screen.queryByLabelText('Featured')).not.toBeInTheDocument()
     expect(screen.queryByRole('columnheader', { name: 'Featured' })).not.toBeInTheDocument()
-    await userEvent.selectOptions(screen.getByLabelText('Published'), 'true')
+    const status = screen.getByLabelText('Status')
+    expect(within(status).getAllByRole('option').map((o) => o.textContent)).toEqual(['All artists', 'Published only', 'Drafts only'])
+    await userEvent.selectOptions(status, 'true')
     await waitFor(() => expect(listRequests.at(-1)!.searchParams.get('published')).toBe('true'))
     expect(router.state.location.search).toContain('published=true')
+    await userEvent.selectOptions(status, 'false')
+    await waitFor(() => expect(listRequests.at(-1)!.searchParams.get('published')).toBe('false'))
   })
 
   it('delete artist 409 shows the exhibitions that block it', async () => {

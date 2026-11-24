@@ -22,11 +22,11 @@ export function ArtistsToolbar({ search, onSearch, published, onPublished }: Pro
           className="h-11 w-full rounded-xs border border-line-strong bg-surface-2 pl-9 pr-3 text-14 text-ink placeholder:text-faint hover:border-ink focus:border-ink"
         />
       </div>
-      <label className="sr-only" htmlFor="artists-published">Published</label>
+      <label className="sr-only" htmlFor="artists-published">Status</label>
       <Select id="artists-published" className="w-auto" value={published} onChange={(e) => onPublished(e.target.value)}>
-        <option value="">Published: all</option>
-        <option value="true">Published</option>
-        <option value="false">Draft</option>
+        <option value="">All artists</option>
+        <option value="true">Published only</option>
+        <option value="false">Drafts only</option>
       </Select>
     </div>
   )
