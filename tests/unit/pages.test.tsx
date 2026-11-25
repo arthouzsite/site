@@ -314,7 +314,7 @@ describe('shell', () => {
     loadFooterData.mockResolvedValue({ locations: [{ ...location, city: 'Chennai', phone: '73977 45684', tel: null }, { ...location, id: 'l2', city: 'Bengaluru', phone: '98861 12400', tel: null }] })
     const layout = await HomeLayout({ children: (<p>page body</p>) as ReactNode })
     expect(layout.type).toBe(MaintenanceScreen)
-    expect(await homeLayoutMeta()).toMatchObject({ robots: { index: false, follow: false } })
+    expect(await homeLayoutMeta()).not.toHaveProperty('robots')
     expect(SiteLayout({ children: (<p>page body</p>) as ReactNode }).type).toBe(SiteFrame)
     expect(await layoutMeta()).not.toHaveProperty('robots')
     const html = renderToStaticMarkup(await MaintenanceScreen())

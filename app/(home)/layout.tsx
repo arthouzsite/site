@@ -5,10 +5,9 @@ import { SiteFrame } from '@/components/site/SiteFrame'
 import { isUnderMaintenance } from '@/lib/maintenance'
 import { loadSiteMetadata } from '@/lib/site-metadata'
 
-/** While the maintenance screen stands in for the home page, search engines are asked not to index it. */
-export async function generateMetadata(): Promise<Metadata> {
-  const [metadata, isClosed] = await Promise.all([loadSiteMetadata(), isUnderMaintenance()])
-  return isClosed ? { ...metadata, robots: { index: false, follow: false } } : metadata
+/** The home page keeps its normal metadata during a maintenance break, so it stays in search results. */
+export function generateMetadata(): Promise<Metadata> {
+  return loadSiteMetadata()
 }
 
 /**
