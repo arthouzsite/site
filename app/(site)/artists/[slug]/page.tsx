@@ -1,12 +1,11 @@
 import { publicArtistDetailSchema, type PublicArtistDetail } from '@/lib/shared'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { EnquiryTrigger } from '@/components/enquiry/EnquiryTrigger'
 import { ArtistExhibitions } from '@/components/artists/ArtistExhibitions'
 import { SelectedWorks } from '@/components/artists/SelectedWorks'
 import { Container } from '@/components/site/Container'
 import { Eyebrow } from '@/components/site/Eyebrow'
-import { ImageSlot } from '@/components/site/ImageSlot'
+import { FullImage } from '@/components/site/FullImage'
 import { ApiError, apiGet } from '@/lib/api'
 import { detailMetadata } from '@/lib/site-metadata'
 import { TAGS } from '@/lib/tags'
@@ -42,17 +41,16 @@ export default async function ArtistPage({ params }: Props) {
         </Eyebrow>
         <PageTitle variant="detail" className="mb-[clamp(36px,5vw,64px)]">{a.name}</PageTitle>
         <div className="flex flex-wrap gap-x-[clamp(32px,6vw,120px)] gap-y-10">
-          <div className="relative min-w-[min(100%,280px)] flex-[0_1_480px]" style={{ aspectRatio: '4/5' }}>
-            <ImageSlot image={a.image} fill priority sizes="(min-width: 1024px) 480px, 100vw" placeholder="Portrait or studio image" />
+          <div className="min-w-[min(100%,280px)] flex-[0_1_480px] self-start">
+            <FullImage image={a.image} priority sizes="(min-width: 1024px) 480px, 100vw" placeholder="Portrait or studio image" fallbackRatio="4/5" />
           </div>
           <div className="flex min-w-0 flex-[1_1_400px] flex-col gap-7">
             <p className="m-0 font-display text-[clamp(24px,2.4vw,32px)] leading-[1.3] text-pretty">{a.lede}</p>
             <p className="m-0 max-w-[620px] text-[16px] leading-[1.7] text-body text-pretty">{a.bio}</p>
             {a.exhibitions.length > 0 && <ArtistExhibitions exhibitions={a.exhibitions} />}
-            <EnquiryTrigger label="Enquire about works →" target={{ kind: 'ARTIST', slug: a.slug, name: a.name }} />
           </div>
         </div>
-        <SelectedWorks works={a.works} />
+        <SelectedWorks artist={{ slug: a.slug, name: a.name }} works={a.works} />
       </Container>
     </main>
   )

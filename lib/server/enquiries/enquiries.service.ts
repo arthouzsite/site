@@ -15,6 +15,7 @@ import { ENQUIRY_INCLUDE, toAdminEnquiry } from './enquiries.mapper'
 const SERVICE_NOT_FOUND = 'Service not found'
 const ARTIST_NOT_FOUND = 'Artist not found'
 const PRINT_NOT_FOUND = 'Print not found'
+const WORK_NOT_FOUND = 'Work not found'
 const WRONG_CAPTCHA = 'The security code does not match. Try the new one.'
 const ENQUIRY_NOT_FOUND = 'Enquiry not found'
 const BAD_LOCATION = 'Choose one of our locations'
@@ -55,6 +56,22 @@ async function listedPrint(slug: string, imageUrl: string): Promise<Subject & { 
 }
 
 /**
+ * One work of the artist as the public pages show it: a published artwork, or a work hung in an exhibition,
+ * matched by its public image URL.
+ */
+async function listedWork(artistId: string, imageUrl: string): Promise<{ title: string; mediaId: string }> {
+  const image = { url: imageUrl }
+  const artwork = await prisma.artwork.findFirst({ where: { artistId, isPublished: true, image }, select: { title: true, imageId: true } })
+  if (artwork?.imageId) return { title: artwork.title, mediaId: artwork.imageId }
+  const hung = await prisma.exhibitionWork.findFirst({
+    where: { artistId, image, exhibition: { isPublished: true } },
+    select: { title: true, imageId: true },
+  })
+  if (!hung) throw notFound(WORK_NOT_FOUND)
+  return { title: hung.title, mediaId: hung.imageId }
+}
+
+/**
  * A location the public list offers: that list is every Location row, shown by `city`, so the match is exact on
  * `city` (no case folding) and a made-up place is refused.
  */
@@ -76,7 +93,9 @@ function contact({ name, email, mobile, message }: EnquiryInput) {
 async function rowFor(input: EnquiryInput): Promise<Prisma.EnquiryUncheckedCreateInput> {
   if (input.kind === 'ARTIST') {
     const artist = await publishedArtist(input.slug)
-    return { kind: 'ARTIST', artistId: artist.id, subject: artist.label, ...contact(input) }
+    if (!input.imageUrl) return { kind: 'ARTIST', artistId: artist.id, subject: artist.label, ...contact(input) }
+    const work = await listedWork(artist.id, input.imageUrl)
+    return { kind: 'ARTIST', artistId: artist.id, printMediaId: work.mediaId, subject: `${artist.label}: ${work.title}`, ...contact(input) }
   }
   if (input.kind === 'PRINT') {
     const print = await listedPrint(input.slug, input.imageUrl)

@@ -7,7 +7,7 @@ export const image: PublicImage = { url: 'https://picsum.photos/seed/a/1200/800'
 
 export const exhibition: PublicExhibition = {
   id: 'e1', slug: 'salt-line', title: 'Salt Line', subtitle: 'New work on paper', city: 'Chennai', country: 'India',
-  type: 'SOLO', status: 'CURRENT', statusLabel: 'Now on view', datesLabel: '1 Nov – 20 Dec 2026', venue: 'Art Houz Chennai',
+  type: 'SOLO', status: 'CURRENT', statusLabel: 'Now on view', datesLabel: '1 Nov – 20 Dec 2026',
   blurb: 'Drawings from the salt pans.', body: 'A solo presentation.', artistLine: 'Parvathi Nayar',
   artists: [{ name: 'Parvathi Nayar', slug: 'parvathi-nayar' }], image,
 }
@@ -18,7 +18,7 @@ export const pastExhibition: PublicExhibition = { ...exhibition, id: 'e3', slug:
 export const exhibitionDetail: PublicExhibitionDetail = {
   ...exhibition,
   meta: [{ k: 'Opening', v: '1 Nov 2026' }, { k: 'Venue', v: 'Art Houz Chennai' }],
-  works: [{ id: 'w1', title: 'Kolam', year: '2026', artist: 'Parvathi Nayar', medium: 'Ink on paper', image }],
+  works: [{ id: 'w1', title: 'Kolam', year: '2026', artist: 'Parvathi Nayar', artistSlug: 'parvathi-nayar', medium: 'Ink on paper', image }],
   press: [{ slug: 'p1', title: 'A review', excerpt: 'Worth the trip.', monthLabel: 'Nov 2026' }],
 }
 

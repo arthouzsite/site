@@ -58,6 +58,12 @@ export default function EnquiriesPage() {
       { id: 'received', header: 'Received', cell: ({ row }) => <span className="text-13 text-muted">{formatDateTime(row.original.createdAt)}</span> },
       { id: 'type', header: 'Type', cell: ({ row }) => <Chip>{KIND_LABEL[row.original.kind]}</Chip> },
       {
+        id: 'image',
+        header: 'Image',
+        // eslint-disable-next-line @next/next/no-img-element -- a stored thumbnail on the CDN; next/image has nothing to add at this size.
+        cell: ({ row }) => (row.original.imageUrl ? <img src={row.original.imageUrl} alt="" className="block h-12 w-12 border border-line object-cover" /> : null),
+      },
+      {
         id: 'subject',
         header: 'Subject',
         cell: ({ row }) => (

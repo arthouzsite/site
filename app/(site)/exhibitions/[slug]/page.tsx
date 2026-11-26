@@ -6,7 +6,7 @@ import { ExhibitionMeta } from '@/components/exhibitions/ExhibitionMeta'
 import { PressList } from '@/components/exhibitions/PressList'
 import { WorksGrid } from '@/components/exhibitions/WorksGrid'
 import { Container } from '@/components/site/Container'
-import { ImageSlot } from '@/components/site/ImageSlot'
+import { FullImage } from '@/components/site/FullImage'
 import { StatusBadge } from '@/components/site/StatusBadge'
 import { ApiError, apiGet } from '@/lib/api'
 import { detailMetadata } from '@/lib/site-metadata'
@@ -48,9 +48,7 @@ export default async function ExhibitionPage({ params }: Props) {
         <PageTitle variant="detail" className="max-w-[1200px]">{e.title}</PageTitle>
         <div className="mt-5 font-display text-[clamp(22px,2.2vw,30px)] text-body italic">{e.subtitle}</div>
       </Container>
-      <div className="relative h-[clamp(360px,70vh,820px)] w-full bg-imgph">
-        <ImageSlot image={e.image} fill priority sizes="max(100vw, 85vh)" placeholder={e.title} />
-      </div>
+      <FullImage image={e.image} priority sizes="100vw" placeholder={e.title} fallbackRatio="3/2" className="max-h-[max(360px,88vh)]" />
       <Container className="flex flex-wrap gap-x-[clamp(32px,6vw,120px)] gap-y-10 py-[clamp(40px,5vw,72px)]">
         <ExhibitionMeta meta={e.meta} />
         <div className="flex min-w-0 flex-[1_1_480px] flex-col gap-7">
@@ -60,7 +58,7 @@ export default async function ExhibitionPage({ params }: Props) {
         </div>
       </Container>
       <Container className="pb-[clamp(56px,7vw,100px)]">
-        <WorksGrid works={e.works} />
+        <WorksGrid title={e.title} works={e.works} />
       </Container>
       {e.press.length > 0 && (
         <Container className="pb-[clamp(72px,9vw,140px)]">

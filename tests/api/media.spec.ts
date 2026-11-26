@@ -75,9 +75,9 @@ describe('media', () => {
     expect(res.body.error.code).toBe('PAYLOAD_TOO_LARGE')
   })
 
-  it('rejects an image one byte over 2 MB with 413 and stores nothing', async () => {
+  it('rejects an image one byte over 5 MB with 413 and stores nothing', async () => {
     // The size check runs before decoding, so a zero-filled body is enough to exercise the real route.
-    const res = await upload(new Uint8Array(2 * MB + 1))
+    const res = await upload(new Uint8Array(5 * MB + 1))
     expect(res.status).toBe(413)
     expect(res.body.error.code).toBe('PAYLOAD_TOO_LARGE')
     expect(await prisma.media.count()).toBe(0)

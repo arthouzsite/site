@@ -19,7 +19,6 @@ test('editor publishes an exhibition and the public site lists it with its hero 
   await page.getByLabel('Type').selectOption('SOLO')
   await page.getByLabel('City').fill('Chennai')
   await page.getByLabel('Country').fill('India')
-  await page.getByLabel('Venue').fill('Art Houz Chennai')
   await page.getByLabel('Start date').fill('2026-11-01')
   await page.getByLabel('End date').fill('2026-12-20')
   await page.getByLabel('Blurb').fill('Drawings made from the salt pans of the Coromandel coast.')

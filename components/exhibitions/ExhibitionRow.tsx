@@ -25,9 +25,7 @@ export function ExhibitionRow({ exhibition: e }: { exhibition: PublicExhibition 
         </h2>
         <div className="font-display text-[22px] text-body italic">{e.subtitle}</div>
         <div className="text-[14.5px] leading-[1.5] text-body">{e.artistLine}</div>
-        <div className="text-[14px] text-muted">
-          {e.datesLabel} · {e.venue}
-        </div>
+        <div className="text-[14px] text-muted">{e.datesLabel}</div>
         <TextLink href={href} underline className="mt-[6px] self-start">
           View exhibition →
         </TextLink>

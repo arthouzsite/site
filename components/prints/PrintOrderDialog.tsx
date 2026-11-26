@@ -4,7 +4,7 @@ import { useId, useRef } from 'react'
 import Image from 'next/image'
 import type { PublicImage } from '@/lib/shared'
 import { LABEL_CLASS } from '@/components/enquiry/fieldStyles'
-import { OutlineButton } from '@/components/site/OutlineButton'
+import { DialogBar } from '@/components/site/DialogBar'
 import { useModalDialog } from '@/hooks/useModalDialog'
 import { PrintOrderForm } from './PrintOrderForm'
 
@@ -27,11 +27,7 @@ export function PrintOrderDialog({ slug, title, image, onClose, returnFocus }: P
   return (
     <div ref={panel} role="dialog" aria-modal="true" aria-labelledby={headingId} className="fixed inset-0 z-100 overflow-auto bg-paper font-ui">
       <div className="mx-auto max-w-[1180px] px-[clamp(20px,4vw,56px)] pt-6 pb-16">
-        <div className="mb-8 flex justify-end">
-          <OutlineButton tone="ink" onClick={onClose}>
-            Close
-          </OutlineButton>
-        </div>
+        <DialogBar onClose={onClose} />
         <div className="grid items-start gap-x-[clamp(32px,6vw,88px)] gap-y-8 nav:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
           <div className="relative aspect-[4/3] w-full bg-imgph nav:sticky nav:top-6 nav:aspect-[4/5] nav:max-h-[calc(100dvh-140px)]">
             <Image src={image.url} alt={image.alt} fill sizes={IMAGE_SIZES} className="object-contain" />

@@ -1,16 +1,18 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 
-type Props = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className' | 'type'> & {
-  tone: 'ink' | 'paper' | 'solid'
-  children: ReactNode
-}
-
 const TONES = {
   ink: 'border-ink bg-transparent text-ink',
   paper: 'border-paper bg-transparent text-paper',
   /** The filled partner of an ink button, for the main action beside it (Order beside Close). */
   solid: 'border-ink bg-ink text-paper hover:border-amber hover:bg-amber hover:text-ink',
+  /** The filled partner of a paper button, for the main action over an image (Enquire beside View). */
+  light: 'border-paper bg-paper text-ink hover:border-amber hover:bg-amber',
 } as const
+
+type Props = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className' | 'type'> & {
+  tone: keyof typeof TONES
+  children: ReactNode
+}
 
 /** The prototype's 40 px outlined uppercase control (Menu / Close); hit area padded to 44 px. */
 export function OutlineButton({ tone, children, ...rest }: Props) {

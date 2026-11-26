@@ -318,7 +318,7 @@ model Enquiry {
   serviceId String?
   artistId  String?
   printCategoryId String?
-  /// The print that was ordered; cleared when that media is deleted.
+  /// The print that was ordered, or the artist's work enquired about; cleared when that media is deleted.
   printMediaId    String?
   subject   String
   name      String

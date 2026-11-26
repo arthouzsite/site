@@ -98,7 +98,13 @@ export const serviceEnquirySchema = z
   .refine((stay) => stay.dateFrom >= todayIso(), { path: ['dateFrom'], message: 'Date from cannot be in the past', when: whenDatesValid })
   .refine((stay) => stay.dateTo >= stay.dateFrom, { path: ['dateTo'], message: 'Date to cannot be before date from', when: whenDatesValid })
 
-export const artistEnquirySchema = z.object({ kind: z.literal('ARTIST'), slug, ...person })
+/** An enquiry to an artist; `imageUrl` names one of that artist's works when the visitor enquired from it. */
+export const artistEnquirySchema = z.object({
+  kind: z.literal('ARTIST'),
+  slug,
+  imageUrl: z.string().trim().min(1).max(IMAGE_URL_MAX).optional(),
+  ...person,
+})
 
 /**
  * An order request for one print: `slug` is its category and `imageUrl` the print, as the public site knows it.

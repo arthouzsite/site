@@ -64,6 +64,7 @@ export function WorkDialog({ open, onClose, exhibitionId, artists }: Props) {
           <ImageField
             label="Image"
             ratio="4/3"
+            help="Best at 1600 px on the longer side. Visitors can open the whole image with View."
             value={image}
             onChange={(ref) => { setImage(ref); setValue('imageId', ref?.id ?? '', { shouldValidate: Boolean(errors.imageId) }) }}
           />

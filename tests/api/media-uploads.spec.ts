@@ -70,7 +70,7 @@ describe('presigned media uploads', () => {
 
     it.each([
       ['image/heic', 1000, 415, 'UNSUPPORTED_MEDIA_TYPE'],
-      ['image/jpeg', 2 * MB + 1, 413, 'PAYLOAD_TOO_LARGE'],
+      ['image/jpeg', 5 * MB + 1, 413, 'PAYLOAD_TOO_LARGE'],
       ['video/mp4', 200 * MB + 1, 413, 'PAYLOAD_TOO_LARGE'],
     ])('rejects mime %s with %i bytes as %i', async (mime, bytes, status, code) => {
       const res = await createTarget({ filename: 'f', mime, bytes, alt: 'x' })
@@ -195,7 +195,7 @@ describe('presigned media uploads', () => {
 
     it('413 and deletes the object when the stored size exceeds the image limit', async () => {
       const key = 'arthouz/2026/12345678-1234-1234-1234-123456789012.jpg'
-      await memoryStorage.put(key, Buffer.alloc(2 * MB + 1), 'image/jpeg')
+      await memoryStorage.put(key, Buffer.alloc(5 * MB + 1), 'image/jpeg')
       const res = await complete({ key, alt: 'x' })
       expect(res.status).toBe(413)
       expect(memoryStorage.has(key)).toBe(false)

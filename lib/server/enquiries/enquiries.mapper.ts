@@ -1,6 +1,6 @@
 import type { Prisma } from '@/lib/server/generated/prisma/client'
 
-/** The ordered print's thumbnail travels with the row so the CMS can show which print it was. */
+/** The thumbnail of the ordered print, or of the artist's work enquired about, travels with the row for the CMS. */
 export const ENQUIRY_INCLUDE = { printMedia: { select: { thumbUrl: true } } } satisfies Prisma.EnquiryInclude
 type EnquiryRow = Prisma.EnquiryGetPayload<{ include: typeof ENQUIRY_INCLUDE }>
 
@@ -16,7 +16,7 @@ export function toAdminEnquiry(row: EnquiryRow) {
     subject: row.subject,
     /** The service, artist or print category it was about has since been deleted; `subject` is the snapshot taken at the time. */
     subjectRemoved: row.serviceId === null && row.artistId === null && row.printCategoryId === null,
-    /** Thumbnail of the ordered print; null for other enquiries and once that image is deleted. */
+    /** Thumbnail of the ordered print or the work enquired about; null for other enquiries and once that image is deleted. */
     imageUrl: row.printMedia?.thumbUrl ?? null,
     name: row.name,
     email: row.email,

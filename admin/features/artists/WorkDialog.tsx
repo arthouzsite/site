@@ -66,7 +66,7 @@ export function WorkDialog({ artistId, artwork, onClose }: Props) {
     >
       <form id={FORM_ID} noValidate onSubmit={(e) => { e.stopPropagation(); void onSubmit(e) }} className="flex flex-col gap-4">
         <ErrorSummary errors={summary.errors} focusKey={summary.focusKey} idPrefix={ID_PREFIX} />
-        <ImageField label="Image" ratio="1/1" value={image} onChange={setImage} />
+        <ImageField label="Image" ratio="1/1" value={image} onChange={setImage} help="Best at 1600 px on the longer side. Visitors can open the whole image with View." />
         <Field idPrefix={ID_PREFIX} name="title" label="Title" required error={errors.title?.message}>
           <Input data-autofocus {...register('title')} />
         </Field>

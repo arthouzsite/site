@@ -215,7 +215,11 @@ describe('detail pages', () => {
     const out = html(await ArtistPage({ params: params({ slug: 'parvathi-nayar' }) }))
     expect(out).toContain('Exhibitions with Art Houz')
     expect(out).toContain('Selected works')
-    expect(out).toMatch(/<button type="button" aria-haspopup="dialog"[^>]*>Enquire about works →<\/button>/)
+    expect(out).not.toContain('Enquire about works')
+    expect(out).toMatch(/<button type="button" aria-haspopup="dialog" aria-label="View [^"]+"[^>]*>View<\/button>/)
+    expect(out).toMatch(/<button type="button" aria-haspopup="dialog" aria-label="Enquire about [^"]+"[^>]*>Enquire<\/button>/)
+    // The portrait keeps the shape of the uploaded file instead of a fixed 4:5 crop.
+    expect(out).toContain(`aspect-ratio:${artistDetail.image?.width}/${artistDetail.image?.height}`)
     expect(out).not.toContain('href="/visit"')
     const meta = await artistMeta({ params: params({ slug: 'parvathi-nayar' }) })
     expect(meta).toMatchObject({ title: 'Parvathi Nayar', description: 'Lede text.' })

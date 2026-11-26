@@ -5,14 +5,14 @@ import { assertUploadAllowed, completeUploadSchema, createUploadSchema, readBoun
 const MB = 1024 * 1024
 
 describe('assertUploadAllowed', () => {
-  it('accepts an image of exactly 2 MB and a video larger than that', () => {
-    expect(MAX_IMAGE_UPLOAD_BYTES).toBe(2 * MB)
+  it('accepts an image of exactly 5 MB and a video larger than that', () => {
+    expect(MAX_IMAGE_UPLOAD_BYTES).toBe(5 * MB)
     expect(() => assertUploadAllowed({ type: 'image/jpeg', size: MAX_IMAGE_UPLOAD_BYTES })).not.toThrow()
     expect(() => assertUploadAllowed({ type: 'video/mp4', size: 30 * MB })).not.toThrow()
     expect(() => assertUploadAllowed({ type: 'video/mp4', size: MAX_VIDEO_UPLOAD_BYTES })).not.toThrow()
   })
 
-  it('rejects an image over 2 MB with 413 PAYLOAD_TOO_LARGE', () => {
+  it('rejects an image over 5 MB with 413 PAYLOAD_TOO_LARGE', () => {
     expect(() => assertUploadAllowed({ type: 'image/jpeg', size: MAX_IMAGE_UPLOAD_BYTES + 1 })).toThrow(
       expect.objectContaining({ status: 413, code: 'PAYLOAD_TOO_LARGE' }),
     )
@@ -58,7 +58,7 @@ describe('readUploadForm', () => {
 
   it('rejects a declared length beyond the video limit before reading the body', async () => {
     const form = new FormData()
-    const request = post(form, { 'content-length': String(MAX_VIDEO_UPLOAD_BYTES + 2 * MB) })
+    const request = post(form, { 'content-length': String(MAX_VIDEO_UPLOAD_BYTES + 5 * MB) })
     await expect(readUploadForm(request)).rejects.toMatchObject({ status: 413 })
   })
 

@@ -96,7 +96,7 @@ describe('artist components', () => {
   })
 
   it('renders selected works with their captions', () => {
-    expect(html(<SelectedWorks works={artistDetail.works} />)).toContain('30 x 40 cm')
+    expect(html(<SelectedWorks artist={{ slug: artistDetail.slug, name: artistDetail.name }} works={artistDetail.works} />)).toContain('30 x 40 cm')
   })
 })
 
@@ -105,13 +105,13 @@ describe('exhibition components', () => {
     expect(html(<ArtistPills artists={exhibition.artists} />)).toContain('Parvathi Nayar')
     expect(html(<ExhibitionMeta meta={exhibitionDetail.meta} />)).toContain('Opening')
     expect(html(<PressList press={exhibitionDetail.press} />)).toContain('A review')
-    expect(html(<WorksGrid works={exhibitionDetail.works} />)).toContain('Kolam')
+    expect(html(<WorksGrid title={exhibitionDetail.title} works={exhibitionDetail.works} />)).toContain('Kolam')
     expect(html(<EmptyState />)).toContain('No exhibitions match')
   })
 
   it('renders nothing for works sections without items', () => {
-    expect(html(<WorksGrid works={[]} />)).toBe('')
-    expect(html(<SelectedWorks works={[]} />)).toBe('')
+    expect(html(<WorksGrid title="Salt Line" works={[]} />)).toBe('')
+    expect(html(<SelectedWorks artist={{ slug: 'a', name: 'A' }} works={[]} />)).toBe('')
   })
 
   it('renders a list row linking to the detail page', () => {

@@ -1,7 +1,7 @@
 /* Design tokens: the only place colour literals live in apps/web. Values are the prototype's, verbatim. */
 @theme {
   --color-*: initial;
-  --color-paper: #EDEAE4;
+  --color-paper: #F3F1EC;
   --color-ink: #161513;
   --color-amber: #D98A2B;
   --color-rust: #B4651A;

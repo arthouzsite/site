@@ -17,7 +17,7 @@ describe('EnquiriesPage', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Enquiries' })).toBeInTheDocument()
     const table = await screen.findByRole('table', { name: /Enquiries, newest first, 2 records/ })
     const headers = within(table).getAllByRole('columnheader').map((h) => h.textContent)
-    expect(headers).toEqual(['Received', 'Type', 'Subject', 'Name', 'Mobile', 'Email', 'Handled', 'Actions'])
+    expect(headers).toEqual(['Received', 'Type', 'Image', 'Subject', 'Name', 'Mobile', 'Email', 'Handled', 'Actions'])
     const first = within(table).getAllByRole('row')[1]!
     expect(within(first).getByText('Artist')).toBeInTheDocument()
     expect(within(first).getByText('Vijay Pichumani')).toBeInTheDocument()
@@ -101,6 +101,15 @@ describe('EnquiriesPage', () => {
     expect(within(dialog).getByText('Subject')).toBeInTheDocument()
     expect(within(dialog).getByText('Print')).toBeInTheDocument()
     expect(within(dialog).queryByText('Message')).not.toBeInTheDocument()
+  })
+
+  it('shows the picture of the print or work an enquiry is about in the list', async () => {
+    server.use(http.get(`${API_URL}/enquiries`, () => page([makeEnquiry({ subject: 'Vijay Pichumani: Red Earth', imageUrl: 'https://cdn.test/red-earth-t.jpg' }), serviceEnquiry()])))
+    renderRoutes(routes, '/enquiries')
+    const table = await screen.findByRole('table')
+    const [, withImage, without] = within(table).getAllByRole('row')
+    expect(withImage!.querySelector('img')).toHaveAttribute('src', 'https://cdn.test/red-earth-t.jpg')
+    expect(without!.querySelector('img')).toBeNull()
   })
 
   it('marks a subject whose service or artist was deleted', async () => {

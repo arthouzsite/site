@@ -127,6 +127,24 @@ describe('enquiries', () => {
       expect(row.artistId).not.toBeNull()
     })
 
+    it('stores an enquiry about one work of the artist with that work as its image', async () => {
+      const artist = await prisma.artist.findUniqueOrThrow({ where: { slug: 'vijay' } })
+      const media = await prisma.media.create({
+        data: { key: 'red-earth', url: 'https://x/red-earth.jpg', thumbUrl: 'https://x/red-earth-t.jpg', width: 10, height: 10, mime: 'image/jpeg', bytes: 1, alt: 'Red Earth' },
+      })
+      await prisma.artwork.create({ data: { artistId: artist.id, title: 'Red Earth', imageId: media.id, isPublished: true } })
+      const res = await submit(artistBody({ imageUrl: 'https://x/red-earth.jpg' }))
+      expect(res.status).toBe(201)
+      expect(await prisma.enquiry.findFirstOrThrow()).toMatchObject({ kind: 'ARTIST', artistId: artist.id, printMediaId: media.id, subject: 'Vijay Pichumani: Red Earth' })
+      const listed = await api.get('/api/enquiries?kind=ARTIST')
+      expect(listed.body.data).toEqual([expect.objectContaining({ subject: 'Vijay Pichumani: Red Earth', imageUrl: 'https://x/red-earth-t.jpg' })])
+    })
+
+    it('refuses an artist enquiry about an image that is not a work of that artist', async () => {
+      expect((await submit(artistBody({ imageUrl: PRINT_URL }))).status).toBe(404)
+      expect(await prisma.enquiry.count()).toBe(0)
+    })
+
     it('400 VALIDATION with per-field messages and nothing stored', async () => {
       const res = await submit(serviceBody({ name: '', mobile: '123', email: 'nope', dateFrom: day(-1), purpose: '' }))
       expect(res.status).toBe(400)

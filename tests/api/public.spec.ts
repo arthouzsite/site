@@ -195,9 +195,10 @@ describe('public API', () => {
     await exhibition('grp', { type: 'GROUP', venue: 'Main Hall', city: 'Chennai', country: 'India', datesLabel: 'Spring 2025' })
     const d = await ok('/api/public/exhibitions/grp', publicExhibitionDetailSchema)
     expect(d.meta).toEqual([
-      { k: 'Location', v: 'Chennai, India' }, { k: 'Venue', v: 'Main Hall' },
-      { k: 'Dates', v: 'Spring 2025' }, { k: 'Format', v: 'Group exhibition' },
+      { k: 'Location', v: 'Chennai, India' }, { k: 'Dates', v: 'Spring 2025' }, { k: 'Format', v: 'Group exhibition' },
     ])
+    // The venue is no longer edited in the CMS, so a stored one is not published.
+    expect(JSON.stringify(d)).not.toContain('Main Hall')
   })
 
   it('fair detail returns the ordered gallery, 404s for drafts, and the fair is searchable', async () => {

@@ -3,11 +3,11 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import type { ZodError } from 'zod'
 import { EnquiryError, sendEnquiry } from '@/lib/enquiry-client'
-import { artistEnquirySchema, printEnquirySchema, serviceEnquirySchema } from '@/lib/shared'
+import { artistEnquirySchema, printEnquirySchema, serviceEnquirySchema, type PublicImage } from '@/lib/shared'
 
 export type EnquiryTarget =
   | { kind: 'SERVICE'; slug: string; title: string; locations: readonly string[] }
-  | { kind: 'ARTIST'; slug: string; name: string }
+  | { kind: 'ARTIST'; slug: string; name: string; work?: { title: string; image: PublicImage } }
   | { kind: 'PRINT'; slug: string; title: string; imageUrl: string }
 
 /** A print order also answers a picture challenge: its token, and what to do once the server refused the submission. */
@@ -36,7 +36,7 @@ const fromIssues = (error: ZodError): FieldErrors => firstPerField(error.issues.
 function payloadFor(target: EnquiryTarget, values: FieldValues, captchaToken: string | undefined): unknown {
   const { name, mobile, email, message, refCode } = values
   const common = { slug: target.slug, name, mobile, email, message, refCode }
-  if (target.kind === 'ARTIST') return { kind: 'ARTIST', ...common }
+  if (target.kind === 'ARTIST') return { kind: 'ARTIST', ...common, imageUrl: target.work?.image.url }
   if (target.kind === 'PRINT') return { kind: 'PRINT', ...common, imageUrl: target.imageUrl, captcha: values.captcha, captchaToken }
   const { dateFrom, dateTo, purpose, location } = values
   return { kind: 'SERVICE', ...common, dateFrom, dateTo, purpose, location }

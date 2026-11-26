@@ -200,11 +200,12 @@ describe('artist enquiry form', () => {
     await fillContact(user)
     await user.click(screen.getByRole('button', { name: 'Send enquiry' }))
     expect((screen.getByRole('button', { name: 'Sending…' }) as HTMLButtonElement).disabled).toBe(true)
-    screen.getByRole('button', { name: 'Close' }).focus()
+    const home = screen.getByRole('link', { name: 'Art Houz home' })
+    home.focus()
     await user.tab({ shift: true })
     expect(document.activeElement).toBe(field('Message'))
     await user.tab()
-    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Close' }))
+    expect(document.activeElement).toBe(home)
   })
 
   it('keeps the honeypot out of reach of people and assistive tech', async () => {

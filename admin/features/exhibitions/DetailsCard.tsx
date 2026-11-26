@@ -44,9 +44,6 @@ export function DetailsCard({ form, isNew }: Props) {
           <Input {...register('country')} />
         </Field>
       </div>
-      <Field name="venue" label="Venue" error={errors.venue?.message}>
-        <Input {...register('venue')} />
-      </Field>
       <Field name="slug" label="Slug" help="Changing the slug changes the page address." error={errors.slug?.message}>
         <SlugInput registration={slug} onEdit={() => { slugEdited.current = true }} />
       </Field>

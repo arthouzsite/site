@@ -109,7 +109,7 @@ describe('video upload', () => {
     })
   })
 
-  it('accepts a video larger than the 2 MB image limit', async () => {
+  it('accepts a video larger than the 5 MB image limit', async () => {
     await upload({ buffer: Buffer.concat([ftypBox(), Buffer.alloc(30 * 1024 * 1024)]), mimetype: 'video/mp4' }, 'Big', null)
     expect(fake.media.create).toHaveBeenCalledTimes(1)
   })

@@ -12,9 +12,9 @@ describe('checkImageFile', () => {
 
   it('rejects an oversized file without decoding it', async () => {
     let read = false
-    const message = await checkImageFile(image('big.jpg', 2 * MB + 1), async () => { read = true; return { width: 10, height: 10 } })
+    const message = await checkImageFile(image('big.jpg', 5 * MB + 1), async () => { read = true; return { width: 10, height: 10 } })
     expect(message).toContain('big.jpg')
-    expect(message).toContain('2 MB')
+    expect(message).toContain('5 MB')
     expect(read).toBe(false)
   })
 

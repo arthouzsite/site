@@ -12,7 +12,7 @@ export const publicExhibitionSchema = z.object({
   id: z.string(), slug: z.string(), title: z.string(), subtitle: z.string(),
   city: z.string(), country: z.string(), type: z.enum(EXHIBITION_TYPES),
   status: z.enum(EXHIBITION_STATUSES), statusLabel: z.string(), datesLabel: z.string(),
-  venue: z.string(), blurb: z.string(), body: z.string(),
+  blurb: z.string(), body: z.string(),
   artistLine: z.string(), artists: z.array(nameSlug), image,
 })
 
@@ -55,7 +55,7 @@ export const publicLocationSchema = z.object({
 })
 
 const publicExhibitionWorkSchema = z.object({
-  id: z.string(), title: z.string(), year: z.string(), artist: z.string(), medium: z.string(), image,
+  id: z.string(), title: z.string(), year: z.string(), artist: z.string(), artistSlug: z.string(), medium: z.string(), image,
 })
 
 export const publicPressSchema = z.object({

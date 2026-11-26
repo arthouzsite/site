@@ -23,7 +23,7 @@ export const PUBLIC_EXHIBITION_DETAIL_INCLUDE = {
     ...BY_SORT_ORDER,
     // Videos are library-only: never expose one as a work image even if a row points at it.
     where: { artist: { isPublished: true }, image: { kind: 'IMAGE' } },
-    include: { image: true, artist: { select: { name: true } } },
+    include: { image: true, artist: { select: { name: true, slug: true } } },
   },
 } satisfies Prisma.ExhibitionInclude
 export type PublicExhibitionDetailRow = Prisma.ExhibitionGetPayload<{ include: typeof PUBLIC_EXHIBITION_DETAIL_INCLUDE }>
@@ -44,7 +44,7 @@ export function toPublicExhibition(row: PublicExhibitionRow, today: Date): Publi
     id: row.id, slug: row.slug, title: row.title, subtitle: row.subtitle, city: row.city, country: row.country,
     type: row.type, status, statusLabel: STATUS_BADGE[status].label,
     datesLabel: row.datesLabel ?? formatDateRange(row.startDate, row.endDate),
-    venue: row.venue, blurb: row.blurb, body: row.body,
+    blurb: row.blurb, body: row.body,
     artistLine: artists.map((a) => a.name).join(', '), artists, image: toPublicImage(row.heroImage),
   }
 }
@@ -63,12 +63,11 @@ export function toPublicExhibitionDetail(
     ...base,
     meta: [
       { k: 'Location', v: `${row.city}, ${row.country}` },
-      { k: 'Venue', v: row.venue },
       { k: 'Dates', v: base.datesLabel },
       { k: 'Format', v: row.type === 'SOLO' ? 'Solo exhibition' : 'Group exhibition' },
     ],
     works: row.works.map((w) => ({
-      id: w.id, title: w.title, year: w.year, artist: w.artist.name, medium: w.medium, image: toPublicImage(w.image),
+      id: w.id, title: w.title, year: w.year, artist: w.artist.name, artistSlug: w.artist.slug, medium: w.medium, image: toPublicImage(w.image),
     })),
     press: press.map(toPublicPress),
   }
