@@ -7,6 +7,7 @@ export function FooterLocation({ location }: Props) {
   return (
     <div className="flex max-w-[220px] flex-col gap-2 text-[14px] leading-[1.55] text-ondark">
       <div className="text-[11.5px] tracking-[0.18em] text-amber uppercase">{location.city}</div>
+      {location.address && <address className="whitespace-pre-line not-italic">{location.address}</address>}
       <div>
         {location.days}
         <br />

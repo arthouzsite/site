@@ -38,7 +38,7 @@ export function SearchOverlay({ onClose, returnFocus }: Props) {
             maxLength={MAX_QUERY_LENGTH}
             autoComplete="off"
             enterKeyHint="search"
-            className="w-full border-0 border-b border-solid border-ink bg-transparent px-0 pt-2 pb-4 font-display text-[clamp(32px,5vw,64px)] text-ink outline-none"
+            className="w-full border-0 border-b border-solid border-ink bg-transparent px-0 pt-2 pb-4 font-display text-[clamp(20px,2.4vw,28px)] text-ink outline-none"
           />
         </div>
         {result && <SearchResults result={result} onNavigate={onClose} />}

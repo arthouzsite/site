@@ -4,7 +4,7 @@
   --color-paper: #F3F1EC;
   --color-ink: #161513;
   --color-amber: #D98A2B;
-  --color-rust: #B4651A;
+  --color-rust: #C2752A;
   --color-body: #3B3833;
   --color-muted: #5E5A54;
   --color-faint: #8A857D;
@@ -25,13 +25,14 @@
   --color-line-dark-20: rgba(237, 234, 228, 0.2);
 
   /*
-   * Fonts: the prototype's stacks verbatim. next/font registers its self-hosted faces under these literal
-   * family names; its --font-* variables are not used because they insert a size-adjusted "… Fallback"
-   * face, which renders glyphs outside the subsets (→ ↗) wider than the prototype's generic fallback.
+   * Fonts: next/font registers its self-hosted faces under these literal family names; its --font-* variables
+   * are not used because they insert a size-adjusted "… Fallback" face, which renders glyphs outside the
+   * subsets (→ ↗) wider than the generic fallback. The site sets every text in the navigation's face
+   * (FIN-3781), so the display stacks name it too; the CMS keeps its serif display face in admin.css.
    */
   --font-*: initial;
-  --font-display: 'EB Garamond', serif;
-  --font-display-tamil: 'EB Garamond', 'Noto Serif Tamil', serif;
+  --font-display: 'Space Grotesk', 'Noto Sans Tamil', sans-serif;
+  --font-display-tamil: 'Space Grotesk', 'Noto Serif Tamil', sans-serif;
   --font-ui: 'Space Grotesk', 'Noto Sans Tamil', sans-serif;
 
   /*

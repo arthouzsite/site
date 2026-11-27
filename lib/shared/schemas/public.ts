@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { EXHIBITION_STATUSES, EXHIBITION_TYPES, HERO_LAYOUTS, ARTIST_INDEX_LAYOUTS } from '../constants'
+import { EMPTY_PAGE_DESCRIPTIONS, pageDescriptionsSchema } from './settings'
 
 export const publicImageSchema = z.object({
   url: z.string(), thumbUrl: z.string(), width: z.number().positive(), height: z.number().positive(), alt: z.string(),
@@ -99,6 +100,7 @@ export const publicSettingsSchema = z.object({
   site: z.object({ title: z.string(), description: z.string(), ogImage: image }),
   // Defaulted: a settings payload cached before this key existed must still parse after a deploy.
   maintenance: z.object({ isEnabled: z.boolean() }).default({ isEnabled: false }),
+  pageDescriptions: pageDescriptionsSchema.default(EMPTY_PAGE_DESCRIPTIONS),
 })
 
 export const publicAboutSchema = z.object({

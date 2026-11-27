@@ -2,18 +2,19 @@ import type { Metadata } from 'next'
 import { ServiceRow } from '@/components/services/ServiceRow'
 import { Container } from '@/components/site/Container'
 import { getServices } from '@/lib/services'
-import { PageTitle } from '@/components/site/PageTitle'
+import { PageIntro } from '@/components/site/PageIntro'
+import { loadPageDescription } from '@/lib/page-descriptions'
 
 export function generateMetadata(): Metadata {
   return { title: 'Services' }
 }
 
 export default async function ServicesPage() {
-  const services = await getServices()
+  const [services, description] = await Promise.all([getServices(), loadPageDescription('services')])
   return (
     <main>
       <Container className="pt-[clamp(40px,6vw,88px)] pb-[clamp(72px,9vw,140px)]">
-        <PageTitle className="mb-14">Services</PageTitle>
+        <PageIntro title="Services" description={description} className="mb-14" />
         {services.map((service, index) => (
           <ServiceRow key={service.slug} service={service} flipped={index % 2 === 1} />
         ))}

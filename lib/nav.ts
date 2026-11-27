@@ -9,7 +9,7 @@ export type NavChild = { readonly slug: string; readonly title: string }
 
 export type NavItem = { readonly label: string; readonly href: string }
 
-/** Primary navigation, in the prototype's order. */
+/** Primary navigation, in the prototype's order. Visit is hidden for now (FIN-3781); the footer's Contact still links to it. */
 export const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Exhibitions', href: '/exhibitions' },
   { label: 'Artists', href: '/artists' },
@@ -18,7 +18,6 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Services', href: SERVICES_HREF },
   { label: 'Prints', href: PRINTS_HREF },
   { label: 'About', href: '/about' },
-  { label: 'Visit', href: '/visit' },
 ]
 
 export const FOOTER_NAV: readonly NavItem[] = [

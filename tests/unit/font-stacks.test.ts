@@ -13,10 +13,11 @@ function stack(name: string): string {
 describe('font stacks', () => {
   // next/font's variables append a size-adjusted "… Fallback" face, which renders glyphs outside the
   // subset (→ ↗) wider than the prototype's plain generic fallback.
-  it('match the prototype stacks verbatim, without next/font fallback variables', () => {
+  it('name the loaded faces directly, without next/font fallback variables', () => {
     expect(stack('ui')).toBe("'Space Grotesk', 'Noto Sans Tamil', sans-serif")
-    expect(stack('display')).toBe("'EB Garamond', serif")
-    expect(stack('display-tamil')).toBe("'EB Garamond', 'Noto Serif Tamil', serif")
+    // The site sets headings in the navigation's face too (FIN-3781).
+    expect(stack('display')).toBe("'Space Grotesk', 'Noto Sans Tamil', sans-serif")
+    expect(stack('display-tamil')).toBe("'Space Grotesk', 'Noto Serif Tamil', sans-serif")
     expect(TOKENS).not.toMatch(/var\(--font-(space-grotesk|eb-garamond|noto-serif-tamil)\)/)
   })
 })

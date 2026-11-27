@@ -8,7 +8,8 @@ import { Container } from '@/components/site/Container'
 import { apiGet } from '@/lib/api'
 import { buildExhibitionQuery, parseExhibitionParams } from '@/lib/searchParams'
 import { TAGS } from '@/lib/tags'
-import { PageTitle } from '@/components/site/PageTitle'
+import { PageIntro } from '@/components/site/PageIntro'
+import { loadPageDescription } from '@/lib/page-descriptions'
 
 export const metadata: Metadata = { title: 'Exhibitions' }
 
@@ -16,11 +17,14 @@ type Props = { searchParams: Promise<Record<string, string | string[] | undefine
 
 export default async function ExhibitionsPage({ searchParams }: Props) {
   const params = parseExhibitionParams(await searchParams)
-  const { items, cities } = await apiGet(`/public/exhibitions${buildExhibitionQuery(params)}`, publicExhibitionListSchema, [TAGS.exhibitions])
+  const [{ items, cities }, description] = await Promise.all([
+    apiGet(`/public/exhibitions${buildExhibitionQuery(params)}`, publicExhibitionListSchema, [TAGS.exhibitions]),
+    loadPageDescription('exhibitions'),
+  ])
   return (
     <main>
       <Container className="pt-[clamp(40px,6vw,88px)] pb-[clamp(72px,9vw,140px)]">
-        <PageTitle className="mb-10">Exhibitions</PageTitle>
+        <PageIntro title="Exhibitions" description={description} className="mb-10" />
         <div className="mb-14 flex flex-wrap items-center gap-x-10 gap-y-5">
           <StatusChips current={params} />
           <CityChips cities={cities} current={params} />

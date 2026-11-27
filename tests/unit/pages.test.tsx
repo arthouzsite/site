@@ -75,7 +75,10 @@ const settings = {
   footer: { tagline: 'Tagline', instagramUrl: '', facebookUrl: '', linkedinUrl: '', youtubeUrl: '', twitterUrl: '', copyrightFrom: 2012 },
   site: { title: 'Art Houz', description: 'Gallery.', ogImage: null },
   maintenance: { isEnabled: false },
+  pageDescriptions: { exhibitions: 'Shows at both galleries.', artists: '', fairs: '', news: '', services: '', prints: '', about: '', visit: '' },
 }
+/** Answers every path but the settings with `value`, as a page that reads one list would see it. */
+const listOf = (value: unknown) => async (path: string) => (path === '/public/settings' ? settings : value)
 
 const byPath: Record<string, unknown> = {
   '/public/home': home,
@@ -156,18 +159,19 @@ describe('list and static pages', () => {
     const out = html(await ExhibitionsPage({ searchParams: params({ status: 'current', city: 'Chennai' }) }))
     expect(out).toContain('Salt Line')
     expect(apiGet).toHaveBeenCalledWith('/public/exhibitions?status=current&city=Chennai')
-    apiGet.mockImplementation(async () => ({ items: [], cities: [] }))
+    expect(out).toContain('Shows at both galleries.')
+    apiGet.mockImplementation(listOf({ items: [], cities: [] }))
     expect(html(await ExhibitionsPage({ searchParams: params({}) }))).toContain('No exhibitions match')
     expect(exhibitionsMeta).toHaveProperty('title', 'Exhibitions')
   })
 
   it('renders the artists index in both layouts and for an empty search', async () => {
     expect(html(await ArtistsPage({ searchParams: params({}) }))).toContain('id="L-N"')
-    apiGet.mockImplementation(async () => ({ ...artistList, layout: 'FLOWING' }))
+    apiGet.mockImplementation(listOf({ ...artistList, layout: 'FLOWING' }))
     expect(html(await ArtistsPage({ searchParams: params({ q: [' par '] }) }))).toContain('Parvathi Nayar')
-    apiGet.mockImplementation(async () => ({ ...artistList, groups: [], flat: [] }))
+    apiGet.mockImplementation(listOf({ ...artistList, groups: [], flat: [] }))
     expect(html(await ArtistsPage({ searchParams: params({ q: 'zzz' }) }))).toContain('No artists match')
-    expect(apiGet).toHaveBeenLastCalledWith('/public/artists?q=zzz')
+    expect(apiGet).toHaveBeenCalledWith('/public/artists?q=zzz')
     // Free-text searches bypass the data cache; the plain index stays cached under the artists tag.
     expect(apiTags.find(([path]) => path === '/public/artists?q=zzz')?.[1]).toEqual([])
     expect(apiTags.find(([path]) => path === '/public/artists')?.[1]).toEqual(['artists'])
@@ -257,6 +261,15 @@ describe('shell', () => {
     expect(out).toContain('Instagram')
     expect(out).not.toContain('Facebook')
     expect(out).toMatch(/© 2012 – \d{4} Art Houz/)
+    // Social links are icons only: the network is named for assistive technology, not printed.
+    expect(out).toMatch(/<a href="[^"]+"[^>]*aria-label="Instagram \(opens in a new tab\)"[^>]*><svg/)
+    expect(out).not.toContain('Instagram ↗')
+  })
+
+  it('shows each gallery address under its city in the footer', async () => {
+    loadFooterData.mockResolvedValue({ ...footerData, locations: [{ ...location, city: 'Chennai', address: 'No 123, Sterling Rd, Chennai 600034' }] })
+    const out = html((await Footer()) as ReactElement)
+    expect(out).toMatch(/Chennai<\/div><address[^>]*>No 123, Sterling Rd, Chennai 600034<\/address>/)
   })
 
   it('skips social links whose href is not an http(s) URL', async () => {

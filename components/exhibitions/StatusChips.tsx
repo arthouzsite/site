@@ -4,10 +4,10 @@ import type { ExhibitionParams, ExhibitionStatusParam } from '@/lib/searchParams
 import { useFilterNavigation } from './FilterChips'
 
 const CHIPS: ReadonlyArray<{ value: ExhibitionStatusParam | undefined; label: string }> = [
-  { value: undefined, label: 'All' },
-  { value: 'current', label: 'Now on view' },
   { value: 'upcoming', label: 'Upcoming' },
+  { value: 'current', label: 'Now on view' },
   { value: 'past', label: 'Past' },
+  { value: undefined, label: 'All' },
 ]
 
 export function StatusChips({ current }: { current: ExhibitionParams }) {

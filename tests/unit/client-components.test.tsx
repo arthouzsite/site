@@ -27,6 +27,7 @@ afterEach(() => {
 describe('exhibition filter chips', () => {
   it('writes the chosen status to the URL, keeping the city filter', () => {
     render(<StatusChips current={{ city: 'Chennai' }} />)
+    expect(screen.getAllByRole('button').map((chip) => chip.textContent)).toEqual(['Upcoming', 'Now on view', 'Past', 'All'])
     expect(screen.getByRole('button', { name: 'All' })).toHaveProperty('ariaPressed', 'true')
     fireEvent.click(screen.getByRole('button', { name: 'Upcoming' }))
     expect(replace).toHaveBeenCalledWith('/exhibitions?status=upcoming&city=Chennai', { scroll: false })

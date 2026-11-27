@@ -7,6 +7,7 @@ import { FocusArtistCard } from './FocusArtistCard'
 import { FooterCard } from './FooterCard'
 import { HeroLayoutCards } from './HeroLayoutCards'
 import { MaintenanceCard } from './MaintenanceCard'
+import { PageDescriptionsCard } from './PageDescriptionsCard'
 import { SiteCard } from './SiteCard'
 import { useCanEditSettings, useSettings } from './useSettings'
 
@@ -55,6 +56,7 @@ export default function SettingsPage() {
             <HeroLayoutCards settings={settings.data} readOnly={!canEdit} />
             <FocusArtistCard settings={settings.data} readOnly={!canEdit} />
             <ArtistIndexCards settings={settings.data} readOnly={!canEdit} />
+            <PageDescriptionsCard settings={settings.data} readOnly={!canEdit} />
             <FooterCard settings={settings.data} readOnly={!canEdit} />
             <SiteCard settings={settings.data} readOnly={!canEdit} />
             <MaintenanceCard settings={settings.data} readOnly={!canEdit} />

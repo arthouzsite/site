@@ -14,6 +14,12 @@ describe('navigation items', () => {
     expect(NAV_ITEMS.find((item) => item.label === 'Prints')?.href).toBe(PRINTS_HREF)
   })
 
+  it('hides Visit from the header while the footer keeps Contact, in two columns of four', () => {
+    expect(NAV_ITEMS.map((item) => item.label)).not.toContain('Visit')
+    expect(FOOTER_NAV.find((item) => item.label === 'Contact')?.href).toBe('/visit')
+    expect(FOOTER_NAV).toHaveLength(8)
+  })
+
   it('marks Services active on the index and on any service page, but not on a lookalike path', () => {
     expect(isActive('/services', SERVICES_HREF)).toBe(true)
     expect(isActive('/services/art-sales', SERVICES_HREF)).toBe(true)

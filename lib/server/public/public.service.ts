@@ -190,6 +190,7 @@ export async function getSiteSettings(): Promise<PublicSettings> {
     footer: all.footer as FooterSetting,
     site: { ...site, ogImage: ogImageId ? (images.get(ogImageId) ?? null) : null },
     maintenance: all.maintenance as PublicSettings['maintenance'],
+    pageDescriptions: all.pageDescriptions as PublicSettings['pageDescriptions'],
   }
 }
 

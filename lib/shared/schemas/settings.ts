@@ -6,11 +6,31 @@ import { httpUrl, idSchema } from './common'
 
 export const SETTING_KEYS = [
   'heroLayout', 'artistIndexLayout', 'homeHeroExhibitionId', 'homeFocus',
-  'about.gallery', 'about.proprietor', 'about.services', 'about.publications', 'footer', 'site', 'maintenance',
+  'about.gallery', 'about.proprietor', 'about.services', 'about.publications', 'footer', 'site', 'maintenance', 'pageDescriptions',
 ] as const
 export type SettingKey = (typeof SETTING_KEYS)[number]
 
 const text = z.string()
+
+/** The section pages whose title can carry a description, with the label the CMS shows for each. */
+export const DESCRIBED_PAGES = [
+  { page: 'exhibitions', label: 'Exhibitions' },
+  { page: 'artists', label: 'Artists' },
+  { page: 'fairs', label: 'Fairs' },
+  { page: 'news', label: 'News' },
+  { page: 'services', label: 'Services' },
+  { page: 'prints', label: 'Prints' },
+  { page: 'about', label: 'About' },
+  { page: 'visit', label: 'Visit' },
+] as const
+export type DescribedPage = (typeof DESCRIBED_PAGES)[number]['page']
+export type PageDescriptions = Record<DescribedPage, string>
+export const PAGE_DESCRIPTION_MAX = 600
+export const EMPTY_PAGE_DESCRIPTIONS = Object.fromEntries(DESCRIBED_PAGES.map(({ page }) => [page, ''])) as PageDescriptions
+/** Every page defaults to '', so a value saved before a page was added still parses. */
+export const pageDescriptionsSchema = z.object(
+  Object.fromEntries(DESCRIBED_PAGES.map(({ page }) => [page, z.string().trim().max(PAGE_DESCRIPTION_MAX).default('')])) as Record<DescribedPage, z.ZodDefault<z.ZodString>>,
+)
 const nullableId = idSchema.nullable()
 const nullableUrl = httpUrl().nullable()
 /** Optional social link: an http(s) URL, or '' when unset. */
@@ -35,6 +55,8 @@ export const settingSchemas: { [K in SettingKey]: ZodType } = {
   site: z.object({ title: text, description: text, ogImageId: nullableId }),
   /** While enabled, every public page shows the maintenance screen instead of its content; the CMS stays open. */
   maintenance: z.object({ isEnabled: z.boolean() }),
+  /** A short text shown under the title of each section page; '' shows nothing. */
+  pageDescriptions: pageDescriptionsSchema,
 }
 
 export const SETTING_DEFAULTS: Record<SettingKey, unknown> = {
@@ -51,4 +73,5 @@ export const SETTING_DEFAULTS: Record<SettingKey, unknown> = {
   },
   site: { title: '', description: '', ogImageId: null },
   maintenance: { isEnabled: false },
+  pageDescriptions: EMPTY_PAGE_DESCRIPTIONS,
 }

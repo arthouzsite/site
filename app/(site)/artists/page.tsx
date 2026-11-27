@@ -7,7 +7,8 @@ import { LetterStrip } from '@/components/artists/LetterStrip'
 import { Container } from '@/components/site/Container'
 import { apiGet, apiGetUncached } from '@/lib/api'
 import { TAGS } from '@/lib/tags'
-import { PageTitle } from '@/components/site/PageTitle'
+import { PageIntro } from '@/components/site/PageIntro'
+import { loadPageDescription } from '@/lib/page-descriptions'
 
 export const metadata: Metadata = { title: 'Artists' }
 
@@ -21,15 +22,17 @@ function readQuery(value: string | string[] | undefined): string {
 export default async function ArtistsPage({ searchParams }: Props) {
   const q = readQuery((await searchParams).q)
   // Free-text queries are per request: caching them would let arbitrary ?q values grow the data cache without bound.
-  const { groups, flat, layout } = q
-    ? await apiGetUncached(`/public/artists?q=${encodeURIComponent(q)}`, publicArtistListSchema)
-    : await apiGet('/public/artists', publicArtistListSchema, [TAGS.artists])
+  const [{ groups, flat, layout }, description] = await Promise.all([
+    q
+      ? apiGetUncached(`/public/artists?q=${encodeURIComponent(q)}`, publicArtistListSchema)
+      : apiGet('/public/artists', publicArtistListSchema, [TAGS.artists]),
+    loadPageDescription('artists'),
+  ])
   return (
     <main>
       <Container className="pt-[clamp(40px,6vw,88px)] pb-[clamp(72px,9vw,140px)]">
-        <PageTitle className="mb-12">Artists</PageTitle>
-        <div className="mb-6 flex flex-wrap items-end justify-between gap-x-12 gap-y-6">
-          <h2 className="m-0 font-display text-[clamp(36px,4vw,56px)] leading-none font-normal">Index A–Z</h2>
+        <PageIntro title="Artists" description={description} className="mb-10" />
+        <div className="mb-6 flex justify-end">
           <ArtistSearch initialQuery={q} />
         </div>
         <LetterStrip letters={groups.map((group) => group.letter)} />

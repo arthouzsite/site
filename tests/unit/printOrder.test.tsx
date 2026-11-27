@@ -126,4 +126,21 @@ describe('print order', () => {
     expect(await screen.findByText('The security code could not load.')).toBeTruthy()
     expect((screen.getByRole('button', { name: 'Place order request' }) as HTMLButtonElement).disabled).toBe(true)
   })
+
+  it('Order on a print opens its order form at once, and Close returns to the prints', async () => {
+    serve(() => reply(201, { ok: true, data: { received: true }, error: null }))
+    const user = userEvent.setup()
+    render(
+      <div id={APP_ROOT_ID}>
+        <PrintGrid slug="etchings" title="Etchings" images={images} />
+      </div>,
+    )
+    expect(screen.getAllByRole('button', { name: /^View / })).toHaveLength(2)
+    await user.click(screen.getByRole('button', { name: 'Order Misty hills' }))
+    await screen.findByRole('img', { name: 'Security code' })
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByAltText('Misty hills')).toBeTruthy()
+    await user.click(within(dialog).getByRole('button', { name: 'Close' }))
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
 })
